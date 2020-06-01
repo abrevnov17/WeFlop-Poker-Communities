@@ -1,0 +1,30 @@
+{
+    "database": {
+        "db_host": "localhost",
+        "db_identifier": "Accounts",
+        "db_password": "iKWKy2VmfPBUk5xn",
+        "db_port": 5000
+    },
+    "security": {
+        "salt_rounds": 12,
+        "session_token_bytes": 16
+    },
+    "api": {
+        "base_url": "/api",
+        "create_account_route": "/create_account",
+        "login_route": "/login",
+        "delete_account_route": "/delete_account"
+    },
+    "default": {
+        "app_name": "Accounts Service",
+        "description": "Serves api calls related to user authentication and account management."
+    },
+    "development": {
+        "config_id": "development",
+        "port": 8000
+    },
+    "production": {
+        "config_id": "production",
+        "port": 8080
+    }
+}
