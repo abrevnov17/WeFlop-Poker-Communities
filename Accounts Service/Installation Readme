@@ -7,4 +7,4 @@ https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/develo
 
 3. Install postgresql: brew install postgresql (need to install brew first)
 
-4. Run server: node app.js
+ 
