@@ -24,7 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-package com.weflop.Evaluation;
+package com.weflop.Evaluation.TwoPlusTwo;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -34,8 +34,10 @@ import com.google.common.io.Closeables;
 
 /**
  * Utility class for loading configuration and resource files
+ * 
+ * @author abrevnov
  */
-public class EvaluationHandsLoader {
+public class TwoPlusTwoHandsTableLoader {
 	
 	private static final int HAND_RANK_SIZE = 32487834;
 
@@ -54,7 +56,7 @@ public class EvaluationHandsLoader {
 	        byte[] b = new byte[tableSize];
 	        InputStream br = null;
 			try {
-				br = new BufferedInputStream(EvaluationHandsLoader.class.getResourceAsStream(name));
+				br = new BufferedInputStream(TwoPlusTwoHandsTableLoader.class.getResourceAsStream(name));
 				int bytesRead = br.read(b, 0, tableSize);
 	            if (bytesRead != tableSize) {
 	                throw new IOException("Read " + bytesRead + " bytes out of " + tableSize);

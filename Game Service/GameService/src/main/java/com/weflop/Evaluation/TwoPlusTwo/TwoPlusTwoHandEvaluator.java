@@ -28,14 +28,13 @@ package com.weflop.Evaluation.TwoPlusTwo;
 import java.util.List;
 
 import com.weflop.Cards.Card;
-import com.weflop.Evaluation.EvaluationHandsLoader;
 import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 
 /**
  * Poker hand Evaluation algorithm based on the two plus two 7 card hand evaluation algorithm.
  * 
- * @author jacobhyphenated
+ * @author abrevnov
  */
 public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 
@@ -45,7 +44,7 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 	private static TwoPlusTwoHandEvaluator instance;
 	
 	public TwoPlusTwoHandEvaluator(){
-		EvaluationHandsLoader reader = new EvaluationHandsLoader();
+		TwoPlusTwoHandsTableLoader reader = new TwoPlusTwoHandsTableLoader();
 		handRanks = reader.loadHandRankResource(HAND_RANKS);
 	}
 	
@@ -69,7 +68,7 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 		for (Card card : board) {
 			p = handRanks[p + cardToIntegerRepresentation(card)];
 		}
-		return new HandRank(p);
+		return new TwoPlusTwoHandRank(p);
 	}
 	
 	/**
@@ -161,5 +160,4 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 		
 		return result;
 	}
-
 }

@@ -26,16 +26,14 @@ THE SOFTWARE.
 
 package com.weflop.Evaluation;
 
-import java.io.Serializable;
-
 /**
- * Representation of the poker hand strength.
+ * Representation of a poker hand.
+ * 
+ * @author abrevnov
  */
-public class HandRank implements Comparable<HandRank>, Serializable {
+public abstract class HandRank implements Comparable<HandRank> {
 
-	private static final long serialVersionUID = 6897360347770643227L;
-
-	private final int rankValue;
+	protected final int rankValue;
 
 	public HandRank(int rankValue) {
 		super();
@@ -69,16 +67,8 @@ public class HandRank implements Comparable<HandRank>, Serializable {
 	}
 
 	/**
-	 * The type of hand as represented by {@link HandType}
-	 * @return {@link HandType}
+	 * The type of hand as represented by {@link HandClassification}
+	 * @return {@link HandClassification}
 	 */
-	public HandClassification getHandType(){
-		/*
-		 * The rank value is categorized based on the Two Plus Two (2+2) hand evaluation algorithm.
-		 * 0 == invalid hand, 1 == high card, so on.  This value is stored in the thirteenth bit of the rankValue score.
-		 * Bit-shift to get the type value bit, match it to the enum with the ordinal ordering for the 2+2 evaluation type
-		 * */
-		return HandClassification.values()[rankValue >> 12];
-	}
-
+	public abstract HandClassification getHandType();
 }
