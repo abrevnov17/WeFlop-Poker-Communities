@@ -13,24 +13,24 @@ public class Turn {
 	private Player player;
 	private Duration timeElapsed;
 	
-	Turn(Player player, Duration timeElapsed) {
+	public Turn(Player player, Duration timeElapsed) {
 		this.setPlayer(player);
 		this.setTimeElapsed(timeElapsed);
 	}
 
-	public Player getPlayer() {
+	synchronized public Player getPlayer() {
 		return player;
 	}
 
-	public void setPlayer(Player player) {
+	synchronized public void setPlayer(Player player) {
 		this.player = player;
 	}
 
-	public Duration getTimeElapsed() {
+	synchronized public Duration getTimeElapsed() {
 		return timeElapsed;
 	}
 
-	public void setTimeElapsed(Duration timeElapsed) {
+	synchronized public void setTimeElapsed(Duration timeElapsed) {
 		this.timeElapsed = timeElapsed;
 	}
 }

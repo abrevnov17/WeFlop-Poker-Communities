@@ -14,14 +14,14 @@ import com.weflop.Cards.Card;
  *
  */
 public class Player {
-	private long id;
+	private final long id;
 	private List<Card> cards;
 	private float balance; 
 	private float currentBet;
 	private PlayerState state;
 	
 	Player(long id) {
-		this.setId(id);
+		this.id = id;
 		this.setCards(new ArrayList<Card>());
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
@@ -29,7 +29,7 @@ public class Player {
 	}
 	
 	Player(long id, List<Card> cards) {
-		this.setId(id);
+		this.id = id;
 		this.setCards(cards);
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
@@ -40,27 +40,23 @@ public class Player {
 		return id;
 	}
 
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public List<Card> getCards() {
+	synchronized public List<Card> getCards() {
 		return cards;
 	}
 
-	public void setCards(List<Card> cards) {
+	synchronized public void setCards(List<Card> cards) {
 		this.cards = cards;
 	}
 
-	public float getBalance() {
+	synchronized public float getBalance() {
 		return balance;
 	}
 
-	public void setBalance(float balance) {
+	synchronized public void setBalance(float balance) {
 		this.balance = balance;
 	}
 
-	public float getCurrentBet() {
+	synchronized public float getCurrentBet() {
 		return currentBet;
 	}
 
@@ -68,11 +64,15 @@ public class Player {
 		this.currentBet = currentBet;
 	}
 
-	public PlayerState getState() {
+	synchronized public PlayerState getState() {
 		return state;
 	}
 
-	public void setState(PlayerState state) {
+	synchronized public void setState(PlayerState state) {
 		this.state = state;
+	}
+	
+	synchronized public void addCard(Card card) {
+		this.cards.add(card);
 	}
 }
