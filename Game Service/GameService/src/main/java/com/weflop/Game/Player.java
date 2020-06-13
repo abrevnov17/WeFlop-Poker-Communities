@@ -35,11 +35,52 @@ public class Player {
 		this.setCurrentBet(0.00f);
 		this.setState(PlayerState.WATCHING);		
 	}
+	
+	/**
+	 * Returns whether the player has a sufficient balance to
+	 * place a given bet.
+	 * 
+	 * @param amount Amount to bet
+	 * @return Whether or not the player has a sufficient balance
+	 */
+	synchronized public boolean canBet(float amount) {
+		if (this.balance >= amount) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Reduces balance by bet amount;
+	 * 
+	 * @param amount
+	 * @return
+	 */
+	synchronized void bet(float amount) {
+		this.balance -= amount;
+	}
+	
+	/**
+	 * Reduces balance to zero and switches state to all in.
+	 * 
+	 * @return The balance they forfeited to the pot to go all in
+	 */
+	synchronized float goAllIn() {
+		float currBalance = this.balance;
+		
+		this.balance = 0.0f;
+		this.state = PlayerState.ALL_IN;
+		
+		return currBalance;
+	}
 
+	/* Getters and Setters */
+	
 	public long getId() {
 		return id;
 	}
-
+	
 	synchronized public List<Card> getCards() {
 		return cards;
 	}

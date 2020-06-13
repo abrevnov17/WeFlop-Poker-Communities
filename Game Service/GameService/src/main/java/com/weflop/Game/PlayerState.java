@@ -12,5 +12,6 @@ public enum PlayerState {
 	FOLDED,
 	WAITING_FOR_TURN,
 	CURRENT_TURN,
+	ALL_IN,
 	WATCHING
 }

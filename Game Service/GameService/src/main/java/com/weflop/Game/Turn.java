@@ -10,12 +10,22 @@ import java.time.Duration;
  *
  */
 public class Turn {
-	private Player player;
-	private Duration timeElapsed;
 	
-	public Turn(Player player, Duration timeElapsed) {
+	private int count; // number of turns since game start
+	private Player player;
+	private long startTime; // value of system timer in nanoseconds at start
+	
+	
+	public Turn(Player player, long startTime) {
 		this.setPlayer(player);
-		this.setTimeElapsed(timeElapsed);
+		this.setStartTime(startTime);
+		this.setCount(0);
+	}
+	
+	public Turn(Player player, long startTime, int count) {
+		this.setPlayer(player);
+		this.setStartTime(startTime);
+		this.setCount(count);
 	}
 
 	synchronized public Player getPlayer() {
@@ -26,11 +36,27 @@ public class Turn {
 		this.player = player;
 	}
 
-	synchronized public Duration getTimeElapsed() {
-		return timeElapsed;
+	synchronized public Duration getTimeElapsed(long currentTime) {
+		return Duration.ofNanos(currentTime - startTime);
 	}
 
-	synchronized public void setTimeElapsed(Duration timeElapsed) {
-		this.timeElapsed = timeElapsed;
+	synchronized public void fixTimeElapsed(long currentTime, Duration timeElapsed) {
+		this.startTime = currentTime - timeElapsed.toNanos();
+	}
+	
+	synchronized public long getStartTime() {
+		return startTime;
+	}
+
+	synchronized public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+
+	synchronized public int getCount() {
+		return count;
+	}
+
+	synchronized public void setCount(int count) {
+		this.count = count;
 	}
 }

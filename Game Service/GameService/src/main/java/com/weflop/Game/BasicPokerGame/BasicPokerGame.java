@@ -22,26 +22,28 @@ public class BasicPokerGame extends AbstractGame {
 	private VariantRepresentation variant;
 	private Deck deck;
 	
-	protected BasicPokerGame(float smallBlind, int tableSize) {
-		super(smallBlind, tableSize);
+	protected BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration) {
+		super(smallBlind, tableSize, turnDuration);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	protected BasicPokerGame(float smallBlind, int tableSize, VariantRepresentation variant, Deck deck) {
-		super(smallBlind, tableSize, tableSize);
+	protected BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, 
+			VariantRepresentation variant, Deck deck) {
+		super(smallBlind, tableSize, tableSize, turnDuration);
 		this.variant = variant;
 		this.deck = deck;
 	}
 	
-	protected BasicPokerGame(float smallBlind, float bigBlind, int tableSize) {
-		super(smallBlind, bigBlind, tableSize);
+	protected BasicPokerGame(float smallBlind, float bigBlind, int tableSize, Duration turnDuration) {
+		super(smallBlind, bigBlind, tableSize, turnDuration);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	protected BasicPokerGame(float smallBlind, float bigBlind, int tableSize, VariantRepresentation variant, Deck deck) {
-		super(smallBlind, bigBlind, tableSize);
+	protected BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
+			Duration turnDuration, VariantRepresentation variant, Deck deck) {
+		super(smallBlind, bigBlind, tableSize, turnDuration);
 		this.variant = variant;
 		this.deck = deck;
 	}
@@ -71,11 +73,14 @@ public class BasicPokerGame extends AbstractGame {
 				}
 			}
 			
-			// begin turn for dealer
+			// initializing turn for dealer
 			Player dealer = this.getGroup().getPlayers()[this.getDealerIndex()];
 			dealer.setState(PlayerState.CURRENT_TURN);
 			
-			this.setTurn(new Turn(dealer, Duration.ZERO));
+			this.setTurn(new Turn(dealer, System.nanoTime()));
+			
+			// beginning turn by starting timer
+			this.beginRound();
 		} finally {
 			// releasing game lock
 			this.getLock().unlock();
@@ -95,7 +100,7 @@ public class BasicPokerGame extends AbstractGame {
 	}
 
 	@Override
-	public void sendPackets() throws Exception {
+	public void sendGamePackets() throws Exception {
 		// TODO Auto-generated method stub
 
 	}

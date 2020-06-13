@@ -12,10 +12,11 @@ public enum Action {
 	FOLD(0),
 	RAISE(1),
 	CALL(2),
+	TURN_TIMEOUT(3),
 	// Logistics-related actions:
-	SIT(3),
-	EXIT(4),
-	DISCONNECT(5);
+	SIT(4),
+	EXIT(5),
+	DISCONNECT(6);
 	
 	private final int value;
 
