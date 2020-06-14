@@ -3,6 +3,8 @@ package com.weflop.Game;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.util.Assert;
+
 import com.weflop.Cards.Card;
 
 /**
@@ -43,7 +45,7 @@ public class Player {
 	 * @param amount Amount to bet
 	 * @return Whether or not the player has a sufficient balance
 	 */
-	synchronized public boolean canBet(float amount) {
+	synchronized private boolean canBet(float amount) {
 		if (this.balance >= amount) {
 			return true;
 		}
@@ -57,8 +59,10 @@ public class Player {
 	 * @param amount
 	 * @return
 	 */
-	synchronized void bet(float amount) {
+	synchronized public void bet(float amount) throws IllegalStateException {
+		Assert.isTrue(this.canBet(amount), "Insufficient funds to place bet");
 		this.balance -= amount;
+		this.currentBet += amount;
 	}
 	
 	/**
@@ -72,8 +76,55 @@ public class Player {
 		this.balance = 0.0f;
 		this.state = PlayerState.ALL_IN;
 		
+		this.currentBet += currBalance;
+		
 		return currBalance;
 	}
+	
+	synchronized void convertToSpectator() {
+		this.cards.clear();
+		this.currentBet = 0.0f;
+		this.state = PlayerState.WATCHING;
+	}
+	
+	/**
+	 * Discards all player cards.
+	 * 
+	 */
+	synchronized public void discardHand() {
+		this.cards.clear();
+	}
+	
+	/**
+	 * Increased balance by a given amount.
+	 * 
+	 * @param amount Amount to add to balance
+	 */
+	synchronized public void increaseBalance(float amount) {
+		this.balance += amount;
+	}
+	
+	/* Overriding default object methods */
+	
+	@Override
+    public boolean equals(Object o) { 
+  
+        // If the object is compared with itself then return true   
+        if (o == this) { 
+            return true; 
+        } 
+  
+        /* Check if o is an instance of Player */
+        if (!(o instanceof Player)) { 
+            return false; 
+        } 
+          
+        // cast o to Player so that we can compare data members  
+        Player p = (Player) o; 
+          
+        // Compare the data members and return accordingly  
+        return id == p.id; 
+    } 
 
 	/* Getters and Setters */
 	

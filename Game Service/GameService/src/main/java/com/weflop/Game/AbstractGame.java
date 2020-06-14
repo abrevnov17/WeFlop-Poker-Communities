@@ -9,6 +9,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.weflop.Cards.Card;
+import com.weflop.Evaluation.HandRank;
+import com.weflop.Evaluation.HandRankEvaluator;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,13 +41,17 @@ public abstract class AbstractGame implements Game {
 	private float smallBlind;
 	private float bigBlind; // almost always just 2x the smallBlind
 	
+	private float roundBet;
+	
 	private Group group; // our group of players
 
 	private Turn turn;
 	
 	private Duration turnDuration; // how long user gets per turn
+	
+	private HandRankEvaluator evaluator;
 		
-	protected AbstractGame(float smallBlind, int tableSize, Duration turnDuration) {
+	protected AbstractGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
 		this.id = UUID.randomUUID();
 		this.setPot(0.0f);
 		this.centerCards = new ArrayList<Card>();
@@ -58,22 +64,27 @@ public abstract class AbstractGame implements Game {
 		this.setStarted(false);
 		this.setLock(new ReentrantLock());
 		this.setTurnDuration(turnDuration);
+		this.setRoundBet(this.bigBlind);
+		this.evaluator = evaluator;
 	}
 	
 	// if the big blind is not just 2x small blind
-	protected AbstractGame(float smallBlind, float bigBlind, int tableSize, Duration turnDuration) {
-		this(smallBlind, tableSize, turnDuration);
+	protected AbstractGame(float smallBlind, float bigBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
+		this(smallBlind, tableSize, turnDuration, evaluator);
 		this.bigBlind = bigBlind;
+		this.setRoundBet(this.bigBlind);
 	}
 	
 	/* These methods are publicly exposed and will be overriden by subclasses: */
 	
 	public abstract void start() throws Exception; // starts a game
-	public abstract void end() throws Exception; // cleanly ends a game AND flushes to database
-	public abstract void performAction(long playerID, Action action) throws Exception; // performs an action as a given player
+	public abstract void end(); // cleanly ends a game AND flushes to database
+	public abstract void performAction(long participantID, Action action) throws Exception; // performs an action as a given participant
 	public abstract void sendGamePackets() throws Exception; // sends game packets (i.e. copies of game state) to each player
 	public abstract void flushToDatabase() throws Exception; // flushes game state to database
 	
+	/* Required methods (internally used) for all subclasses */
+	protected abstract void deal(); // deals cards to players
 	
 	/**
 	 * Handler for turn expirations. Called by a single thread after execution.
@@ -89,7 +100,7 @@ public abstract class AbstractGame implements Game {
 		// time. in such cases, the user performs a TURN_TIMEOUT action, which (will likely
 		// be handled in a similar manner as to a fold)
 		try {
-			this.performAction(this.turn.getPlayer().getId(), Action.TURN_TIMEOUT);
+			this.performAction(this.turn.getPlayer().getId(), new Action(ActionType.TURN_TIMEOUT));
 		} catch (Exception e) {
 			// we do not need to do anything. this is only possible in an incredibly unlikely
 			// race condition where the current players action is processed between the last if statement
@@ -126,11 +137,17 @@ public abstract class AbstractGame implements Game {
 	 * Helper function to begin a round. Note that any locking must be handled
 	 * outside of this function as this function is not inherently thread-safe.
 	 * 
+	 * Additionally, beginRound() expects an up-to-date dealer index and that all
+	 * players have sufficient funds to play the current round.
+	 * 
 	 */
 	protected void beginRound() {
+		// first we deal cards
+		this.deal();
+		
 		// Note: We do not need to check if the small/big blind can pay or not because that
 		// is done at the end of each round
-		
+				
 		// small blind pays
 		this.getSmallBlindPlayer().bet(this.smallBlind);
 		this.pot += this.smallBlind;
@@ -139,15 +156,148 @@ public abstract class AbstractGame implements Game {
 		this.getBigBlindPlayer().bet(this.bigBlind);
 		this.pot += this.bigBlind;
 		
+		// resetting the current round bet amount (this is the most any player has bet during
+		// the current round)
+		this.setRoundBet(this.getBigBlind());
+		
+		// cycling to next turn
+		cycleTurn(this.getBigBlindIndex());
+	}
+	
+	/**
+	 * Helper function to end a round. Updates dealer index and checks to see that all players
+	 * have sufficient funds to player the current round.
+	 * 
+	 */
+	protected void endRound() {
+		
+		// calculate winning hand(s)
+		List<Player> playersWithMaxRank = new ArrayList<Player>();
+		HandRank maxRank = null;
+		for (Player player : this.group.getPlayers()) {
+			if (player.getState() != PlayerState.FOLDED) {
+				HandRank rank = this.evaluator.evaluate(this.centerCards, player.getCards());
+				if (maxRank == null || rank.compareTo(maxRank) == 0) {
+					// either first handrank we have found or tied with best hand rank we have found
+					maxRank = rank;
+					playersWithMaxRank.add(player);
+				} else if (rank.compareTo(maxRank) < 0) {
+					// hand rank is best we have found so far
+					playersWithMaxRank.clear();
+					maxRank = rank;
+					playersWithMaxRank.add(player);
+				}
+			}
+		}
+		
+		// distribute funds to winner(s)
+		float perPlayerWinnings = this.pot / playersWithMaxRank.size(); // split pot between winners
+		for (Player player : playersWithMaxRank) {
+			player.increaseBalance(perPlayerWinnings);
+		}
+		
+		// removing any players with insufficient funds
+		for (Player player : this.group.getPlayers()) {
+			if (player.getBalance() < this.bigBlind) {
+				this.bootPlayer(player, BootReason.INSUFFICIENT_FUNDS);
+			}
+		}
+		
+		// checking to see if we have enough players to continue
+		if (this.group.getPlayers().size() < 2) {
+			this.end();
+		}
+		
+		// update dealer index
+		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
+		
+		// starting next round
+		this.beginRound();
+	}
+	
+	protected void bootPlayer(Player player, BootReason reason) {
+		this.group.movePlayerToSpectator(player);
+		switch(reason) {
+			case INSUFFICIENT_FUNDS:
+				// TODO: send message
+				break;
+			case MISCONDUCT:
+				// TODO: send message
+				break;
+			case FORBIDDEN_ACTIVITY:
+				// TODO: send message
+				break;
+			default:
+				// TODO: send message
+				break;
+		}
+	}
+	
+	/**
+	 * Given an index of the player in the last turn (or the big blind index
+	 * in the case that this is the start of a round), updates the turn to the
+	 * next elligible player who is not all-in.
+	 * 
+	 * Also, this function checks to see if the round has ended and calls the
+	 * appropriate handler for that case.
+	 * 
+	 * @param lastTurnIndex
+	 */
+	protected void cycleTurn(int lastTurnIndex) {
+		// checking to see if the round is over
+		if (isRoundOver()) {
+			this.endRound();
+		}
 		// setting current turn to be person
-		this.turn = new Turn(getNextPlayer(this.getSmallBlindIndex()), System.nanoTime());
+		int nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
+		Player nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
+		
+		while (nextPlayer.getState() == PlayerState.ALL_IN) {
+			// this player is all-in, so we skip over them
+			nextPlayerIndex++;
+			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
+		}
+		
+		this.turn = new Turn(getNextPlayer(lastTurnIndex), System.nanoTime());
+		this.turn.getPlayer().setState(PlayerState.CURRENT_TURN);
 		
 		// starting the turn timer
 		this.beginTurnTimer();
 	}
+	
+	/**
+	 * A round is over when every player has either folded, bet the 'roundBet' (i.e.
+	 * bet as much as the most any player has bet that round), or has gone all in.
+	 * 
+	 * @return A boolean indicating if the round is over.
+	 */
+	protected boolean isRoundOver() {
+		for (Player player : this.group.getPlayers()) {
+			if (!(player.getState() == PlayerState.FOLDED || 
+					player.getState() == PlayerState.ALL_IN 
+					|| player.getCurrentBet() == this.roundBet)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Checks that it is a given player's current turn.
+	 * Throws an exception if it is not.
+	 * 
+	 * @param player
+	 * @throws Exception
+	 */
+	synchronized protected void assertIsPlayerTurn(Player player) throws Exception {
+		if (!this.getTurn().getPlayer().equals(player)) {
+			throw new Exception("Player cannot perform that action "
+					+ "as it is no longer their turn.");
+		}
+	}
 
 	/* Getters and setters for universal game properties */
-	
+		
 	/**
 	 * Gets the index of the next player (clockwise) in our group
 	 * of players given the index of the previous player in the group.
@@ -156,11 +306,11 @@ public abstract class AbstractGame implements Game {
 	 * @return The index of the desired player
 	 */
 	synchronized protected int getNextPlayerIndex(int index) {
-		return (index+1) % this.group.getPlayers().length;
+		return (index+1) % this.group.getPlayers().size();
 	}
 	
 	synchronized protected Player getNextPlayer(int index) {
-		return this.group.getPlayers()[getNextPlayerIndex(index)];
+		return this.group.getPlayers().get(getNextPlayerIndex(index));
 	}
 	
 	synchronized protected int getSmallBlindIndex() {
@@ -168,7 +318,7 @@ public abstract class AbstractGame implements Game {
 	}
 	
 	synchronized protected Player getSmallBlindPlayer() {
-		return this.group.getPlayers()[getSmallBlindIndex()];
+		return this.group.getPlayers().get(getSmallBlindIndex());
 	}
 	
 	synchronized protected int getBigBlindIndex() {
@@ -176,7 +326,24 @@ public abstract class AbstractGame implements Game {
 	}
 	
 	synchronized protected Player getBigBlindPlayer() {
-		return this.group.getPlayers()[getBigBlindIndex()];
+		return this.group.getPlayers().get(getBigBlindIndex());
+	}
+	
+	synchronized protected Player getParticipantById(long id) throws Exception {
+		// looping through players
+		for (Player player : group.getPlayers()) {
+			if (player.getId() == id) {
+				return player;
+			}
+		}
+		// looping through spectators
+		for (Player spectator : group.getSpectators()) {
+			if (spectator.getId() == id) {
+				return spectator;
+			}
+		}
+		
+		throw new Exception("Invalid participant id");
 	}
 	
 	protected UUID getId() {
@@ -269,5 +436,17 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void setTurnDuration(Duration turnDuration) {
 		this.turnDuration = turnDuration;
+	}
+	
+	synchronized protected void addToPot(float amount) {
+		this.pot += amount;
+	}
+
+	public float getRoundBet() {
+		return roundBet;
+	}
+
+	public void setRoundBet(float roundBet) {
+		this.roundBet = roundBet;
 	}
 }

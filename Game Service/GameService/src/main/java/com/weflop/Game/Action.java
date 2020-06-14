@@ -1,30 +1,38 @@
 package com.weflop.Game;
 
 /**
- * Enum describing all supported actions a user can
- * make.
+ * Actions have an associated type and an optional parameter value
+ * (as some actions such as raising have an associated float payload).
  * 
  * @author abrevnov
  *
  */
-public enum Action {
-	// Gameplay-related actions:
-	FOLD(0),
-	RAISE(1),
-	CALL(2),
-	TURN_TIMEOUT(3),
-	// Logistics-related actions:
-	SIT(4),
-	EXIT(5),
-	DISCONNECT(6);
+public class Action {
+	private ActionType type;
+	private float value; // some actions have associated payload values
 	
-	private final int value;
-
-	Action(int value) {
-		this.value = value;
+	public Action(ActionType type, float value) {
+		this.setType(type);
+		this.setValue(value);
+	}
+	
+	public Action(ActionType type) {
+		this(type, 0);
 	}
 
-	public int getValue() {
+	public ActionType getType() {
+		return type;
+	}
+
+	public void setType(ActionType type) {
+		this.type = type;
+	}
+
+	public float getValue() {
 		return value;
+	}
+
+	public void setValue(float value) {
+		this.value = value;
 	}
 }
