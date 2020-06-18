@@ -3,6 +3,8 @@ package com.weflop.Game;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.util.Assert;
+
 /**
  * A Group is everyone that is either spectating or participating in
  * an individual game.
@@ -25,6 +27,8 @@ public class Group {
 	 * @param player
 	 */
 	synchronized public void movePlayerToSpectator(Player player) {
+		Assert.isTrue(player.isSpectating(), "Must be spectator to sit");
+		
 		for (int i=0; i < players.length; i++) {
 			if (players[i].equals(player)) {
 				players[i] = null; // removing player from players
@@ -34,6 +38,43 @@ public class Group {
 		}
 	}
 	
+	
+	/**
+	 * Transitions a spectator to an active player.
+	 * 
+	 * @param player
+	 */
+	synchronized public void moveSpectatorToActivePlayer(Player spectator) {
+		Assert.isTrue(spectator.isSpectating(), "Must be spectator to sit");
+		
+		// finding an empty seat
+		int slotIndex = getFirstEmptySlot();
+		Assert.isTrue(slotIndex == -1, "No empty seats to sit at");
+		
+		
+		// switch player state to waiting for round
+		spectator.setState(PlayerState.WAITING_FOR_ROUND);
+		
+		// remove participant from spectators and move to active players
+		spectators.remove(spectator);
+		
+		players[slotIndex] = spectator;
+	}
+	
+	/**
+	 * Finds first empty slot in table and returns the index of that slot.
+	 * 
+	 * @return Index of empty slot or -1 if no such slot exists
+	 */
+	synchronized public int getFirstEmptySlot() {
+		for (int i=0; i < players.length; i++) {
+			if (players[i] == null) {
+				return i;
+			}
+		}
+		
+		return -1;
+	}
 	
 	/* Getters and Setters */
 
@@ -70,5 +111,31 @@ public class Group {
 
 	synchronized public void setSpectators(List<Player> spectators) {
 		this.spectators = spectators;
+	}
+	
+	synchronized public void removePlayerFromTable(Player player) {
+		for (int i=0; i < players.length; i++) {
+			if (players[i] != null && players[i].equals(player)) {
+				players[i] = null;
+			}
+		}
+	}
+	
+	synchronized public void setAllPlayersToState(PlayerState state) {
+		for (int i=0; i < players.length; i++) {
+			if (players[i] != null) {
+				players[i].setState(state);
+			}
+		}
+	}
+	
+	synchronized public void deleteParticipant(Player participant) {
+		if (participant.isSpectating()) {
+			// need to delete from spectators
+			this.spectators.remove(participant);
+		} else {
+			// need to delete from array of active players
+			removePlayerFromTable(participant);
+		}
 	}
 }

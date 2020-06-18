@@ -167,4 +167,12 @@ public class Player {
 	synchronized public void addCard(Card card) {
 		this.cards.add(card);
 	}
+	
+	synchronized public boolean isPlaying() {
+		return this.state != PlayerState.WATCHING;
+	}
+	
+	synchronized public boolean isSpectating() {
+		return this.state == PlayerState.WATCHING;
+	}
 }

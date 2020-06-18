@@ -50,6 +50,8 @@ public abstract class AbstractGame implements Game {
 	private Duration turnDuration; // how long user gets per turn
 	
 	private HandRankEvaluator evaluator;
+	
+	private int round;
 		
 	protected AbstractGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
 		this.id = UUID.randomUUID();
@@ -66,6 +68,7 @@ public abstract class AbstractGame implements Game {
 		this.setTurnDuration(turnDuration);
 		this.setRoundBet(this.bigBlind);
 		this.evaluator = evaluator;
+		this.setRound(0);
 	}
 	
 	// if the big blind is not just 2x small blind
@@ -84,7 +87,8 @@ public abstract class AbstractGame implements Game {
 	public abstract void flushToDatabase() throws Exception; // flushes game state to database
 	
 	/* Required methods (internally used) for all subclasses */
-	protected abstract void deal(); // deals cards to players
+	protected abstract void deal(boolean dealNewHands); // deals cards to players
+	protected abstract boolean isLastBettingRound(); // returns whether current round was last round of betting
 	
 	/**
 	 * Handler for turn expirations. Called by a single thread after execution.
@@ -114,7 +118,7 @@ public abstract class AbstractGame implements Game {
 	/**
 	 * Spawns a timer-thread that will send game packets when a turn has expired
 	 */
-	protected void beginTurnTimer() {
+	synchronized protected void beginTurnTimer() {
 		ScheduledExecutorService turnTimer = Executors
 		        .newSingleThreadScheduledExecutor();
 
@@ -134,19 +138,19 @@ public abstract class AbstractGame implements Game {
 	}
 	
 	/**
-	 * Helper function to begin a round. Note that any locking must be handled
+	 * Helper function to begin a new set of hands. Note that any locking must be handled
 	 * outside of this function as this function is not inherently thread-safe.
 	 * 
-	 * Additionally, beginRound() expects an up-to-date dealer index and that all
+	 * Additionally, beginBettingRounds() expects an up-to-date dealer index and that all
 	 * players have sufficient funds to play the current round.
 	 * 
 	 */
-	protected void beginRound() {
+	synchronized protected void beginBettingRounds() {
 		// first we deal cards
-		this.deal();
+		this.deal(true); // Note: this also deals center cards and updates round number
 		
 		// Note: We do not need to check if the small/big blind can pay or not because that
-		// is done at the end of each round
+		// should be done before calling this function
 				
 		// small blind pays
 		this.getSmallBlindPlayer().bet(this.smallBlind);
@@ -160,17 +164,27 @@ public abstract class AbstractGame implements Game {
 		// the current round)
 		this.setRoundBet(this.getBigBlind());
 		
+		this.beginNewRound();
+	}
+	
+	/**
+	 * Begins an individual round of betting.
+	 * 
+	 */
+	synchronized protected void beginNewRound() {
+		// flipping any new center cards
+		this.deal(false); 
+
 		// cycling to next turn
 		cycleTurn(this.getBigBlindIndex());
 	}
 	
 	/**
-	 * Helper function to end a round. Updates dealer index and checks to see that all players
-	 * have sufficient funds to player the current round.
+	 * Helper function called at the end of the last betting round. Updates dealer index and 
+	 * checks to see that all players have sufficient funds to player the current round.
 	 * 
 	 */
-	protected void endRound() {
-		
+	synchronized protected void endOfBettingRounds() {		
 		// calculate winning hand(s)
 		List<Player> playersWithMaxRank = new ArrayList<Player>();
 		HandRank maxRank = null;
@@ -211,11 +225,14 @@ public abstract class AbstractGame implements Game {
 		// update dealer index
 		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
 		
-		// starting next round
-		this.beginRound();
+		// resets all players to the waiting for next turn state
+		this.group.setAllPlayersToState(PlayerState.WAITING_FOR_TURN);
+		
+		// resetting and starting next set of betting rounds
+		this.beginBettingRounds();
 	}
 	
-	protected void bootPlayer(Player player, BootReason reason) {
+	synchronized protected void bootPlayer(Player player, BootReason reason) {
 		this.group.movePlayerToSpectator(player);
 		switch(reason) {
 			case INSUFFICIENT_FUNDS:
@@ -233,6 +250,14 @@ public abstract class AbstractGame implements Game {
 		}
 	}
 	
+	synchronized protected void endBettingRound() {
+		if (this.isLastBettingRound()) {
+			this.endOfBettingRounds();
+		} else {
+			this.beginNewRound();
+		}
+	}
+	
 	/**
 	 * Given an index of the player in the last turn (or the big blind index
 	 * in the case that this is the start of a round), updates the turn to the
@@ -243,17 +268,18 @@ public abstract class AbstractGame implements Game {
 	 * 
 	 * @param lastTurnIndex
 	 */
-	protected void cycleTurn(int lastTurnIndex) {
+	synchronized protected void cycleTurn(int lastTurnIndex) {
 		// checking to see if the round is over
 		if (isRoundOver()) {
-			this.endRound();
+			this.endBettingRound();
 		}
 		// setting current turn to be person
 		int nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
 		Player nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
 		
-		while (nextPlayer.getState() == PlayerState.ALL_IN) {
-			// this player is all-in, so we skip over them
+		while (nextPlayer.getState() == PlayerState.ALL_IN 
+				|| nextPlayer.getState() == PlayerState.WAITING_FOR_ROUND) {
+			// this player is either all-in or not playing this round, so we skip over them
 			nextPlayerIndex++;
 			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
 		}
@@ -271,7 +297,7 @@ public abstract class AbstractGame implements Game {
 	 * 
 	 * @return A boolean indicating if the round is over.
 	 */
-	protected boolean isRoundOver() {
+	synchronized protected boolean isRoundOver() {
 		for (Player player : this.group.getPlayers()) {
 			if (!(player.getState() == PlayerState.FOLDED || 
 					player.getState() == PlayerState.ALL_IN 
@@ -442,11 +468,27 @@ public abstract class AbstractGame implements Game {
 		this.pot += amount;
 	}
 
-	public float getRoundBet() {
+	synchronized protected float getRoundBet() {
 		return roundBet;
 	}
 
-	public void setRoundBet(float roundBet) {
+	synchronized protected void setRoundBet(float roundBet) {
 		this.roundBet = roundBet;
+	}
+
+	synchronized protected int getRound() {
+		return round;
+	}
+
+	synchronized protected void setRound(int round) {
+		this.round = round;
+	}
+	
+	synchronized protected void incrementRound() {
+		this.round++;
+	}
+	
+	synchronized protected void discardCenterCards() {
+		this.centerCards.clear();
 	}
 }

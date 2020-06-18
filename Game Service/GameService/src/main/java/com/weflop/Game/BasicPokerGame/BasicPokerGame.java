@@ -27,27 +27,27 @@ public class BasicPokerGame extends AbstractGame {
 	
 	/* Constructors */
 	
-	protected BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
+	public BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
 		super(smallBlind, tableSize, turnDuration, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	protected BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, 
+	public BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, 
 			VariantRepresentation variant, Deck deck, HandRankEvaluator evaluator) {
 		super(smallBlind, tableSize, tableSize, turnDuration, evaluator);
 		this.variant = variant;
 		this.deck = deck;
 	}
 	
-	protected BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
+	public BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
 			Duration turnDuration, HandRankEvaluator evaluator) {
 		super(smallBlind, bigBlind, tableSize, turnDuration, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	protected BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
+	public BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
 			Duration turnDuration, VariantRepresentation variant, Deck deck, 
 			HandRankEvaluator evaluator) {
 		super(smallBlind, bigBlind, tableSize, turnDuration, evaluator);
@@ -71,8 +71,8 @@ public class BasicPokerGame extends AbstractGame {
 			this.setStarted(true);
 			this.setStartTime(Instant.now());
 						
-			// beginning round
-			this.beginRound();
+			// start betting rounds
+			this.beginBettingRounds();
 		} finally {
 			// releasing game lock
 			this.getLock().unlock();
@@ -155,6 +155,7 @@ public class BasicPokerGame extends AbstractGame {
 					break;
 				case TURN_TIMEOUT:
 				{
+					assertIsPlayerTurn(participant);
 					// we handle timeouts the same way as folding
 					this.getLock().unlock();
 					try {
@@ -166,17 +167,23 @@ public class BasicPokerGame extends AbstractGame {
 					break;
 				case SIT:
 				{
-					
+					this.getGroup().moveSpectatorToActivePlayer(participant); // helper method performs necessary validation
+					// TODO: propogate updates
 				}
 					break;
-				case EXIT:
+				case STAND:
 				{
+					// transition player from player to spectator
+					this.getGroup().movePlayerToSpectator(participant);
 					
+					// TODO: propogate updates
 				}
 					break;
 				case DISCONNECT:
 				{
+					this.getGroup().deleteParticipant(participant);
 					
+					// TODO: propogate updates
 				}
 					break;
 				default:
@@ -203,19 +210,47 @@ public class BasicPokerGame extends AbstractGame {
 	
 	/**
 	 * Deals new hands to each player
+	 * 
+	 * @param Boolean describing whether to deal all players 
+	 * new hands and clear old center cards.
 	 */
 	@Override
-	protected void deal() {
+	protected void deal(boolean dealNewHands) {
 		// shuffling deck
 		deck.shuffle();
 
-		// deal cards to players
-		int numDealt = this.variant.getNumDealt();
-		for (Player player : this.getGroup().getPlayers()) {
-			player.discardHand(); // discarding any old hands
-			for (int i=0; i < numDealt; i++) {
-				player.addCard(deck.dealCard());
+		if (dealNewHands) {
+			// deal cards to players
+			int numDealt = this.variant.getNumDealt();
+			for (Player player : this.getGroup().getPlayers()) {
+				player.discardHand(); // discarding any old hands
+				for (int i=0; i < numDealt; i++) {
+					player.addCard(deck.dealCard());
+				}
 			}
+			
+			this.discardCenterCards();
 		}
+		
+		// deal center cards
+		int centerCards = this.variant.getCardDealtBeforeRound(this.getRound());
+		for (int i=0; i < centerCards; i++) {
+			this.getCenterCards().add(deck.dealCard());
+		}
+		
+		// updating round
+		this.incrementRound();
+	}
+
+	/**
+	 * Determines if it is the last round.
+	 * 
+	 */
+	@Override
+	protected boolean isLastBettingRound() {
+		if (this.getRound() == this.variant.getBettingRounds()) {
+			return true;
+		}
+		return false;
 	}
 }

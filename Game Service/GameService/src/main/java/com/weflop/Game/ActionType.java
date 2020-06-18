@@ -16,7 +16,7 @@ public enum ActionType {
 	TURN_TIMEOUT(4),
 	// Logistics-related actions:
 	SIT(5),
-	EXIT(6),
+	STAND(6),
 	DISCONNECT(7);
 	
 	private final int value;
