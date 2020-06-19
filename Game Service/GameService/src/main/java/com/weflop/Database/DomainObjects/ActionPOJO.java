@@ -10,14 +10,14 @@ public class ActionPOJO {
 	
 	private String userId;
 	
-	private float value;
+	private Float value;
 	
 	public ActionPOJO(int type, String userId) {
         this.type = type;
         this.userId = userId;
     }
 
-	public ActionPOJO(int type, String userId, float value) {
+	public ActionPOJO(int type, String userId, Float value) {
 		this(type, userId);
 		this.value = value;
     }
@@ -42,7 +42,7 @@ public class ActionPOJO {
 		return value;
 	}
 
-	public void setValue(float value) {
+	public void setValue(Float value) {
 		this.value = value;
 	}
 }

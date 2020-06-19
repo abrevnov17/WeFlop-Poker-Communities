@@ -40,7 +40,25 @@ public class GameDocument {
 	private List<SpectatorPOJO> spectators;
 	
 	private HistoryPOJO history;
-
+	
+	// Constructors: 
+	
+	public GameDocument(String id, int type, long startTime, float smallBlind, float bigBlind,
+			List<CardPOJO> centerCards, float pot, int dealerIndex, List<PlayerPOJO> players,
+			List<SpectatorPOJO> spectators, HistoryPOJO history) {
+		super();
+		this.id = id;
+		this.type = type;
+		this.startTime = startTime;
+		this.smallBlind = smallBlind;
+		this.bigBlind = bigBlind;
+		this.centerCards = centerCards;
+		this.pot = pot;
+		this.dealerIndex = dealerIndex;
+		this.players = players;
+		this.spectators = spectators;
+		this.history = history;
+	}
 	
 	// getters and setters
 	
@@ -130,5 +148,5 @@ public class GameDocument {
 
 	public void setHistory(HistoryPOJO history) {
 		this.history = history;
-	}	
+	}
 }

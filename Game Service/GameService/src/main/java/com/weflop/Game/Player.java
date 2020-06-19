@@ -2,10 +2,14 @@ package com.weflop.Game;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
 
 import com.weflop.Cards.Card;
+import com.weflop.Database.DomainObjects.CardPOJO;
+import com.weflop.Database.DomainObjects.PlayerPOJO;
+import com.weflop.Database.DomainObjects.SpectatorPOJO;
 
 /**
  * Player.java
@@ -16,13 +20,13 @@ import com.weflop.Cards.Card;
  *
  */
 public class Player {
-	private final long id;
+	private final String id;
 	private List<Card> cards;
 	private float balance; 
 	private float currentBet;
 	private PlayerState state;
 	
-	Player(long id) {
+	Player(String id) {
 		this.id = id;
 		this.setCards(new ArrayList<Card>());
 		this.setBalance(0.00f);
@@ -30,7 +34,7 @@ public class Player {
 		this.setState(PlayerState.WATCHING);
 	}
 	
-	Player(long id, List<Card> cards) {
+	Player(String id, List<Card> cards) {
 		this.id = id;
 		this.setCards(cards);
 		this.setBalance(0.00f);
@@ -104,6 +108,28 @@ public class Player {
 		this.balance += amount;
 	}
 	
+	/**
+	 * Converts Player instance to Player POJO.
+	 * 
+	 * @return Corresponding instance of PlayerPOJO
+	 */
+	synchronized public PlayerPOJO toPlayerPOJO() {
+		List<CardPOJO> cards = this.cards.stream()
+		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
+		        		card.getCardValue().getValue()))
+		        .collect(Collectors.toList());
+		return new PlayerPOJO(this.id, this.balance, this.currentBet, cards, this.state.getValue());
+	}
+	
+	/**
+	 * Converts Player instance to Spectator POJO.
+	 * 
+	 * @return Corresponding instance of SpectatorPOJO
+	 */
+	synchronized public SpectatorPOJO toSpectatorPOJO() {
+		return new SpectatorPOJO(this.id);
+	}
+	
 	/* Overriding default object methods */
 	
 	@Override
@@ -128,7 +154,7 @@ public class Player {
 
 	/* Getters and Setters */
 	
-	public long getId() {
+	public String getId() {
 		return id;
 	}
 	

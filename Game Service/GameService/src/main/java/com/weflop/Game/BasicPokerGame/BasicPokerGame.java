@@ -2,6 +2,7 @@ package com.weflop.Game.BasicPokerGame;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 
 import org.springframework.util.Assert;
 
@@ -10,6 +11,8 @@ import com.weflop.Cards.StandardDeck;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.Action;
 import com.weflop.Game.ActionType;
+import com.weflop.Game.History;
+import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
 import com.weflop.Game.PlayerState;
 import com.weflop.Game.AbstractGame;
@@ -67,6 +70,10 @@ public class BasicPokerGame extends AbstractGame {
 			Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
 			Assert.isTrue(!this.isStarted(), "Game has already begun");
 			
+			// initializing game history
+			InitialState state = new InitialState(this.getGroup().getPlayers());
+			this.setHistory(new History(state, new ArrayList<Action>()));
+			
 			// start game clock
 			this.setStarted(true);
 			this.setStartTime(Instant.now());
@@ -86,12 +93,12 @@ public class BasicPokerGame extends AbstractGame {
 	}
 
 	@Override
-	public void performAction(long participantID, Action action) throws Exception {
+	public void performAction(Action action) throws Exception {
 		// locking game object
 		this.getLock().lock();
 
 		try {
-			Player participant = this.getParticipantById(participantID);
+			Player participant = this.getParticipantById(action.getPlayerId());
 			
 			switch(action.getType()) {
 				case FOLD:
@@ -159,7 +166,7 @@ public class BasicPokerGame extends AbstractGame {
 					// we handle timeouts the same way as folding
 					this.getLock().unlock();
 					try {
-						this.performAction(participantID, new Action(ActionType.FOLD));
+						this.performAction(new Action(ActionType.FOLD, action.getPlayerId()));
 					} finally {
 						this.getLock().lock();
 					}

@@ -1,14 +1,20 @@
 package com.weflop.Game;
 
 import java.time.Duration;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import com.weflop.Cards.Card;
+import com.weflop.Database.DomainObjects.CardPOJO;
+import com.weflop.Database.DomainObjects.GameDocument;
+import com.weflop.Database.DomainObjects.PlayerPOJO;
+import com.weflop.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 
@@ -52,6 +58,10 @@ public abstract class AbstractGame implements Game {
 	private HandRankEvaluator evaluator;
 	
 	private int round;
+	
+	private History history;
+	
+	private GameType type;
 		
 	protected AbstractGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
 		this.id = UUID.randomUUID();
@@ -69,6 +79,7 @@ public abstract class AbstractGame implements Game {
 		this.setRoundBet(this.bigBlind);
 		this.evaluator = evaluator;
 		this.setRound(0);
+		this.type = GameType.STANDARD_REPRESENTATION;
 	}
 	
 	// if the big blind is not just 2x small blind
@@ -82,7 +93,7 @@ public abstract class AbstractGame implements Game {
 	
 	public abstract void start() throws Exception; // starts a game
 	public abstract void end(); // cleanly ends a game AND flushes to database
-	public abstract void performAction(long participantID, Action action) throws Exception; // performs an action as a given participant
+	public abstract void performAction(Action action) throws Exception; // performs an action as a given participant
 	public abstract void sendGamePackets() throws Exception; // sends game packets (i.e. copies of game state) to each player
 	public abstract void flushToDatabase() throws Exception; // flushes game state to database
 	
@@ -104,7 +115,7 @@ public abstract class AbstractGame implements Game {
 		// time. in such cases, the user performs a TURN_TIMEOUT action, which (will likely
 		// be handled in a similar manner as to a fold)
 		try {
-			this.performAction(this.turn.getPlayer().getId(), new Action(ActionType.TURN_TIMEOUT));
+			this.performAction(new Action(ActionType.TURN_TIMEOUT, this.turn.getPlayer().getId()));
 		} catch (Exception e) {
 			// we do not need to do anything. this is only possible in an incredibly unlikely
 			// race condition where the current players action is processed between the last if statement
@@ -321,6 +332,30 @@ public abstract class AbstractGame implements Game {
 					+ "as it is no longer their turn.");
 		}
 	}
+	
+	/**
+	 * Returns the document corresponding to the current game state.
+	 * 
+	 * @return Game state as GameDocument
+	 */
+	synchronized protected GameDocument toDocument() {
+		List<CardPOJO> centerCards = this.centerCards.stream()
+		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
+		        		card.getCardValue().getValue()))
+		        .collect(Collectors.toList());
+		
+		List<PlayerPOJO> players = this.group.getPlayers().stream()
+		        .map(player -> player.toPlayerPOJO())
+		        .collect(Collectors.toList());
+		
+		List<SpectatorPOJO> spectators = this.group.getSpectators().stream()
+		        .map(spectator -> spectator.toSpectatorPOJO())
+		        .collect(Collectors.toList());
+				
+		return new GameDocument(id.toString(), type.getValue(), 
+				startTime.toEpochMilli(), smallBlind, bigBlind, centerCards, 
+				pot, dealerIndex, players, spectators, history.toPOJO());
+	}
 
 	/* Getters and setters for universal game properties */
 		
@@ -355,7 +390,7 @@ public abstract class AbstractGame implements Game {
 		return this.group.getPlayers().get(getBigBlindIndex());
 	}
 	
-	synchronized protected Player getParticipantById(long id) throws Exception {
+	synchronized protected Player getParticipantById(String id) throws Exception {
 		// looping through players
 		for (Player player : group.getPlayers()) {
 			if (player.getId() == id) {
@@ -490,5 +525,13 @@ public abstract class AbstractGame implements Game {
 	
 	synchronized protected void discardCenterCards() {
 		this.centerCards.clear();
+	}
+
+	synchronized protected History getHistory() {
+		return history;
+	}
+
+	synchronized protected void setHistory(History history) {
+		this.history = history;
 	}
 }
