@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
+import org.springframework.web.socket.WebSocketSession;
 
 import com.weflop.Cards.Card;
 import com.weflop.Database.DomainObjects.CardPOJO;
@@ -26,16 +27,20 @@ public class Player {
 	private float currentBet;
 	private PlayerState state;
 	
-	Player(String id) {
+	private WebSocketSession session;
+	
+	Player(String id, WebSocketSession session) {
 		this.id = id;
+		this.setSession(session);
 		this.setCards(new ArrayList<Card>());
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
 		this.setState(PlayerState.WATCHING);
 	}
 	
-	Player(String id, List<Card> cards) {
+	Player(String id, WebSocketSession session, List<Card> cards) {
 		this.id = id;
+		this.setSession(session);
 		this.setCards(cards);
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
@@ -200,5 +205,13 @@ public class Player {
 	
 	synchronized public boolean isSpectating() {
 		return this.state == PlayerState.WATCHING;
+	}
+
+	synchronized public WebSocketSession getSession() {
+		return session;
+	}
+
+	synchronized public void setSession(WebSocketSession session) {
+		this.session = session;
 	}
 }

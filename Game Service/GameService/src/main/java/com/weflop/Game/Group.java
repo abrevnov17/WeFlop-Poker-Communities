@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.util.Assert;
+import org.springframework.web.socket.WebSocketSession;
 
 /**
  * A Group is everyone that is either spectating or participating in
@@ -137,5 +138,12 @@ public class Group {
 			// need to delete from array of active players
 			removePlayerFromTable(participant);
 		}
+	}
+	
+	/**
+	 * Creates a spectator and adds it to list of spectators.
+	 */
+	synchronized public void createSpectator(String id, WebSocketSession session) {
+		this.spectators.add(new Player(id, session));
 	}
 }

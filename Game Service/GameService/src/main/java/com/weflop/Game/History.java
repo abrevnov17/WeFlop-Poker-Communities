@@ -31,6 +31,10 @@ public class History {
 		return new HistoryPOJO(initState.toPOJO(), actions);
 	}
 	
+	public void appendActionToSequence(Action action) {
+		this.actionsSequence.add(action);
+	}
+	
 	/* Getters and Setters */
 	
 	public InitialState getInitState() {

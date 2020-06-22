@@ -15,9 +15,10 @@ public enum ActionType {
 	CHECK(3),
 	TURN_TIMEOUT(4),
 	// Logistics-related actions:
-	SIT(5),
-	STAND(6),
-	DISCONNECT(7);
+	JOIN(5),
+	SIT(6),
+	STAND(7),
+	DISCONNECT(8);
 	
 	private final int value;
 
@@ -28,4 +29,8 @@ public enum ActionType {
 	public int getValue() {
 		return value;
 	}
+	
+	public static ActionType getTypeFromInt(int type) {
+		   return ActionType.values()[type];
+		}
 }

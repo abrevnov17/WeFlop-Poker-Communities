@@ -1,6 +1,7 @@
 package com.weflop.Game;
 
 public interface Game {
+	public String getGameId(); // gets game ID
 	public void start() throws Exception; // starts a game
 	public void end() throws Exception; // cleanly ends a game AND flushes to database
 	public void performAction(Action action) throws Exception; // performs an action as a given player

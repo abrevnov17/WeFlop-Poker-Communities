@@ -1,6 +1,7 @@
 package com.weflop.Game.BasicPokerGame;
 
 import java.time.Duration;
+
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -8,9 +9,9 @@ import org.springframework.util.Assert;
 
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
+import com.weflop.Database.DomainObjects.GameDocument;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.Action;
-import com.weflop.Game.ActionType;
 import com.weflop.Game.History;
 import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
@@ -30,30 +31,31 @@ public class BasicPokerGame extends AbstractGame {
 	
 	/* Constructors */
 	
-	public BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
-		super(smallBlind, tableSize, turnDuration, evaluator);
+	public BasicPokerGame(String createdBy, float smallBlind, int tableSize, 
+			Duration turnDuration, HandRankEvaluator evaluator) {
+		super(createdBy, smallBlind, tableSize, turnDuration, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	public BasicPokerGame(float smallBlind, int tableSize, Duration turnDuration, 
+	public BasicPokerGame(String createdBy, float smallBlind, int tableSize, Duration turnDuration, 
 			VariantRepresentation variant, Deck deck, HandRankEvaluator evaluator) {
-		super(smallBlind, tableSize, tableSize, turnDuration, evaluator);
+		super(createdBy, smallBlind, tableSize, tableSize, turnDuration, evaluator);
 		this.variant = variant;
 		this.deck = deck;
 	}
 	
-	public BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
+	public BasicPokerGame(String createdBy, float smallBlind, float bigBlind, int tableSize, 
 			Duration turnDuration, HandRankEvaluator evaluator) {
-		super(smallBlind, bigBlind, tableSize, turnDuration, evaluator);
+		super(createdBy, smallBlind, bigBlind, tableSize, turnDuration, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	public BasicPokerGame(float smallBlind, float bigBlind, int tableSize, 
+	public BasicPokerGame(String createdBy, float smallBlind, float bigBlind, int tableSize, 
 			Duration turnDuration, VariantRepresentation variant, Deck deck, 
 			HandRankEvaluator evaluator) {
-		super(smallBlind, bigBlind, tableSize, turnDuration, evaluator);
+		super(createdBy, smallBlind, bigBlind, tableSize, turnDuration, evaluator);
 		this.variant = variant;
 		this.deck = deck;
 	}
@@ -97,12 +99,12 @@ public class BasicPokerGame extends AbstractGame {
 		// locking game object
 		this.getLock().lock();
 
-		try {
-			Player participant = this.getParticipantById(action.getPlayerId());
-			
+		try {			
 			switch(action.getType()) {
 				case FOLD:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					assertIsPlayerTurn(participant);
 					
 					// update player state to folded
@@ -110,11 +112,15 @@ public class BasicPokerGame extends AbstractGame {
 					
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					// TODO: propogate updates
+					
+					// propogate action to members of group
+					this.propogateAction(action);
 				}
 					break;
 				case RAISE:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					assertIsPlayerTurn(participant);
 					
 					// get bet and check that it is valid
@@ -130,11 +136,15 @@ public class BasicPokerGame extends AbstractGame {
 					
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					// TODO: propogate updates
+					
+					// propogate action to members of group
+					this.propogateAction(action);
 				}
 					break;
 				case CALL:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					assertIsPlayerTurn(participant);
 					
 					// update player balances and pot
@@ -150,47 +160,77 @@ public class BasicPokerGame extends AbstractGame {
 					
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					// TODO: propogate updates
+					
+					// propogate action to members of group
+					this.propogateAction(action);
 				}
 					break;
 				case CHECK:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					assertIsPlayerTurn(participant);
 					// update player state to waiting for turn
 					participant.setState(PlayerState.WAITING_FOR_TURN);
+					
+					// propogate action to members of group
+					this.propogateAction(action);
 				}
 					break;
 				case TURN_TIMEOUT:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					assertIsPlayerTurn(participant);
 					// we handle timeouts the same way as folding
-					this.getLock().unlock();
-					try {
-						this.performAction(new Action(ActionType.FOLD, action.getPlayerId()));
-					} finally {
-						this.getLock().lock();
-					}
+
+					// update player state to folded
+					participant.setState(PlayerState.FOLDED);
+					
+					// move on to next turn
+					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+					
+					// propogate action to members of group
+					this.propogateAction(action);
+				}
+					break;
+				case JOIN:
+				{
+					// add player as spectator
+					this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
 				}
 					break;
 				case SIT:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					this.getGroup().moveSpectatorToActivePlayer(participant); // helper method performs necessary validation
-					// TODO: propogate updates
+					
+					// propogate action to members of group
+					this.propogateAction(action);
 				}
 					break;
 				case STAND:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					// transition player from player to spectator
 					this.getGroup().movePlayerToSpectator(participant);
 					
-					// TODO: propogate updates
+					// propogate action to members of group
+					this.propogateAction(action);
 				}
 					break;
 				case DISCONNECT:
 				{
+					Player participant = this.getParticipantById(action.getPlayerId());
+
 					this.getGroup().deleteParticipant(participant);
 					
-					// TODO: propogate updates
+					// propogate action to members of group if not spectator
+					if (participant.isPlaying()) {
+						this.propogateAction(action);
+					}
 				}
 					break;
 				default:
@@ -211,8 +251,8 @@ public class BasicPokerGame extends AbstractGame {
 
 	@Override
 	public void flushToDatabase() throws Exception {
-		// TODO Auto-generated method stub
-
+		GameDocument document = this.toDocument();
+		this.getGameRepository().save(document);
 	}
 	
 	/**

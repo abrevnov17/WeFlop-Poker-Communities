@@ -12,13 +12,16 @@ public class ActionPOJO {
 	
 	private Float value;
 	
-	public ActionPOJO(int type, String userId) {
+	private long timestamp;	// milliseconds since start of current epoch
+	
+	public ActionPOJO(int type, String userId, long timestamp) {
         this.type = type;
         this.userId = userId;
+        this.setTimestamp(timestamp);
     }
 
-	public ActionPOJO(int type, String userId, Float value) {
-		this(type, userId);
+	public ActionPOJO(int type, String userId, long timestamp, Float value) {
+		this(type, userId, timestamp);
 		this.value = value;
     }
 
@@ -44,5 +47,13 @@ public class ActionPOJO {
 
 	public void setValue(Float value) {
 		this.value = value;
+	}
+
+	public long getTimestamp() {
+		return timestamp;
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 }

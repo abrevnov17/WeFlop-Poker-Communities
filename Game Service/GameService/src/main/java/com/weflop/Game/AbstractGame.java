@@ -1,5 +1,6 @@
 package com.weflop.Game;
 
+import java.io.IOException;
 import java.time.Duration;
 
 import java.time.Instant;
@@ -10,13 +11,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.socket.TextMessage;
+
 import com.weflop.Cards.Card;
+import com.weflop.Database.GameRepository;
 import com.weflop.Database.DomainObjects.CardPOJO;
 import com.weflop.Database.DomainObjects.GameDocument;
 import com.weflop.Database.DomainObjects.PlayerPOJO;
 import com.weflop.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
+import com.weflop.Networking.MessageSendingHandlers;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,8 +68,15 @@ public abstract class AbstractGame implements Game {
 	private History history;
 	
 	private GameType type;
+	
+	private String createdBy; // id of user who created game
+	
+	@Autowired
+	private GameRepository gameRepository;
 		
-	protected AbstractGame(float smallBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
+	protected AbstractGame(String createdBy, float smallBlind, int tableSize, 
+			Duration turnDuration, HandRankEvaluator evaluator) {
+		this.setCreatedBy(createdBy);
 		this.id = UUID.randomUUID();
 		this.setPot(0.0f);
 		this.centerCards = new ArrayList<Card>();
@@ -83,10 +96,15 @@ public abstract class AbstractGame implements Game {
 	}
 	
 	// if the big blind is not just 2x small blind
-	protected AbstractGame(float smallBlind, float bigBlind, int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
-		this(smallBlind, tableSize, turnDuration, evaluator);
+	protected AbstractGame(String createdBy, float smallBlind, float bigBlind, 
+			int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
+		this(createdBy, smallBlind, tableSize, turnDuration, evaluator);
 		this.bigBlind = bigBlind;
 		this.setRoundBet(this.bigBlind);
+	}
+	
+	public String getGameId() {
+		return this.getId().toString();
 	}
 	
 	/* These methods are publicly exposed and will be overriden by subclasses: */
@@ -247,18 +265,35 @@ public abstract class AbstractGame implements Game {
 		this.group.movePlayerToSpectator(player);
 		switch(reason) {
 			case INSUFFICIENT_FUNDS:
-				// TODO: send message
+				try {
+					player.getSession().sendMessage(new TextMessage("Insufficient funds"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				break;
 			case MISCONDUCT:
-				// TODO: send message
+				try {
+					player.getSession().sendMessage(new TextMessage("Misconduct"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				break;
 			case FORBIDDEN_ACTIVITY:
-				// TODO: send message
+				try {
+					player.getSession().sendMessage(new TextMessage("Forbidden activity"));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				break;
 			default:
-				// TODO: send message
+				try {
+					player.getSession().sendMessage(new TextMessage("Player booted."));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				break;
 		}
+		this.propogateAction(new Action(ActionType.DISCONNECT, player.getId()));
 	}
 	
 	synchronized protected void endBettingRound() {
@@ -355,6 +390,24 @@ public abstract class AbstractGame implements Game {
 		return new GameDocument(id.toString(), type.getValue(), 
 				startTime.toEpochMilli(), smallBlind, bigBlind, centerCards, 
 				pot, dealerIndex, players, spectators, history.toPOJO());
+	}
+	
+	/**
+	 * Once an action has been verified by the server, we save it to our
+	 * game history and propogate that information to user sessions.
+	 * 
+	 * @param action
+	 */
+	synchronized protected void propogateAction(Action action) {
+		// add action to game history
+		this.history.appendActionToSequence(action);
+
+		// propogate action to members of group
+		try {
+			MessageSendingHandlers.propogateAction(this.getGroup(), action);
+		} catch (Exception e) {
+			System.out.println(e.getStackTrace());
+		}
 	}
 
 	/* Getters and setters for universal game properties */
@@ -533,5 +586,21 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void setHistory(History history) {
 		this.history = history;
+	}
+
+	synchronized protected GameRepository getGameRepository() {
+		return gameRepository;
+	}
+
+	synchronized protected void setGameRepository(GameRepository gameRepository) {
+		this.gameRepository = gameRepository;
+	}
+
+	protected String getCreatedBy() {
+		return createdBy;
+	}
+
+	protected void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
 	}
 }
