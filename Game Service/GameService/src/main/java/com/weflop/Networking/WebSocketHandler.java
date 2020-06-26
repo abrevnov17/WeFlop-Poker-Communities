@@ -19,7 +19,7 @@ import com.weflop.Game.GameFactory;
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
 	
-	private static final Gson GSON = new Gson();
+	public static final Gson GSON = new Gson();
 
 	private static List<WebSocketSession> sessions = new CopyOnWriteArrayList<WebSocketSession>();
 	

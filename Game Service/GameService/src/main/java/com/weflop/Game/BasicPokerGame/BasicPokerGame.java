@@ -63,46 +63,37 @@ public class BasicPokerGame extends AbstractGame {
 	/* Overrided methods from abstract superclass */
 
 	@Override
-	public void start() throws Exception {
-		// we want to prevent concurrent access to most of our game
-		// properties while starting up (which we control with the game lock)
-		this.getLock().lock();
-		
-		try {
-			Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
-			Assert.isTrue(!this.isStarted(), "Game has already begun");
-			
-			// initializing game history
-			InitialState state = new InitialState(this.getGroup().getPlayers());
-			this.setHistory(new History(state, new ArrayList<Action>()));
-			
-			// start game clock
-			this.setStarted(true);
-			this.setStartTime(Instant.now());
-						
-			// start betting rounds
-			this.beginBettingRounds();
-		} finally {
-			// releasing game lock
-			this.getLock().unlock();
-		}
-	}
-
-	@Override
-	public void end() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void performAction(Action action) throws Exception {
 		// locking game object
 		this.getLock().lock();
 
 		try {			
 			switch(action.getType()) {
+				case START:
+				{
+					Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
+					Assert.isTrue(!this.isStarted(), "Game has already begun");
+
+					// initializing game history
+					InitialState state = new InitialState(this.getGroup().getPlayers());
+					this.setHistory(new History(state, new ArrayList<Action>()));
+
+					// start game clock
+					this.setStarted(true);
+					this.setStartTime(Instant.now());
+
+					// start betting rounds
+					this.beginBettingRounds();
+					
+					// spawning a thread that periodically saves the game
+					spawnSaveGameThread();
+					
+				}
+					break;
 				case FOLD:
 				{
+					Assert.isTrue(this.isStarted(), "Game has not begun");
+
 					Player participant = this.getParticipantById(action.getPlayerId());
 
 					assertIsPlayerTurn(participant);
@@ -119,6 +110,8 @@ public class BasicPokerGame extends AbstractGame {
 					break;
 				case RAISE:
 				{
+					Assert.isTrue(this.isStarted(), "Game has not begun");
+
 					Player participant = this.getParticipantById(action.getPlayerId());
 
 					assertIsPlayerTurn(participant);
@@ -143,6 +136,8 @@ public class BasicPokerGame extends AbstractGame {
 					break;
 				case CALL:
 				{
+					Assert.isTrue(this.isStarted(), "Game has not begun");
+
 					Player participant = this.getParticipantById(action.getPlayerId());
 
 					assertIsPlayerTurn(participant);
@@ -167,6 +162,8 @@ public class BasicPokerGame extends AbstractGame {
 					break;
 				case CHECK:
 				{
+					Assert.isTrue(this.isStarted(), "Game has not begun");
+
 					Player participant = this.getParticipantById(action.getPlayerId());
 
 					assertIsPlayerTurn(participant);
@@ -244,13 +241,7 @@ public class BasicPokerGame extends AbstractGame {
 	}
 
 	@Override
-	public void sendGamePackets() throws Exception {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void flushToDatabase() throws Exception {
+	public void flushToDatabase() {
 		GameDocument document = this.toDocument();
 		this.getGameRepository().save(document);
 	}
@@ -299,5 +290,16 @@ public class BasicPokerGame extends AbstractGame {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public void sendGamePackets() throws Exception {
+		for (Player player : this.getGroup().getPlayers()) {
+			
+		}
+		
+		for (Player spectator : this.getGroup().getSpectators()) {
+			
+		}
 	}
 }

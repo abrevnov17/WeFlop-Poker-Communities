@@ -23,6 +23,7 @@ import com.weflop.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Networking.MessageSendingHandlers;
+import com.weflop.Utils.ThreadExecution.TurnTimerManager;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -71,6 +72,8 @@ public abstract class AbstractGame implements Game {
 	
 	private String createdBy; // id of user who created game
 	
+	private ScheduledExecutorService threadExecutor; // useful when creating timed events
+		
 	@Autowired
 	private GameRepository gameRepository;
 		
@@ -93,6 +96,8 @@ public abstract class AbstractGame implements Game {
 		this.evaluator = evaluator;
 		this.setRound(0);
 		this.type = GameType.STANDARD_REPRESENTATION;
+		this.threadExecutor = Executors
+		        .newSingleThreadScheduledExecutor();
 	}
 	
 	// if the big blind is not just 2x small blind
@@ -109,11 +114,8 @@ public abstract class AbstractGame implements Game {
 	
 	/* These methods are publicly exposed and will be overriden by subclasses: */
 	
-	public abstract void start() throws Exception; // starts a game
-	public abstract void end(); // cleanly ends a game AND flushes to database
 	public abstract void performAction(Action action) throws Exception; // performs an action as a given participant
-	public abstract void sendGamePackets() throws Exception; // sends game packets (i.e. copies of game state) to each player
-	public abstract void flushToDatabase() throws Exception; // flushes game state to database
+	public abstract void flushToDatabase(); // flushes game state to database
 	
 	/* Required methods (internally used) for all subclasses */
 	protected abstract void deal(boolean dealNewHands); // deals cards to players
@@ -148,22 +150,26 @@ public abstract class AbstractGame implements Game {
 	 * Spawns a timer-thread that will send game packets when a turn has expired
 	 */
 	synchronized protected void beginTurnTimer() {
-		ScheduledExecutorService turnTimer = Executors
-		        .newSingleThreadScheduledExecutor();
+		    Runnable turnExpirationHandler = new TurnTimerManager(this, this.turn.getCount());
 
-		    Runnable packetSender = new Runnable() {
+		    // resent packets after the duration of the turn has passed
+		    threadExecutor.schedule(turnExpirationHandler, this.turnDuration.getSeconds(), TimeUnit.SECONDS);
+	}
+	
+	
+	/**
+	 * Spawns a thread that periodically flushes the game state to the database.
+	 */
+	synchronized protected void spawnSaveGameThread() {
+	    Runnable stateSaver = new Runnable() {
 		      @Override
 		      public void run() {
-		        try {
-		          sendGamePackets();
-		        } catch (Exception e) {
-		          e.printStackTrace();
-		        }
+		    	  flushToDatabase();
 		      }
 		    };
 
 		    // resent packets after the duration of the turn has passed
-		    turnTimer.schedule(packetSender, this.turnDuration.getSeconds(), TimeUnit.SECONDS);
+		    threadExecutor.scheduleAtFixedRate(stateSaver, 0, 60, TimeUnit.SECONDS);
 	}
 	
 	/**
@@ -248,7 +254,9 @@ public abstract class AbstractGame implements Game {
 		
 		// checking to see if we have enough players to continue
 		if (this.group.getPlayers().size() < 2) {
-			this.end();
+			// TODO: this needs to be fleshed out
+			this.setStarted(false); 
+			this.threadExecutor.shutdown();
 		}
 		
 		// update dealer index
@@ -404,10 +412,14 @@ public abstract class AbstractGame implements Game {
 
 		// propogate action to members of group
 		try {
-			MessageSendingHandlers.propogateAction(this.getGroup(), action);
+			MessageSendingHandlers.propogateAction(this.getGroup(), action, this.getCurrentHistoryVersion());
 		} catch (Exception e) {
 			System.out.println(e.getStackTrace());
 		}
+	}
+	
+	synchronized protected void sendUserGameState(Player player) {
+		
 	}
 
 	/* Getters and setters for universal game properties */
@@ -458,6 +470,17 @@ public abstract class AbstractGame implements Game {
 		}
 		
 		throw new Exception("Invalid participant id");
+	}
+	
+	/**
+	 * Returns a number representing the length of our action history.
+	 * This number acts as a way to track whether clients have up to date
+	 * game histories. 
+	 *
+	 * @return
+	 */
+	synchronized protected int getCurrentHistoryVersion() {
+		return this.history.getActionsSequence().size();
 	}
 	
 	protected UUID getId() {

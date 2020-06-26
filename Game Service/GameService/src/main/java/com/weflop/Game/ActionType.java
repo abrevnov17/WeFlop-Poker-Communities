@@ -9,16 +9,17 @@ package com.weflop.Game;
  */
 public enum ActionType {
 	// Gameplay-related actions:
-	FOLD(0),
-	RAISE(1),
-	CALL(2),
-	CHECK(3),
-	TURN_TIMEOUT(4),
+	START(0),
+	FOLD(1),
+	RAISE(2),
+	CALL(3),
+	CHECK(4),
+	TURN_TIMEOUT(5),
 	// Logistics-related actions:
-	JOIN(5),
-	SIT(6),
-	STAND(7),
-	DISCONNECT(8);
+	JOIN(6),
+	SIT(7),
+	STAND(8),
+	DISCONNECT(9);
 	
 	private final int value;
 

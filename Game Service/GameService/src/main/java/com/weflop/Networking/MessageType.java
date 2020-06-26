@@ -2,7 +2,8 @@ package com.weflop.Networking;
 
 public enum MessageType {
 	JOIN_GAME(0),
-	ACTION(1);
+	ACTION(1),
+	GAME_STATE(2);
 	
 	private final int value;
 
