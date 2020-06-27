@@ -1,22 +1,20 @@
 {
-  "name": "accounts_server",
+  "name": "rooms_service",
   "version": "1.0.0",
-  "description": "Service handling all requests for managing user accounts (including authentication).",
+  "description": "Service that manages storage, representation, and access to rooms.",
   "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/abrevnov17/WeFlop.git",
     "private": true
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "abrevnov17",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^4.0.1",
     "body-parser": "^1.19.0",
-    "crypto": "^1.0.1",
     "express": "^4.17.1",
     "lodash": "^4.17.15"
   }

@@ -103,7 +103,7 @@ router.get(global.gConfig.login_route, function(req, res) {
 
   // validating the provided user credentials
   db.getUserId(username, hash).then(user_id => {
-  	if (user_id == -1) {
+  	if (user_id === -1) {
 		res.status(400).send({ error: "Invalid username/password combination." })
   	} else {
 		// successfully found user in database...generating a session token and responding with success

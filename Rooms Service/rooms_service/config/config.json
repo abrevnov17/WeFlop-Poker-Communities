@@ -1,0 +1,32 @@
+{
+    "database": {
+        "db_host": "localhost",
+        "db_identifier": "Rooms",
+        "db_password": "iKWKy5VmfP8Uf5xm",
+        "db_port": 5001
+    },
+    "api": {
+        "base_url": "/api",
+        "get_games_in_room_route": "/room-games",
+        "get_members_of_room_route": "/room-members",
+        "get_rooms_of_user_route": "/user-rooms",
+        "create_room_route": "/create-room",
+        "add_table_to_room_route": "/add-table"
+    },
+    "room_defaults": {
+        "max_members": 5000,
+        "max_active_games": 50,
+    },
+    "default": {
+        "app_name": "Rooms Service",
+        "description": "Serves api calls related to room and room-member management."
+    },
+    "development": {
+        "config_id": "development",
+        "port": 8000
+    },
+    "production": {
+        "config_id": "production",
+        "port": 8080
+    }
+}

@@ -15,8 +15,8 @@ const pool = new Pool({
 // create table statements
 const CREATE_USERS_TABLE = `CREATE TABLE IF NOT EXISTS Users (
   ID SERIAL PRIMARY KEY,
-  username VARCHAR(24) NOT NULL,
-  email VARCHAR(254) NOT NULL,
+  username VARCHAR(24) UNIQUE NOT NULL,
+  email VARCHAR(254) UNIQUE NOT NULL,
   password VARCHAR(24) NOT NULL,
   date_created timestamp NOT NULL DEFAULT NOW()
 );`
