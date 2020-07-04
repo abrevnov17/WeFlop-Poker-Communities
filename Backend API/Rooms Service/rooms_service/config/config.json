@@ -14,8 +14,8 @@
         "add_table_to_room_route": "/add-table"
     },
     "room_defaults": {
-        "max_members": 5000,
-        "max_active_games": 50,
+        "max_num_members": 5000,
+        "max_num_active_games": 50,
     },
     "default": {
         "app_name": "Rooms Service",
