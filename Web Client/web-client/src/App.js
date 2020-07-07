@@ -1,8 +1,9 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import logo from "./logo.svg";
+import "./App.css";
+import "bootstrap/dist/css/bootstrap.css";
 
-import Input from "./components/base-components/form-input/input"
+import Input from "./components/base-components/form-input/input";
 
 function App() {
   return (
@@ -12,6 +13,8 @@ function App() {
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
+        <Input type="email" size="large" maxLength="100" placeholder="test" />
+
         <a
           className="App-link"
           href="https://reactjs.org"
@@ -21,7 +24,6 @@ function App() {
           Learn React
         </a>
       </header>
-      <Input type="email" size="large" maxLength="100"/>
     </div>
   );
 }

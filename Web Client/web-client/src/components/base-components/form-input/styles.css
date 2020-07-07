@@ -1,0 +1,34 @@
+input {
+  opacity: 0.35;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  padding-left: 4px;
+}
+
+input:focus {
+  opacity: 1;
+  border: 2px solid #ffffff;
+  border-radius: 5px;
+  outline: none !important;
+}
+
+input:hover {
+  cursor: pointer;
+}
+
+.small {
+  width: 111px;
+  height: 40px;
+}
+
+.medium {
+  width: 111px;
+  height: 40px;
+}
+
+.large {
+  width: 206px;
+  height: 40px;
+}
