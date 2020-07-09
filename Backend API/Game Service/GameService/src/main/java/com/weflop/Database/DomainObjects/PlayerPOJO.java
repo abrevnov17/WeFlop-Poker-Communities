@@ -20,12 +20,15 @@ public class PlayerPOJO {
 	
 	private int state;
 	
-	public PlayerPOJO(String id, float balance, float currentBet, List<CardPOJO> cards, int state) {
+	private int slot;
+	
+	public PlayerPOJO(String id, float balance, float currentBet, List<CardPOJO> cards, int state, int slot) {
 		this.id = id;
 		this.balance = balance;
 		this.currentBet = currentBet;
 		this.cards = cards;
 		this.state = state;
+		this.slot = slot;
 	}
 
 	public String getId() {
@@ -63,8 +66,16 @@ public class PlayerPOJO {
 	public int getState() {
 		return state;
 	}
-
+	
 	public void setState(int state) {
 		this.state = state;
+	}
+
+	public int getSlot() {
+		return slot;
+	}
+
+	public void setSlot(int slot) {
+		this.slot = slot;
 	}
 }

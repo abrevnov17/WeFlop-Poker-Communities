@@ -22,6 +22,8 @@ import com.weflop.Database.DomainObjects.PlayerPOJO;
 import com.weflop.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
+import com.weflop.Networking.GameStatePOJO;
+import com.weflop.Networking.LimitedPlayerPOJO;
 import com.weflop.Networking.MessageSendingHandlers;
 import com.weflop.Utils.ThreadExecution.TurnTimerManager;
 
@@ -73,7 +75,9 @@ public abstract class AbstractGame implements Game {
 	private String createdBy; // id of user who created game
 	
 	private ScheduledExecutorService threadExecutor; // useful when creating timed events
-		
+	
+	private int epoch; // value we increment on changes in state; keeps track of state versions
+	
 	@Autowired
 	private GameRepository gameRepository;
 		
@@ -98,6 +102,7 @@ public abstract class AbstractGame implements Game {
 		this.type = GameType.STANDARD_REPRESENTATION;
 		this.threadExecutor = Executors
 		        .newSingleThreadScheduledExecutor();
+		this.epoch = 0;
 	}
 	
 	// if the big blind is not just 2x small blind
@@ -245,6 +250,8 @@ public abstract class AbstractGame implements Game {
 			player.increaseBalance(perPlayerWinnings);
 		}
 		
+		this.pot = 0.0f; // resetting pot
+		
 		// removing any players with insufficient funds
 		for (Player player : this.group.getPlayers()) {
 			if (player.getBalance() < this.bigBlind) {
@@ -301,7 +308,7 @@ public abstract class AbstractGame implements Game {
 				}
 				break;
 		}
-		this.propogateAction(new Action(ActionType.DISCONNECT, player.getId()));
+		this.propagateAction(new Action(ActionType.DISCONNECT, player.getId()));
 	}
 	
 	synchronized protected void endBettingRound() {
@@ -315,7 +322,7 @@ public abstract class AbstractGame implements Game {
 	/**
 	 * Given an index of the player in the last turn (or the big blind index
 	 * in the case that this is the start of a round), updates the turn to the
-	 * next elligible player who is not all-in.
+	 * next eligible player who is not all-in.
 	 * 
 	 * Also, this function checks to see if the round has ended and calls the
 	 * appropriate handler for that case.
@@ -402,24 +409,69 @@ public abstract class AbstractGame implements Game {
 	
 	/**
 	 * Once an action has been verified by the server, we save it to our
-	 * game history and propogate that information to user sessions.
+	 * game history and propagate that information to user sessions.
 	 * 
 	 * @param action
 	 */
-	synchronized protected void propogateAction(Action action) {
+	synchronized protected void propagateAction(Action action) {
 		// add action to game history
 		this.history.appendActionToSequence(action);
+		this.incrementEpoch();
 
-		// propogate action to members of group
+		// propagate action to members of group
 		try {
-			MessageSendingHandlers.propogateAction(this.getGroup(), action, this.getCurrentHistoryVersion());
+			if (action.isUserAction()) {
+				MessageSendingHandlers.propagateIncomingAction(this.getGameId(), this.getGroup(), 
+					action, this.getEpoch());
+			} else {
+				if (action.getPlayerId() != null) {
+					// message is sent to individual player
+					MessageSendingHandlers.propagateOutgoingActionToPlayer(this.getGameId(), 
+						this.getParticipantById(action.getPlayerId()),
+						action, this.getEpoch());
+				} else {
+					// message is sent to all players
+					MessageSendingHandlers.propagateOutgoingAction(this.getGameId(), 
+							this.group, action, this.getEpoch());
+				}
+			}
 		} catch (Exception e) {
 			System.out.println(e.getStackTrace());
 		}
 	}
 	
+	/**
+	 * Sends a player an updated game state (with limited view on other player states).
+	 * Called on player join and on disconnects and any loss of synchronization.
+	 * 
+	 * @param player
+	 */
 	synchronized protected void sendUserGameState(Player player) {
+		// sends player an updated game state
+		try {
+			MessageSendingHandlers.sendGameState(player, getGameStatePOJO(player));
+		} catch (Exception e) {
+			System.out.println(e.getStackTrace());
+		}
+	}
+	
+	/**
+	 * Gets instance of GameStatePOJO used to update players on game state.
+	 * @return Instance of GameStatePOJO
+	 */
+	synchronized protected GameStatePOJO getGameStatePOJO(Player player) {
+		List<CardPOJO> centerCardsPOJO = this.centerCards.stream()
+		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
+		        		card.getCardValue().getValue()))
+		        .collect(Collectors.toList());
 		
+		List<LimitedPlayerPOJO> otherPlayers = this.group.getPlayers().stream()
+                .filter(p -> !p.equals(player)) // filtering out current player
+		        .map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPlayerPOJO()))
+		        .collect(Collectors.toList());
+		
+		return new GameStatePOJO(this.getGameId(), centerCardsPOJO, pot, otherPlayers, 
+				player.toPlayerPOJO(), turn.getPlayer().getId(), this.getEpoch());
 	}
 
 	/* Getters and setters for universal game properties */
@@ -472,17 +524,6 @@ public abstract class AbstractGame implements Game {
 		throw new Exception("Invalid participant id");
 	}
 	
-	/**
-	 * Returns a number representing the length of our action history.
-	 * This number acts as a way to track whether clients have up to date
-	 * game histories. 
-	 *
-	 * @return
-	 */
-	synchronized protected int getCurrentHistoryVersion() {
-		return this.history.getActionsSequence().size();
-	}
-	
 	protected UUID getId() {
 		return id;
 	}
@@ -517,6 +558,10 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void setCenterCards(List<Card> centerCards) {
 		this.centerCards = centerCards;
+	}
+	
+	synchronized protected void addToCenterCards(Card card) {
+		this.getCenterCards().add(card);
 	}
 
 	synchronized protected int getDealerIndex() {
@@ -625,5 +670,13 @@ public abstract class AbstractGame implements Game {
 
 	protected void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
+	}
+
+	synchronized protected int getEpoch() {
+		return epoch;
+	}
+	
+	synchronized protected void incrementEpoch() {
+		this.epoch++;
 	}
 }

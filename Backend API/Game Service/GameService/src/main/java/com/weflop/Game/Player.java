@@ -26,16 +26,12 @@ public class Player {
 	private float balance; 
 	private float currentBet;
 	private PlayerState state;
+	int slot; // position of player in table (clockwise increasing, -1 if spectator)
 	
 	private WebSocketSession session;
 	
 	Player(String id, WebSocketSession session) {
-		this.id = id;
-		this.setSession(session);
-		this.setCards(new ArrayList<Card>());
-		this.setBalance(0.00f);
-		this.setCurrentBet(0.00f);
-		this.setState(PlayerState.WATCHING);
+		this(id, session, new ArrayList<Card>());
 	}
 	
 	Player(String id, WebSocketSession session, List<Card> cards) {
@@ -44,7 +40,8 @@ public class Player {
 		this.setCards(cards);
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
-		this.setState(PlayerState.WATCHING);		
+		this.setState(PlayerState.WATCHING);
+		this.setSlot(-1);
 	}
 	
 	/**
@@ -94,6 +91,7 @@ public class Player {
 		this.cards.clear();
 		this.currentBet = 0.0f;
 		this.state = PlayerState.WATCHING;
+		this.slot = -1;
 	}
 	
 	/**
@@ -123,7 +121,7 @@ public class Player {
 		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
 		        		card.getCardValue().getValue()))
 		        .collect(Collectors.toList());
-		return new PlayerPOJO(this.id, this.balance, this.currentBet, cards, this.state.getValue());
+		return new PlayerPOJO(this.id, this.balance, this.currentBet, cards, this.state.getValue(), this.slot);
 	}
 	
 	/**
@@ -213,5 +211,13 @@ public class Player {
 
 	synchronized public void setSession(WebSocketSession session) {
 		this.session = session;
+	}
+
+	public int getSlot() {
+		return slot;
+	}
+
+	public void setSlot(int slot) {
+		this.slot = slot;
 	}
 }

@@ -1,5 +1,7 @@
 package com.weflop.Database.DomainObjects;
 
+import java.util.List;
+
 /**
  * CRUD object wrapping information about user actions
  * 
@@ -11,6 +13,7 @@ public class ActionPOJO {
 	private String userId;
 	
 	private Float value;
+	private List<CardPOJO> cards;
 	
 	private long timestamp;	// milliseconds since start of current epoch
 	
@@ -23,6 +26,11 @@ public class ActionPOJO {
 	public ActionPOJO(int type, String userId, long timestamp, Float value) {
 		this(type, userId, timestamp);
 		this.value = value;
+    }
+	
+	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards) {
+		this(type, userId, timestamp, value);
+		this.setCards(cards);
     }
 
 	public int getType() {
@@ -55,5 +63,13 @@ public class ActionPOJO {
 
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public List<CardPOJO> getCards() {
+		return cards;
+	}
+
+	public void setCards(List<CardPOJO> cards) {
+		this.cards = cards;
 	}
 }

@@ -22,7 +22,7 @@ public class MessageReceivingHandlers {
 		
 		// adding player to game
 		try {
-			game.performAction(new Action(ActionType.JOIN, playerId, session));
+			game.performAction(new Action(ActionType.JOIN, playerId));
 		} catch (Exception e) {
 			session.sendMessage(new TextMessage("Error attempting to join game."));
 		}

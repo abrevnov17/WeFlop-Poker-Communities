@@ -12,6 +12,7 @@ import com.weflop.Cards.StandardDeck;
 import com.weflop.Database.DomainObjects.GameDocument;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.Action;
+import com.weflop.Game.ActionType;
 import com.weflop.Game.History;
 import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
@@ -104,8 +105,8 @@ public class BasicPokerGame extends AbstractGame {
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case RAISE:
@@ -130,8 +131,8 @@ public class BasicPokerGame extends AbstractGame {
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case CALL:
@@ -156,8 +157,8 @@ public class BasicPokerGame extends AbstractGame {
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case CHECK:
@@ -170,8 +171,8 @@ public class BasicPokerGame extends AbstractGame {
 					// update player state to waiting for turn
 					participant.setState(PlayerState.WAITING_FOR_TURN);
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case TURN_TIMEOUT:
@@ -187,14 +188,18 @@ public class BasicPokerGame extends AbstractGame {
 					// move on to next turn
 					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case JOIN:
 				{
 					// add player as spectator
 					this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
+					
+					// need to send the player the current game state
+					Player participant = this.getParticipantById(action.getPlayerId());
+					this.sendUserGameState(participant);
 				}
 					break;
 				case SIT:
@@ -203,8 +208,8 @@ public class BasicPokerGame extends AbstractGame {
 
 					this.getGroup().moveSpectatorToActivePlayer(participant); // helper method performs necessary validation
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case STAND:
@@ -214,8 +219,8 @@ public class BasicPokerGame extends AbstractGame {
 					// transition player from player to spectator
 					this.getGroup().movePlayerToSpectator(participant);
 					
-					// propogate action to members of group
-					this.propogateAction(action);
+					// propagate action to members of group
+					this.propagateAction(action);
 				}
 					break;
 				case DISCONNECT:
@@ -224,9 +229,9 @@ public class BasicPokerGame extends AbstractGame {
 
 					this.getGroup().deleteParticipant(participant);
 					
-					// propogate action to members of group if not spectator
+					// propagate action to members of group if not spectator
 					if (participant.isPlaying()) {
-						this.propogateAction(action);
+						this.propagateAction(action);
 					}
 				}
 					break;
@@ -265,15 +270,30 @@ public class BasicPokerGame extends AbstractGame {
 				for (int i=0; i < numDealt; i++) {
 					player.addCard(deck.dealCard());
 				}
+				
+				if (numDealt > 0) {
+					// sending message to player with new cards
+					this.propagateAction(new Action(ActionType.PLAYER_DEAL, player.getId(), player.getCards()));
+				}
 			}
 			
 			this.discardCenterCards();
+			
+			if (numDealt > 0) {
+				this.incrementEpoch();
+			}
 		}
 		
 		// deal center cards
-		int centerCards = this.variant.getCardDealtBeforeRound(this.getRound());
-		for (int i=0; i < centerCards; i++) {
-			this.getCenterCards().add(deck.dealCard());
+		int newCenterCards = this.variant.getCardDealtBeforeRound(this.getRound());
+		for (int i=0; i < newCenterCards; i++) {
+			this.addToCenterCards(deck.dealCard());
+		}
+		
+		// messaging players regarding new center cards
+		if (newCenterCards > 0) {
+			this.propagateAction(new Action(ActionType.CENTER_DEAL, null, this.getCenterCards()));
+			this.incrementEpoch();
 		}
 		
 		// updating round

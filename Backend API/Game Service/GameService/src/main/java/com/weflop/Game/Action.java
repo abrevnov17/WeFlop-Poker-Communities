@@ -1,10 +1,14 @@
 package com.weflop.Game;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.web.socket.WebSocketSession;
 
+import com.weflop.Cards.Card;
 import com.weflop.Database.DomainObjects.ActionPOJO;
+import com.weflop.Database.DomainObjects.CardPOJO;
 
 /**
  * Actions have an associated type and an optional parameter value
@@ -20,7 +24,8 @@ public class Action {
 	// optional values
 	private String playerId; // user associated with action
 	private WebSocketSession session; // session associated with action
-	private Float value; // some actions have associated payload values
+	private Float value; // some actions have associated float as payload
+	private List<Card> cards; // some actions have associated cards as payload
 	
 	// automatically set values
 	private Instant timestamp;
@@ -36,9 +41,9 @@ public class Action {
 		this.setValue(value);
 	}
 	
-	public Action(ActionType type, String playerId, WebSocketSession session) {
+	public Action(ActionType type, String playerId, List<Card> cards) {
 		this(type, playerId);
-		this.setSession(session);
+		this.setCards(cards);
 	}
 	
 	/**
@@ -48,7 +53,11 @@ public class Action {
 	 * @return Corresponding ActionPOJO instance
 	 */
 	public ActionPOJO toPojo() {
-		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value);
+		List<CardPOJO> cards = this.cards.stream()
+		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
+		        		card.getCardValue().getValue()))
+		        .collect(Collectors.toList());
+		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value, cards);
 	}
 	
 	/* Getters and Setters */
@@ -91,5 +100,24 @@ public class Action {
 
 	public void setTimestamp(Instant timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	public List<Card> getCards() {
+		return cards;
+	}
+
+	public void setCards(List<Card> cards) {
+		this.cards = cards;
+	}
+	
+	/**
+	 * Returns a boolean indicating whether this action was
+	 * created by a user (or, alternatively, an outgoing action generated
+	 * by the game server).
+	 * 
+	 * @returns True if user action, false otherwise
+	 */
+	public boolean isUserAction() {
+		return this.type != ActionType.DEAL;
 	}
 }

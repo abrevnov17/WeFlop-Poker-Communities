@@ -52,6 +52,7 @@ public class Group {
 		int slotIndex = getFirstEmptySlot();
 		Assert.isTrue(slotIndex == -1, "No empty seats to sit at");
 		
+		spectator.setSlot(slotIndex);
 		
 		// switch player state to waiting for round
 		spectator.setState(PlayerState.WAITING_FOR_ROUND);
@@ -120,6 +121,7 @@ public class Group {
 				players[i] = null;
 			}
 		}
+		player.setSlot(-1);
 	}
 	
 	synchronized public void setAllPlayersToState(PlayerState state) {

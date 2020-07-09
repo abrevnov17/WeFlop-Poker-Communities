@@ -19,7 +19,11 @@ public enum ActionType {
 	JOIN(6),
 	SIT(7),
 	STAND(8),
-	DISCONNECT(9);
+	DISCONNECT(9),
+	// Outgoing actions:
+	PLAYER_DEAL(10), // cards dealt to individual player
+	CENTER_DEAL(11), // cards dealt to center
+	POT_WON(12); // some player has won a round (and the current pot)
 	
 	private final int value;
 
