@@ -266,6 +266,10 @@ public abstract class AbstractGame implements Game {
 			this.threadExecutor.shutdown();
 		}
 		
+		// propagating winners 
+		this.propagateAction(new Action(ActionType.POT_WON, 
+				playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList())));
+		
 		// update dealer index
 		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
 		

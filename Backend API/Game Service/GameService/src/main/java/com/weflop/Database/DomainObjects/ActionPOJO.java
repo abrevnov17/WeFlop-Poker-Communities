@@ -14,6 +14,7 @@ public class ActionPOJO {
 	
 	private Float value;
 	private List<CardPOJO> cards;
+	private List<String> playerIds;
 	
 	private long timestamp;	// milliseconds since start of current epoch
 	
@@ -28,7 +29,7 @@ public class ActionPOJO {
 		this.value = value;
     }
 	
-	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards) {
+	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards, List<String> playerIds) {
 		this(type, userId, timestamp, value);
 		this.setCards(cards);
     }
@@ -71,5 +72,13 @@ public class ActionPOJO {
 
 	public void setCards(List<CardPOJO> cards) {
 		this.cards = cards;
+	}
+
+	public List<String> getPlayerIds() {
+		return playerIds;
+	}
+
+	public void setPlayerIds(List<String> playerIds) {
+		this.playerIds = playerIds;
 	}
 }

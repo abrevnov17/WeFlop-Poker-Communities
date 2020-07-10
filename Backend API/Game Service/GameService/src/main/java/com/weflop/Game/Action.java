@@ -26,6 +26,7 @@ public class Action {
 	private WebSocketSession session; // session associated with action
 	private Float value; // some actions have associated float as payload
 	private List<Card> cards; // some actions have associated cards as payload
+	private List<String> playerIds; // some actions have associated lists of player ids as payload
 	
 	// automatically set values
 	private Instant timestamp;
@@ -46,6 +47,11 @@ public class Action {
 		this.setCards(cards);
 	}
 	
+	public Action(ActionType type, List<String> playerIds) {
+		this.setType(type);
+		this.setPlayerIds(playerIds);
+	}
+	
 	/**
 	 * Provides POJO representation of Action
 	 * (consumable by database).
@@ -57,7 +63,7 @@ public class Action {
 		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
 		        		card.getCardValue().getValue()))
 		        .collect(Collectors.toList());
-		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value, cards);
+		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value, cards, playerIds);
 	}
 	
 	/* Getters and Setters */
@@ -110,6 +116,14 @@ public class Action {
 		this.cards = cards;
 	}
 	
+	public List<String> getPlayerIds() {
+		return playerIds;
+	}
+
+	public void setPlayerIds(List<String> playerIds) {
+		this.playerIds = playerIds;
+	}
+	
 	/**
 	 * Returns a boolean indicating whether this action was
 	 * created by a user (or, alternatively, an outgoing action generated
@@ -118,6 +132,6 @@ public class Action {
 	 * @returns True if user action, false otherwise
 	 */
 	public boolean isUserAction() {
-		return this.type != ActionType.DEAL;
+		return !(this.type == ActionType.PLAYER_DEAL || this.type == ActionType.CENTER_DEAL || this.type == ActionType.POT_WON);
 	}
 }
