@@ -244,12 +244,6 @@ public class BasicPokerGame extends AbstractGame {
 		}
 		
 	}
-
-	@Override
-	public void flushToDatabase() {
-		GameDocument document = this.toDocument();
-		this.getGameRepository().save(document);
-	}
 	
 	/**
 	 * Deals new hands to each player
@@ -310,16 +304,5 @@ public class BasicPokerGame extends AbstractGame {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public void sendGamePackets() throws Exception {
-		for (Player player : this.getGroup().getPlayers()) {
-			
-		}
-		
-		for (Player spectator : this.getGroup().getSpectators()) {
-			
-		}
 	}
 }

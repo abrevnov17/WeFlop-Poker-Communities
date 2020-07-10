@@ -39,6 +39,10 @@ public class Turn {
 	synchronized public Duration getTimeElapsed(long currentTime) {
 		return Duration.ofNanos(currentTime - startTime);
 	}
+	
+	synchronized public Duration getTimeRemaining(long currentTime, Duration turnDuration) {
+		return turnDuration.minus(Duration.ofNanos(currentTime - startTime));
+	}
 
 	synchronized public void fixTimeElapsed(long currentTime, Duration timeElapsed) {
 		this.startTime = currentTime - timeElapsed.toNanos();

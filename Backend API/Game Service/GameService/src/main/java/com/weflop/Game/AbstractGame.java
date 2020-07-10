@@ -120,7 +120,6 @@ public abstract class AbstractGame implements Game {
 	/* These methods are publicly exposed and will be overriden by subclasses: */
 	
 	public abstract void performAction(Action action) throws Exception; // performs an action as a given participant
-	public abstract void flushToDatabase(); // flushes game state to database
 	
 	/* Required methods (internally used) for all subclasses */
 	protected abstract void deal(boolean dealNewHands); // deals cards to players
@@ -128,7 +127,6 @@ public abstract class AbstractGame implements Game {
 	
 	/**
 	 * Handler for turn expirations. Called by a single thread after execution.
-	 * 
 	 */
 	synchronized public void turnExpired(int turnCount) {
 		// check to see if provided turn count matches current turn
@@ -147,6 +145,14 @@ public abstract class AbstractGame implements Game {
 			// and the current call to perform the action of a turn timeout. In this case, we can just
 			// ignore the exception and consider this turn to be stale.
 		}
+	}
+	
+	/**
+	 * Flushes game state and history to database.
+	 */
+	synchronized public void flushToDatabase() {
+		GameDocument document = this.toDocument();
+		this.getGameRepository().save(document);
 	}
 	
 	/* Universally shared methods */
@@ -175,6 +181,30 @@ public abstract class AbstractGame implements Game {
 
 		    // resent packets after the duration of the turn has passed
 		    threadExecutor.scheduleAtFixedRate(stateSaver, 0, 60, TimeUnit.SECONDS);
+	}
+	
+	/**
+	 * Spawns a thread that periodically sends synchronization messages.
+	 */
+	synchronized protected void spawnSynchronizationPacketSendingThread() {
+	    Runnable packetSender = new Runnable() {
+		      @Override
+		      public void run() {
+		    	  flushToDatabase();
+		      }
+		    };
+
+		    // resent packets after the duration of the turn has passed
+		    threadExecutor.scheduleAtFixedRate(packetSender, 0, 2000, TimeUnit.MILLISECONDS);
+	}
+	
+	synchronized protected void sendSynchronizationPackets() {
+		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), this.turnDuration).toMillis();
+		try {
+			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch, millisecondsRemaining);
+		} catch (Exception e) {
+			System.out.println(e.getStackTrace());
+		}
 	}
 	
 	/**
@@ -269,6 +299,7 @@ public abstract class AbstractGame implements Game {
 		// propagating winners 
 		this.propagateAction(new Action(ActionType.POT_WON, 
 				playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList())));
+		this.incrementEpoch();
 		
 		// update dealer index
 		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);

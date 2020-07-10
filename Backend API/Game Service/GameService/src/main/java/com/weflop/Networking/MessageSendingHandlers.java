@@ -91,7 +91,7 @@ public class MessageSendingHandlers {
 	
 
 	/** 
-	 * Propogates outgoing message to group of players in game.
+	 * Propagates outgoing message to group of players in game.
 	 * @param gameId
 	 * @param group
 	 * @param action
@@ -117,5 +117,32 @@ public class MessageSendingHandlers {
 		
 		// propogating state information to player
 		player.getSession().sendMessage(new TextMessage(messageString));
+	}
+	
+	public static void sendSynchronizationPackets(String gameId, Group group, int epoch, long turnTimeRemaining) 
+			throws InterruptedException, IOException {
+		// creating message
+		JsonObject message = new JsonObject();
+		message.addProperty("game_id", gameId);
+		message.addProperty("type", MessageType.SYNCHRONIZATION.getValue());
+		
+		JsonObject payload = new JsonObject();
+
+		payload.addProperty("epoch", epoch);
+		payload.addProperty("turn_time_remaining", turnTimeRemaining);
+		
+		message.add("payload", payload);
+		
+		String messageString = message.getAsString();
+		
+		// propagating message to players
+		for (Player player : group.getPlayers()) {
+			player.getSession().sendMessage(new TextMessage(messageString));
+		}
+		
+		// propagating message to spectators
+		for (Player spectator : group.getSpectators()) {
+			spectator.getSession().sendMessage(new TextMessage(messageString));
+		}
 	}
 }
