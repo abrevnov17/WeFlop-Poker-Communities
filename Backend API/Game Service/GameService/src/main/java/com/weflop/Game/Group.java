@@ -45,14 +45,12 @@ public class Group {
 	 * 
 	 * @param player
 	 */
-	synchronized public void moveSpectatorToActivePlayer(Player spectator) {
+	synchronized public void moveSpectatorToActivePlayer(Player spectator, Integer slot) {
 		Assert.isTrue(spectator.isSpectating(), "Must be spectator to sit");
+		Assert.isTrue(slot != null, "Slot must be specified in order to sit");
+		Assert.isTrue(players[slot] == null, "Seat is already taken");
 		
-		// finding an empty seat
-		int slotIndex = getFirstEmptySlot();
-		Assert.isTrue(slotIndex == -1, "No empty seats to sit at");
-		
-		spectator.setSlot(slotIndex);
+		spectator.setSlot(slot);
 		
 		// switch player state to waiting for round
 		spectator.setState(PlayerState.WAITING_FOR_ROUND);
@@ -60,7 +58,7 @@ public class Group {
 		// remove participant from spectators and move to active players
 		spectators.remove(spectator);
 		
-		players[slotIndex] = spectator;
+		players[slot] = spectator;
 	}
 	
 	/**

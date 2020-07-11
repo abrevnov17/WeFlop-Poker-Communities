@@ -13,6 +13,7 @@ public class ActionPOJO {
 	private String userId;
 	
 	private Float value;
+	private Integer slot;
 	private List<CardPOJO> cards;
 	private List<String> playerIds;
 	
@@ -29,7 +30,7 @@ public class ActionPOJO {
 		this.value = value;
     }
 	
-	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards, List<String> playerIds) {
+	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards, List<String> playerIds, Integer slot) {
 		this(type, userId, timestamp, value);
 		this.setCards(cards);
     }
@@ -80,5 +81,13 @@ public class ActionPOJO {
 
 	public void setPlayerIds(List<String> playerIds) {
 		this.playerIds = playerIds;
+	}
+
+	public Integer getSlot() {
+		return slot;
+	}
+
+	public void setSlot(Integer slot) {
+		this.slot = slot;
 	}
 }

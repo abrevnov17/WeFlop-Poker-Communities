@@ -188,7 +188,7 @@ public class BasicPokerGame extends AbstractGame {
 				{
 					Player participant = this.getParticipantById(action.getPlayerId());
 
-					this.getGroup().moveSpectatorToActivePlayer(participant); // helper method performs necessary validation
+					this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot()); // helper method performs necessary validation
 					
 					// propagate action to members of group
 					this.propagateAction(action);

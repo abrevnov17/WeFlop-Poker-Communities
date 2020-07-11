@@ -25,11 +25,14 @@ public class Action {
 	private String playerId; // user associated with action
 	private WebSocketSession session; // session associated with action
 	private Float value; // some actions have associated float as payload
+	private Integer slot; // some actions have associated integer slot value as payload
 	private List<Card> cards; // some actions have associated cards as payload
 	private List<String> playerIds; // some actions have associated lists of player ids as payload
 	
 	// automatically set values
 	private Instant timestamp;
+	
+	/* Constructors */
 	
 	public Action(ActionType type, String playerId) {
 		this.setType(type);
@@ -42,6 +45,11 @@ public class Action {
 		this.setValue(value);
 	}
 	
+	public Action(ActionType type, String playerId, Integer slot) {
+		this(type, playerId);
+		this.setSlot(slot);
+	}
+	
 	public Action(ActionType type, String playerId, List<Card> cards) {
 		this(type, playerId);
 		this.setCards(cards);
@@ -51,6 +59,8 @@ public class Action {
 		this.setType(type);
 		this.setPlayerIds(playerIds);
 	}
+	
+	/* Methods */
 	
 	/**
 	 * Provides POJO representation of Action
@@ -63,7 +73,18 @@ public class Action {
 		        .map(card -> new CardPOJO(card.getSuit().getValue(), 
 		        		card.getCardValue().getValue()))
 		        .collect(Collectors.toList());
-		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value, cards, playerIds);
+		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value, cards, playerIds, slot);
+	}
+	
+	/**
+	 * Returns a boolean indicating whether this action was
+	 * created by a user (or, alternatively, an outgoing action generated
+	 * by the game server).
+	 * 
+	 * @returns True if user action, false otherwise
+	 */
+	public boolean isUserAction() {
+		return !(this.type == ActionType.PLAYER_DEAL || this.type == ActionType.CENTER_DEAL || this.type == ActionType.POT_WON);
 	}
 	
 	/* Getters and Setters */
@@ -123,15 +144,12 @@ public class Action {
 	public void setPlayerIds(List<String> playerIds) {
 		this.playerIds = playerIds;
 	}
-	
-	/**
-	 * Returns a boolean indicating whether this action was
-	 * created by a user (or, alternatively, an outgoing action generated
-	 * by the game server).
-	 * 
-	 * @returns True if user action, false otherwise
-	 */
-	public boolean isUserAction() {
-		return !(this.type == ActionType.PLAYER_DEAL || this.type == ActionType.CENTER_DEAL || this.type == ActionType.POT_WON);
+
+	public Integer getSlot() {
+		return slot;
+	}
+
+	public void setSlot(Integer slot) {
+		this.slot = slot;
 	}
 }
