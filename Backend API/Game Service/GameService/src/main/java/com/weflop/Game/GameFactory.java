@@ -1,8 +1,5 @@
 package com.weflop.Game;
 
-import java.time.Duration;
-
-
 import com.weflop.Evaluation.TwoPlusTwo.TwoPlusTwoHandEvaluator;
 import com.weflop.Game.BasicPokerGame.BasicPokerGame;
 
@@ -29,8 +26,8 @@ public class GameFactory {
 	 * @return Id of newly created game
 	 */
 	public static String generateStandardPokerGame(String creatorId, float smallBlind) {
-		Game game = new BasicPokerGame(creatorId, smallBlind, 8, 
-				Duration.ofSeconds(180), new TwoPlusTwoHandEvaluator());
+		GameCustomMetadata metadata = new GameCustomMetadata(smallBlind, creatorId);
+		Game game = new BasicPokerGame(metadata, new TwoPlusTwoHandEvaluator());
 		ID_TO_GAME.put(game.getGameId(), game);
 		return game.getGameId();
 	}

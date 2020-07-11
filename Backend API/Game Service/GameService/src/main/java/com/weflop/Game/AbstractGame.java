@@ -1,7 +1,6 @@
 package com.weflop.Game;
 
 import java.io.IOException;
-import java.time.Duration;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -53,64 +52,44 @@ public abstract class AbstractGame implements Game {
 	private List<Card> centerCards;
 	private int dealerIndex;
 	
-	private float smallBlind;
-	private float bigBlind; // almost always just 2x the smallBlind
-	
 	private float roundBet;
 	
 	private Group group; // our group of players
 
 	private Turn turn;
-	
-	private Duration turnDuration; // how long user gets per turn
-	
+		
 	private HandRankEvaluator evaluator;
 	
 	private int round;
 	
 	private History history;
-	
-	private GameType type;
-	
-	private String createdBy; // id of user who created game
-	
+			
 	private ScheduledExecutorService threadExecutor; // useful when creating timed events
 	
 	private int epoch; // value we increment on changes in state; keeps track of state versions
 	
+	private GameCustomMetadata metadata;
+	
 	@Autowired
 	private GameRepository gameRepository;
 		
-	protected AbstractGame(String createdBy, float smallBlind, int tableSize, 
-			Duration turnDuration, HandRankEvaluator evaluator) {
-		this.setCreatedBy(createdBy);
+	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
+		this.metadata = metadata;
 		this.id = UUID.randomUUID();
 		this.setPot(0.0f);
 		this.centerCards = new ArrayList<Card>();
 		this.dealerIndex = 0;
 		this.setStartTime(null); // do not start clock till start() called
-		this.smallBlind = smallBlind;
-		this.bigBlind = 2.0f*smallBlind;
-		this.setGroup(new Group(tableSize));
+		this.setGroup(new Group(metadata.getTableSize()));
 		this.turn = null; // is not initialized until game starts
 		this.setStarted(false);
 		this.setLock(new ReentrantLock());
-		this.setTurnDuration(turnDuration);
-		this.setRoundBet(this.bigBlind);
+		this.setRoundBet(this.metadata.getBigBlind());
 		this.evaluator = evaluator;
 		this.setRound(0);
-		this.type = GameType.STANDARD_REPRESENTATION;
 		this.threadExecutor = Executors
 		        .newSingleThreadScheduledExecutor();
 		this.epoch = 0;
-	}
-	
-	// if the big blind is not just 2x small blind
-	protected AbstractGame(String createdBy, float smallBlind, float bigBlind, 
-			int tableSize, Duration turnDuration, HandRankEvaluator evaluator) {
-		this(createdBy, smallBlind, tableSize, turnDuration, evaluator);
-		this.bigBlind = bigBlind;
-		this.setRoundBet(this.bigBlind);
 	}
 	
 	public String getGameId() {
@@ -124,6 +103,11 @@ public abstract class AbstractGame implements Game {
 	/* Required methods (internally used) for all subclasses */
 	protected abstract void deal(boolean dealNewHands); // deals cards to players
 	protected abstract boolean isLastBettingRound(); // returns whether current round was last round of betting
+	
+	@Override
+	public GameCustomMetadata getGameMetadata() {
+		return this.metadata;
+	}
 	
 	/**
 	 * Handler for turn expirations. Called by a single thread after execution.
@@ -164,7 +148,7 @@ public abstract class AbstractGame implements Game {
 		    Runnable turnExpirationHandler = new TurnTimerManager(this, this.turn.getCount());
 
 		    // resent packets after the duration of the turn has passed
-		    threadExecutor.schedule(turnExpirationHandler, this.turnDuration.getSeconds(), TimeUnit.SECONDS);
+		    threadExecutor.schedule(turnExpirationHandler, metadata.getTurnDuration().getSeconds(), TimeUnit.SECONDS);
 	}
 	
 	
@@ -199,7 +183,7 @@ public abstract class AbstractGame implements Game {
 	}
 	
 	synchronized protected void sendSynchronizationPackets() {
-		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), this.turnDuration).toMillis();
+		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), metadata.getTurnDuration()).toMillis();
 		try {
 			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch, millisecondsRemaining);
 		} catch (Exception e) {
@@ -223,16 +207,16 @@ public abstract class AbstractGame implements Game {
 		// should be done before calling this function
 				
 		// small blind pays
-		this.getSmallBlindPlayer().bet(this.smallBlind);
-		this.pot += this.smallBlind;
+		this.getSmallBlindPlayer().bet(metadata.getSmallBlind());
+		this.pot += metadata.getSmallBlind();
 		
 		// big blind pays
-		this.getBigBlindPlayer().bet(this.bigBlind);
-		this.pot += this.bigBlind;
+		this.getBigBlindPlayer().bet(metadata.getBigBlind());
+		this.pot += metadata.getBigBlind();
 		
 		// resetting the current round bet amount (this is the most any player has bet during
 		// the current round)
-		this.setRoundBet(this.getBigBlind());
+		this.setRoundBet(metadata.getBigBlind());
 		
 		this.beginNewRound();
 	}
@@ -284,7 +268,7 @@ public abstract class AbstractGame implements Game {
 		
 		// removing any players with insufficient funds
 		for (Player player : this.group.getPlayers()) {
-			if (player.getBalance() < this.bigBlind) {
+			if (player.getBalance() < metadata.getBigBlind()) {
 				this.bootPlayer(player, BootReason.INSUFFICIENT_FUNDS);
 			}
 		}
@@ -437,8 +421,8 @@ public abstract class AbstractGame implements Game {
 		        .map(spectator -> spectator.toSpectatorPOJO())
 		        .collect(Collectors.toList());
 				
-		return new GameDocument(id.toString(), type.getValue(), 
-				startTime.toEpochMilli(), smallBlind, bigBlind, centerCards, 
+		return new GameDocument(id.toString(), metadata.getType().getValue(), 
+				startTime.toEpochMilli(), metadata.getSmallBlind(), metadata.getBigBlind(), centerCards, 
 				pot, dealerIndex, players, spectators, history.toPOJO());
 	}
 	
@@ -607,22 +591,6 @@ public abstract class AbstractGame implements Game {
 		this.dealerIndex = dealerIndex;
 	}
 
-	synchronized protected float getSmallBlind() {
-		return smallBlind;
-	}
-
-	synchronized protected void setSmallBlind(float smallBlind) {
-		this.smallBlind = smallBlind;
-	}
-
-	synchronized protected float getBigBlind() {
-		return bigBlind;
-	}
-
-	synchronized protected void setBigBlind(float bigBlind) {
-		this.bigBlind = bigBlind;
-	}
-
 	synchronized protected Turn getTurn() {
 		return turn;
 	}
@@ -645,14 +613,6 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void setGroup(Group group) {
 		this.group = group;
-	}
-
-	synchronized protected Duration getTurnDuration() {
-		return turnDuration;
-	}
-
-	synchronized protected void setTurnDuration(Duration turnDuration) {
-		this.turnDuration = turnDuration;
 	}
 	
 	synchronized protected void addToPot(float amount) {
@@ -697,14 +657,6 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void setGameRepository(GameRepository gameRepository) {
 		this.gameRepository = gameRepository;
-	}
-
-	protected String getCreatedBy() {
-		return createdBy;
-	}
-
-	protected void setCreatedBy(String createdBy) {
-		this.createdBy = createdBy;
 	}
 
 	synchronized protected int getEpoch() {

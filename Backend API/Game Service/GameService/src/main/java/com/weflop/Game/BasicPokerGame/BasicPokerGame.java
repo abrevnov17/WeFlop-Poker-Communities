@@ -1,7 +1,5 @@
 package com.weflop.Game.BasicPokerGame;
 
-import java.time.Duration;
-
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -9,10 +7,10 @@ import org.springframework.util.Assert;
 
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
-import com.weflop.Database.DomainObjects.GameDocument;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.Action;
 import com.weflop.Game.ActionType;
+import com.weflop.Game.GameCustomMetadata;
 import com.weflop.Game.History;
 import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
@@ -32,31 +30,15 @@ public class BasicPokerGame extends AbstractGame {
 	
 	/* Constructors */
 	
-	public BasicPokerGame(String createdBy, float smallBlind, int tableSize, 
-			Duration turnDuration, HandRankEvaluator evaluator) {
-		super(createdBy, smallBlind, tableSize, turnDuration, evaluator);
+	public BasicPokerGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
+		super(metadata, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 	
-	public BasicPokerGame(String createdBy, float smallBlind, int tableSize, Duration turnDuration, 
+	public BasicPokerGame(GameCustomMetadata metadata, 
 			VariantRepresentation variant, Deck deck, HandRankEvaluator evaluator) {
-		super(createdBy, smallBlind, tableSize, tableSize, turnDuration, evaluator);
-		this.variant = variant;
-		this.deck = deck;
-	}
-	
-	public BasicPokerGame(String createdBy, float smallBlind, float bigBlind, int tableSize, 
-			Duration turnDuration, HandRankEvaluator evaluator) {
-		super(createdBy, smallBlind, bigBlind, tableSize, turnDuration, evaluator);
-		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
-		this.deck = new StandardDeck(); // default is standard 52 card deck
-	}
-	
-	public BasicPokerGame(String createdBy, float smallBlind, float bigBlind, int tableSize, 
-			Duration turnDuration, VariantRepresentation variant, Deck deck, 
-			HandRankEvaluator evaluator) {
-		super(createdBy, smallBlind, bigBlind, tableSize, turnDuration, evaluator);
+		super(metadata, evaluator);
 		this.variant = variant;
 		this.deck = deck;
 	}
