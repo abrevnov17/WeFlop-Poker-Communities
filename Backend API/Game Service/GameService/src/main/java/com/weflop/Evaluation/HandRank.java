@@ -47,8 +47,7 @@ public abstract class HandRank implements Comparable<HandRank> {
 	 */
 	@Override
 	public final int compareTo(HandRank rank) {
-		return rankValue < rank.rankValue ? -1
-				: (rankValue == rank.rankValue ? 0 : 1);
+		return rankValue < rank.rankValue ? -1 : (rankValue == rank.rankValue ? 0 : 1);
 	}
 
 	@Override
@@ -58,8 +57,7 @@ public abstract class HandRank implements Comparable<HandRank> {
 
 	@Override
 	public final boolean equals(Object obj) {
-		return (obj instanceof HandRank)
-				&& (rankValue == ((HandRank) obj).rankValue);
+		return (obj instanceof HandRank) && (rankValue == ((HandRank) obj).rankValue);
 	}
 
 	public final int getValue() {
@@ -68,6 +66,7 @@ public abstract class HandRank implements Comparable<HandRank> {
 
 	/**
 	 * The type of hand as represented by {@link HandClassification}
+	 * 
 	 * @return {@link HandClassification}
 	 */
 	public abstract HandClassification getHandType();

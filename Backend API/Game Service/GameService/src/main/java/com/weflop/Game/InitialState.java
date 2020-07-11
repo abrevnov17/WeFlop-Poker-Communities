@@ -14,24 +14,23 @@ import com.weflop.Database.DomainObjects.PlayerPOJO;
  */
 public class InitialState {
 	private List<Player> initPlayers;
-	
+
 	public InitialState(List<Player> initPlayers) {
 		this.initPlayers = initPlayers;
 	}
-	
+
 	/**
 	 * Converts to POJO representation.
 	 * 
 	 * @return Corresponding instance of InitialStatePOJO
 	 */
 	public InitialStatePOJO toPOJO() {
-		List<PlayerPOJO> players = initPlayers.stream()
-		        .map(player -> player.toPlayerPOJO())
-		        .collect(Collectors.toList());
-		
+		List<PlayerPOJO> players = initPlayers.stream().map(player -> player.toPlayerPOJO())
+				.collect(Collectors.toList());
+
 		return new InitialStatePOJO(players);
 	}
-	
+
 	/* Getters and Setters */
 
 	public List<Player> getInitPlayers() {

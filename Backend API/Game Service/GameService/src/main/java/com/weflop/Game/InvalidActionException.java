@@ -6,12 +6,12 @@ package com.weflop.Game;
  * @author abrevnov
  *
  */
-public class InvalidActionException extends Exception { 
+public class InvalidActionException extends Exception {
 
 	// used for serialization...can be ignored
 	private static final long serialVersionUID = 3633383730449105142L;
 
 	public InvalidActionException(String errorMessage, Throwable err) {
-        super(errorMessage, err);
-    }
+		super(errorMessage, err);
+	}
 }

@@ -10,9 +10,9 @@ import com.weflop.Database.DomainObjects.HistoryPOJO;
  * Describes history of game.
  */
 public class History {
-	
+
 	private InitialState initState;
-	
+
 	private List<Action> actionsSequence;
 
 	public History(InitialState initState, List<Action> actionsSequence) {
@@ -20,23 +20,22 @@ public class History {
 		this.initState = initState;
 		this.actionsSequence = actionsSequence;
 	}
-	
-	/** 
+
+	/**
 	 * Converts to POJO Representation.
 	 */
 	public HistoryPOJO toPOJO() {
-		List<ActionPOJO> actions = this.actionsSequence.stream()
-		        .map(action -> action.toPojo())
-		        .collect(Collectors.toList());
+		List<ActionPOJO> actions = this.actionsSequence.stream().map(action -> action.toPojo())
+				.collect(Collectors.toList());
 		return new HistoryPOJO(initState.toPOJO(), actions);
 	}
-	
+
 	public void appendActionToSequence(Action action) {
 		this.actionsSequence.add(action);
 	}
-	
+
 	/* Getters and Setters */
-	
+
 	public InitialState getInitState() {
 		return initState;
 	}

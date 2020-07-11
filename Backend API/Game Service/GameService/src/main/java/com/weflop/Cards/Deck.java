@@ -1,8 +1,8 @@
 package com.weflop.Cards;
 
 /**
- * Interface specifies methods that any deck
- * (even non-standard decks) must implement.
+ * Interface specifies methods that any deck (even non-standard decks) must
+ * implement.
  * 
  * @author abrevnov
  *

@@ -8,7 +8,7 @@ package com.weflop.Database.DomainObjects;
  */
 public class SpectatorPOJO {
 	private String userId;
-	
+
 	public SpectatorPOJO(String userId) {
 		this.userId = userId;
 	}

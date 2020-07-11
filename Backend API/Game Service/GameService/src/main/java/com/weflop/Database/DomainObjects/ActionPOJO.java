@@ -9,31 +9,32 @@ import java.util.List;
  */
 public class ActionPOJO {
 	private int type;
-	
+
 	private String userId;
-	
+
 	private Float value;
 	private Integer slot;
 	private List<CardPOJO> cards;
 	private List<String> playerIds;
-	
-	private long timestamp;	// milliseconds since start of current epoch
-	
+
+	private long timestamp; // milliseconds since start of current epoch
+
 	public ActionPOJO(int type, String userId, long timestamp) {
-        this.type = type;
-        this.userId = userId;
-        this.setTimestamp(timestamp);
-    }
+		this.type = type;
+		this.userId = userId;
+		this.setTimestamp(timestamp);
+	}
 
 	public ActionPOJO(int type, String userId, long timestamp, Float value) {
 		this(type, userId, timestamp);
 		this.value = value;
-    }
-	
-	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards, List<String> playerIds, Integer slot) {
+	}
+
+	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards,
+			List<String> playerIds, Integer slot) {
 		this(type, userId, timestamp, value);
 		this.setCards(cards);
-    }
+	}
 
 	public int getType() {
 		return type;

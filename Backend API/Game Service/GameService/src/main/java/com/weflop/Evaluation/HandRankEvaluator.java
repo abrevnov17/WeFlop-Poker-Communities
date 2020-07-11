@@ -7,8 +7,8 @@ import com.weflop.Cards.Card;
 /**
  * HandRankEvaluator.java
  * 
- * Interface requiring implementing classes to, given table cards
- * and a users hand, to evaluate the hand.
+ * Interface requiring implementing classes to, given table cards and a users
+ * hand, to evaluate the hand.
  * 
  * @author abrevnov
  *

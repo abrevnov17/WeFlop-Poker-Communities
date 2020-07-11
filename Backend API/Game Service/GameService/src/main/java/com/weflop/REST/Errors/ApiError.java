@@ -34,7 +34,7 @@ public class ApiError {
 		this(status, ex);
 		this.message = message;
 	}
-	
+
 	ApiError(HttpStatus status, String message) {
 		this(status);
 		this.message = message;

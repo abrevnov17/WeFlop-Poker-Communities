@@ -3,8 +3,8 @@ package com.weflop.Networking;
 import com.weflop.Database.DomainObjects.PlayerPOJO;
 
 /**
- * CRUD object wrapping player information for another player (that is not
- * the current user). When updating game states, players need to be updated on
+ * CRUD object wrapping player information for another player (that is not the
+ * current user). When updating game states, players need to be updated on
  * players current bets as well as their respective states. However, we want to
  * omit information about player hands and balances from these players.
  * 
@@ -14,19 +14,20 @@ import com.weflop.Database.DomainObjects.PlayerPOJO;
 public class LimitedPlayerPOJO {
 
 	private String id;
-		
+
 	private float currentBet;
-	
+
 	private int state;
-	
+
 	public LimitedPlayerPOJO(String id, float currentBet, int state) {
 		this.id = id;
 		this.currentBet = currentBet;
 		this.state = state;
 	}
-	
+
 	/**
 	 * Converts a PlayerPOJO instance to a LimitedPlayerPOJO instance.
+	 * 
 	 * @param player
 	 * @return Corresponding instance of LimitedPlayerPOJO
 	 */

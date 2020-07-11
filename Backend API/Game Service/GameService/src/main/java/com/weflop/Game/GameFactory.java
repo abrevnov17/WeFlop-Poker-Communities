@@ -13,13 +13,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  */
 public class GameFactory {
-	
+
 	public static Map<String, Game> ID_TO_GAME;
-	
+
 	public GameFactory() {
 		ID_TO_GAME = new ConcurrentHashMap<String, Game>();
 	}
-	
+
 	/**
 	 * Creates a standard poker game and adds game to map of id's to games.
 	 * 

@@ -3,8 +3,7 @@ package com.weflop.Cards;
 /**
  * Card.java
  * 
- * A Card instance represents a card from a standard
- * 52-card deck.
+ * A Card instance represents a card from a standard 52-card deck.
  * 
  * @author abrevnov
  *

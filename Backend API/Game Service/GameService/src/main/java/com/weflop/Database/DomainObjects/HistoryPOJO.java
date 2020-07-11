@@ -6,9 +6,9 @@ import java.util.List;
  * CRUD object wrapping information about game history.
  */
 public class HistoryPOJO {
-	
+
 	private InitialStatePOJO initState;
-	
+
 	private List<ActionPOJO> actionsSequence;
 
 	public HistoryPOJO(InitialStatePOJO initState, List<ActionPOJO> actionsSequence) {

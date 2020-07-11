@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class InitialStatePOJO {
 	private List<PlayerPOJO> initPlayers;
-	
+
 	public InitialStatePOJO(List<PlayerPOJO> initPlayers) {
 		this.initPlayers = initPlayers;
 	}

@@ -32,7 +32,8 @@ import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 
 /**
- * Poker hand Evaluation algorithm based on the two plus two 7 card hand evaluation algorithm.
+ * Poker hand Evaluation algorithm based on the two plus two 7 card hand
+ * evaluation algorithm.
  * 
  * @author abrevnov
  */
@@ -40,56 +41,47 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 
 	private static final String HAND_RANKS = "/HandRanks.dat";
 	private int[] handRanks;
-	
+
 	private static TwoPlusTwoHandEvaluator instance;
-	
-	public TwoPlusTwoHandEvaluator(){
+
+	public TwoPlusTwoHandEvaluator() {
 		TwoPlusTwoHandsTableLoader reader = new TwoPlusTwoHandsTableLoader();
 		handRanks = reader.loadHandRankResource(HAND_RANKS);
 	}
-	
+
 	/**
-	 * The two plus two lookup table is very memory intensive.  You should only ever create
-	 * one instance of the class.  Use this method to keep the singleton pattern.
+	 * The two plus two lookup table is very memory intensive. You should only ever
+	 * create one instance of the class. Use this method to keep the singleton
+	 * pattern.
+	 * 
 	 * @return {@link TwoPlusTwoHandEvaluator} instance
 	 */
-	public static TwoPlusTwoHandEvaluator getInstance(){
-		if(instance == null){
+	public static TwoPlusTwoHandEvaluator getInstance() {
+		if (instance == null) {
 			instance = new TwoPlusTwoHandEvaluator();
 		}
 		return instance;
 	}
-	
+
 	@Override
 	public HandRank evaluate(List<Card> board, List<Card> hand) {
 		board.addAll(hand); // concatenating all cards
-		
+
 		int p = 53;
 		for (Card card : board) {
 			p = handRanks[p + cardToIntegerRepresentation(card)];
 		}
 		return new TwoPlusTwoHandRank(p);
 	}
-	
+
 	/**
 	 * 
 	 * Helper method that takes in a given card and returns its integer
-	 * representation (as used in the TwoPlusTwo algorithm). This representation
-	 * is as follows:
+	 * representation (as used in the TwoPlusTwo algorithm). This representation is
+	 * as follows:
 	 * 
-	 * "2c": 1,
-	 * "2d": 2,
-	 * "2h": 3,
-	 * "2s": 4,
-	 * "3c": 5,
-	 * "3d": 6,
-	 * ...
-	 * "kh": 47,
-	 * "ks": 48,
-	 * "ac": 49,
-	 * "ad": 50,
-	 * "ah": 51,
-	 * "as": 52
+	 * "2c": 1, "2d": 2, "2h": 3, "2s": 4, "3c": 5, "3d": 6, ... "kh": 47, "ks": 48,
+	 * "ac": 49, "ad": 50, "ah": 51, "as": 52
 	 * 
 	 * @param card
 	 * @return An integer encoding the card.
@@ -113,7 +105,7 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 			System.out.println("ERROR: Invalid card");
 			break;
 		}
-		
+
 		switch (card.getCardValue()) {
 		case TWO:
 			break;
@@ -157,7 +149,7 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 			System.out.println("ERROR: Invalid card");
 			break;
 		}
-		
+
 		return result;
 	}
 }

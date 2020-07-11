@@ -14,18 +14,19 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
-   @Override
-   protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-       String error = "Malformed JSON request";
-       return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
-   }
+	@Override
+	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		String error = "Malformed JSON request";
+		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, error, ex));
+	}
 
-   @ExceptionHandler(IllegalArgumentException.class)
-   protected ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex) {
-       return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, ex.getMessage()));
-   }
-   
-   private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
-       return new ResponseEntity<>(apiError, apiError.getStatus());
-   }
+	@ExceptionHandler(IllegalArgumentException.class)
+	protected ResponseEntity<Object> handleIllegalArgument(IllegalArgumentException ex) {
+		return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, ex.getMessage()));
+	}
+
+	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
+		return new ResponseEntity<>(apiError, apiError.getStatus());
+	}
 }

@@ -2,7 +2,6 @@ package com.weflop.Database.DomainObjects;
 
 import java.util.List;
 
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -16,33 +15,33 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class GameDocument {
 
 	// fixed attributes
-	
-	@Id 
+
+	@Id
 	private String id;
 
 	private int type;
-	
+
 	private long startTime;
-	
+
 	private float smallBlind;
 	private float bigBlind;
 
 	// dynamic attributes
-	
+
 	private List<CardPOJO> centerCards;
-	
+
 	private float pot;
 
 	private int dealerIndex;
-	
+
 	private List<PlayerPOJO> players;
-	
+
 	private List<SpectatorPOJO> spectators;
-	
+
 	private HistoryPOJO history;
-	
-	// Constructors: 
-	
+
+	// Constructors:
+
 	public GameDocument(String id, int type, long startTime, float smallBlind, float bigBlind,
 			List<CardPOJO> centerCards, float pot, int dealerIndex, List<PlayerPOJO> players,
 			List<SpectatorPOJO> spectators, HistoryPOJO history) {
@@ -59,9 +58,9 @@ public class GameDocument {
 		this.spectators = spectators;
 		this.history = history;
 	}
-	
+
 	// getters and setters
-	
+
 	public String getId() {
 		return id;
 	}

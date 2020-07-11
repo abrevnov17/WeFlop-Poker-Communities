@@ -8,7 +8,7 @@ package com.weflop.Game;
  */
 public enum GameType {
 	STANDARD_REPRESENTATION(0);
-	
+
 	private final int value;
 
 	GameType(int value) {

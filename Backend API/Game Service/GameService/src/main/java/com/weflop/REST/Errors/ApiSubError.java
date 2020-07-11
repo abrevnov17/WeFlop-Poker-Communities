@@ -1,3 +1,4 @@
 package com.weflop.REST.Errors;
 
-abstract public class ApiSubError { }
+abstract public class ApiSubError {
+}

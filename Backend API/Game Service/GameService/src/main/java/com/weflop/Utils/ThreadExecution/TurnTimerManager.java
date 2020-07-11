@@ -9,18 +9,19 @@ import com.weflop.Game.AbstractGame;
  *
  */
 public class TurnTimerManager implements Runnable {
-	
+
 	private AbstractGame game;
 	private int currentTurn;
 
-    public TurnTimerManager(AbstractGame game, int currentTurn) {
-        this.game = game;
-        this.currentTurn = currentTurn;
-    }
-	
+	public TurnTimerManager(AbstractGame game, int currentTurn) {
+		this.game = game;
+		this.currentTurn = currentTurn;
+	}
+
 	@Override
 	public void run() {
-		// when a timer has expired, we first check to see if the game turn has already advanced
+		// when a timer has expired, we first check to see if the game turn has already
+		// advanced
 		this.game.turnExpired(currentTurn);
 	}
 

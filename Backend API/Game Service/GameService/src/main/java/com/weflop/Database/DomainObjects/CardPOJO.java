@@ -8,7 +8,7 @@ package com.weflop.Database.DomainObjects;
  */
 public class CardPOJO {
 	private int suit;
-	
+
 	private int value;
 
 	public CardPOJO(int suit, int value) {

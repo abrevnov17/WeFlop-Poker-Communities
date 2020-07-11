@@ -9,18 +9,15 @@ package com.weflop.Cards;
  *
  */
 public enum Suit {
-	  HEARTS(0),
-	  CLUBS(1),
-	  SPADES(2),
-	  DIAMONDS(3);
+	HEARTS(0), CLUBS(1), SPADES(2), DIAMONDS(3);
 
-	  private final int value;
+	private final int value;
 
-	  Suit(int value) {
-	    this.value = value;
-	  }
+	Suit(int value) {
+		this.value = value;
+	}
 
-	  public int getValue() {
-	    return value;
-	  }
+	public int getValue() {
+		return value;
+	}
 }

@@ -3,25 +3,24 @@ package com.weflop.Game;
 import java.time.Duration;
 
 /**
- * A Turn is a wrapper-object that contains information regarding the
- * current term inside of a game.
+ * A Turn is a wrapper-object that contains information regarding the current
+ * term inside of a game.
  * 
  * @author abrevnov
  *
  */
 public class Turn {
-	
+
 	private int count; // number of turns since game start
 	private Player player;
 	private long startTime; // value of system timer in nanoseconds at start
-	
-	
+
 	public Turn(Player player, long startTime) {
 		this.setPlayer(player);
 		this.setStartTime(startTime);
 		this.setCount(0);
 	}
-	
+
 	public Turn(Player player, long startTime, int count) {
 		this.setPlayer(player);
 		this.setStartTime(startTime);
@@ -39,7 +38,7 @@ public class Turn {
 	synchronized public Duration getTimeElapsed(long currentTime) {
 		return Duration.ofNanos(currentTime - startTime);
 	}
-	
+
 	synchronized public Duration getTimeRemaining(long currentTime, Duration turnDuration) {
 		return turnDuration.minus(Duration.ofNanos(currentTime - startTime));
 	}
@@ -47,7 +46,7 @@ public class Turn {
 	synchronized public void fixTimeElapsed(long currentTime, Duration timeElapsed) {
 		this.startTime = currentTime - timeElapsed.toNanos();
 	}
-	
+
 	synchronized public long getStartTime() {
 		return startTime;
 	}

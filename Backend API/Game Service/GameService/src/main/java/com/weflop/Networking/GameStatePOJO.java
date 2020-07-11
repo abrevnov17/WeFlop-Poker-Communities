@@ -6,27 +6,27 @@ import com.weflop.Database.DomainObjects.CardPOJO;
 import com.weflop.Database.DomainObjects.PlayerPOJO;
 
 /**
- * CRUD class containing properties that are propogated to individual players inside
- * of game packets.
+ * CRUD class containing properties that are propogated to individual players
+ * inside of game packets.
  * 
  * @author abrevnov
  *
  */
 public class GameStatePOJO {
 	private String gameId;
-	
+
 	private List<CardPOJO> centerCards;
 	private float pot;
-		
+
 	private List<LimitedPlayerPOJO> otherPlayers;
 	private PlayerPOJO player;
-	
+
 	private String idOfTurn;
-	
+
 	private int epoch;
-	
-	public GameStatePOJO(String gameId, List<CardPOJO> centerCards, float pot, 
-			List<LimitedPlayerPOJO> otherPlayers, PlayerPOJO player, String idOfTurn, int epoch) {
+
+	public GameStatePOJO(String gameId, List<CardPOJO> centerCards, float pot, List<LimitedPlayerPOJO> otherPlayers,
+			PlayerPOJO player, String idOfTurn, int epoch) {
 		this.gameId = gameId;
 		this.centerCards = centerCards;
 		this.pot = pot;
@@ -35,7 +35,7 @@ public class GameStatePOJO {
 		this.idOfTurn = idOfTurn;
 		this.epoch = epoch;
 	}
-	
+
 	/* Getters and Setters */
 	public String getGameId() {
 		return gameId;

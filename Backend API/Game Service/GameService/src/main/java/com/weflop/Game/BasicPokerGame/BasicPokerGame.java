@@ -18,7 +18,7 @@ import com.weflop.Game.PlayerState;
 import com.weflop.Game.AbstractGame;
 
 /**
- * This class represents an actual Poker game following the 
+ * This class represents an actual Poker game following the
  * 
  * @author abrevnov
  *
@@ -27,22 +27,22 @@ public class BasicPokerGame extends AbstractGame {
 
 	private VariantRepresentation variant;
 	private Deck deck;
-	
+
 	/* Constructors */
-	
+
 	public BasicPokerGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
 		super(metadata, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
-	
-	public BasicPokerGame(GameCustomMetadata metadata, 
-			VariantRepresentation variant, Deck deck, HandRankEvaluator evaluator) {
+
+	public BasicPokerGame(GameCustomMetadata metadata, VariantRepresentation variant, Deck deck,
+			HandRankEvaluator evaluator) {
 		super(metadata, evaluator);
 		this.variant = variant;
 		this.deck = deck;
 	}
-	
+
 	/* Overrided methods from abstract superclass */
 
 	@Override
@@ -50,188 +50,182 @@ public class BasicPokerGame extends AbstractGame {
 		// locking game object
 		this.getLock().lock();
 
-		try {			
-			switch(action.getType()) {
-				case START:
-				{
-					Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
-					Assert.isTrue(!this.isStarted(), "Game has already begun");
+		try {
+			switch (action.getType()) {
+			case START: {
+				Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
+				Assert.isTrue(!this.isStarted(), "Game has already begun");
 
-					// initializing game history
-					InitialState state = new InitialState(this.getGroup().getPlayers());
-					this.setHistory(new History(state, new ArrayList<Action>()));
+				// initializing game history
+				InitialState state = new InitialState(this.getGroup().getPlayers());
+				this.setHistory(new History(state, new ArrayList<Action>()));
 
-					// start game clock
-					this.setStarted(true);
-					this.setStartTime(Instant.now());
+				// start game clock
+				this.setStarted(true);
+				this.setStartTime(Instant.now());
 
-					// start betting rounds
-					this.beginBettingRounds();
-					
-					// spawning a thread that periodically saves the game
-					spawnSaveGameThread();
-					
-				}
-					break;
-				case FOLD:
-				{
-					Assert.isTrue(this.isStarted(), "Game has not begun");
+				// start betting rounds
+				this.beginBettingRounds();
 
-					Player participant = this.getParticipantById(action.getPlayerId());
+				// spawning a thread that periodically saves the game
+				spawnSaveGameThread();
 
-					assertIsPlayerTurn(participant);
-					
-					// update player state to folded
-					participant.setState(PlayerState.FOLDED);
-					
-					// move on to next turn
-					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					
-					// propagate action to members of group
+			}
+				break;
+			case FOLD: {
+				Assert.isTrue(this.isStarted(), "Game has not begun");
+
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				assertIsPlayerTurn(participant);
+
+				// update player state to folded
+				participant.setState(PlayerState.FOLDED);
+
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case RAISE: {
+				Assert.isTrue(this.isStarted(), "Game has not begun");
+
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				assertIsPlayerTurn(participant);
+
+				// get bet and check that it is valid
+				float bet = action.getValue();
+				Assert.isTrue(participant.getCurrentBet() + bet > this.getRoundBet(),
+						"You have to raise more than the prior bet");
+
+				// update player balances and pot
+				participant.bet(bet); // verification performed in 'bet' method
+				this.addToPot(bet);
+
+				// update player state to waiting for turn
+				participant.setState(PlayerState.WAITING_FOR_TURN);
+
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case CALL: {
+				Assert.isTrue(this.isStarted(), "Game has not begun");
+
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				assertIsPlayerTurn(participant);
+
+				// update player balances and pot
+				float bet = action.getValue();
+				Assert.isTrue(participant.getCurrentBet() + bet == this.getRoundBet(),
+						"You have to call with same amount as prior bet");
+
+				// update player balances and pot
+				participant.bet(bet); // verification performed in 'bet' method
+				this.addToPot(bet);
+
+				// update player state to waiting for turn
+				participant.setState(PlayerState.WAITING_FOR_TURN);
+
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case CHECK: {
+				Assert.isTrue(this.isStarted(), "Game has not begun");
+
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				assertIsPlayerTurn(participant);
+				// update player state to waiting for turn
+				participant.setState(PlayerState.WAITING_FOR_TURN);
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case TURN_TIMEOUT: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				assertIsPlayerTurn(participant);
+				// we handle timeouts the same way as folding
+
+				// update player state to folded
+				participant.setState(PlayerState.FOLDED);
+
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case JOIN: {
+				// add player as spectator
+				this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
+
+				// need to send the player the current game state
+				Player participant = this.getParticipantById(action.getPlayerId());
+				this.sendUserGameState(participant);
+			}
+				break;
+			case SIT: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot()); // helper method performs
+																							// necessary validation
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case STAND: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				// transition player from player to spectator
+				this.getGroup().movePlayerToSpectator(participant);
+
+				// propagate action to members of group
+				this.propagateAction(action);
+			}
+				break;
+			case DISCONNECT: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+
+				this.getGroup().deleteParticipant(participant);
+
+				// propagate action to members of group if not spectator
+				if (participant.isPlaying()) {
 					this.propagateAction(action);
 				}
-					break;
-				case RAISE:
-				{
-					Assert.isTrue(this.isStarted(), "Game has not begun");
-
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					assertIsPlayerTurn(participant);
-					
-					// get bet and check that it is valid
-					float bet = action.getValue();
-					Assert.isTrue(participant.getCurrentBet() + bet > this.getRoundBet(), "You have to raise more than the prior bet");
-					
-					// update player balances and pot
-					participant.bet(bet); // verification performed in 'bet' method
-					this.addToPot(bet);
-					
-					// update player state to waiting for turn
-					participant.setState(PlayerState.WAITING_FOR_TURN);
-					
-					// move on to next turn
-					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					
-					// propagate action to members of group
-					this.propagateAction(action);
-				}
-					break;
-				case CALL:
-				{
-					Assert.isTrue(this.isStarted(), "Game has not begun");
-
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					assertIsPlayerTurn(participant);
-					
-					// update player balances and pot
-					float bet = action.getValue();
-					Assert.isTrue(participant.getCurrentBet() + bet == this.getRoundBet(), "You have to call with same amount as prior bet");
-					
-					// update player balances and pot
-					participant.bet(bet); // verification performed in 'bet' method
-					this.addToPot(bet);
-
-					// update player state to waiting for turn
-					participant.setState(PlayerState.WAITING_FOR_TURN);
-					
-					// move on to next turn
-					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					
-					// propagate action to members of group
-					this.propagateAction(action);
-				}
-					break;
-				case CHECK:
-				{
-					Assert.isTrue(this.isStarted(), "Game has not begun");
-
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					assertIsPlayerTurn(participant);
-					// update player state to waiting for turn
-					participant.setState(PlayerState.WAITING_FOR_TURN);
-					
-					// propagate action to members of group
-					this.propagateAction(action);
-				}
-					break;
-				case TURN_TIMEOUT:
-				{
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					assertIsPlayerTurn(participant);
-					// we handle timeouts the same way as folding
-
-					// update player state to folded
-					participant.setState(PlayerState.FOLDED);
-					
-					// move on to next turn
-					this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-					
-					// propagate action to members of group
-					this.propagateAction(action);
-				}
-					break;
-				case JOIN:
-				{
-					// add player as spectator
-					this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
-					
-					// need to send the player the current game state
-					Player participant = this.getParticipantById(action.getPlayerId());
-					this.sendUserGameState(participant);
-				}
-					break;
-				case SIT:
-				{
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot()); // helper method performs necessary validation
-					
-					// propagate action to members of group
-					this.propagateAction(action);
-				}
-					break;
-				case STAND:
-				{
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					// transition player from player to spectator
-					this.getGroup().movePlayerToSpectator(participant);
-					
-					// propagate action to members of group
-					this.propagateAction(action);
-				}
-					break;
-				case DISCONNECT:
-				{
-					Player participant = this.getParticipantById(action.getPlayerId());
-
-					this.getGroup().deleteParticipant(participant);
-					
-					// propagate action to members of group if not spectator
-					if (participant.isPlaying()) {
-						this.propagateAction(action);
-					}
-				}
-					break;
-				default:
-					throw new Exception("Unsopported action for this game mode");
+			}
+				break;
+			default:
+				throw new Exception("Unsopported action for this game mode");
 			}
 		} finally {
 			// releasing game lock
 			this.getLock().unlock();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Deals new hands to each player
 	 * 
-	 * @param Boolean describing whether to deal all players 
-	 * new hands and clear old center cards.
+	 * @param Boolean
+	 *            describing whether to deal all players new hands and clear old
+	 *            center cards.
 	 */
 	@Override
 	protected void deal(boolean dealNewHands) {
@@ -243,35 +237,35 @@ public class BasicPokerGame extends AbstractGame {
 			int numDealt = this.variant.getNumDealt();
 			for (Player player : this.getGroup().getPlayers()) {
 				player.discardHand(); // discarding any old hands
-				for (int i=0; i < numDealt; i++) {
+				for (int i = 0; i < numDealt; i++) {
 					player.addCard(deck.dealCard());
 				}
-				
+
 				if (numDealt > 0) {
 					// sending message to player with new cards
 					this.propagateAction(new Action(ActionType.PLAYER_DEAL, player.getId(), player.getCards()));
 				}
 			}
-			
+
 			this.discardCenterCards();
-			
+
 			if (numDealt > 0) {
 				this.incrementEpoch();
 			}
 		}
-		
+
 		// deal center cards
 		int newCenterCards = this.variant.getCardDealtBeforeRound(this.getRound());
-		for (int i=0; i < newCenterCards; i++) {
+		for (int i = 0; i < newCenterCards; i++) {
 			this.addToCenterCards(deck.dealCard());
 		}
-		
+
 		// messaging players regarding new center cards
 		if (newCenterCards > 0) {
 			this.propagateAction(new Action(ActionType.CENTER_DEAL, null, this.getCenterCards()));
 			this.incrementEpoch();
 		}
-		
+
 		// updating round
 		this.incrementRound();
 	}

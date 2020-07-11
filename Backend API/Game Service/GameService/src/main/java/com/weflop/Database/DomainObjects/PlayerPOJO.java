@@ -11,17 +11,17 @@ import java.util.List;
 public class PlayerPOJO {
 
 	private String id;
-	
+
 	private float balance;
-	
+
 	private float currentBet;
 
 	private List<CardPOJO> cards;
-	
+
 	private int state;
-	
+
 	private int slot;
-	
+
 	public PlayerPOJO(String id, float balance, float currentBet, List<CardPOJO> cards, int state, int slot) {
 		this.id = id;
 		this.balance = balance;
@@ -66,7 +66,7 @@ public class PlayerPOJO {
 	public int getState() {
 		return state;
 	}
-	
+
 	public void setState(int state) {
 		this.state = state;
 	}

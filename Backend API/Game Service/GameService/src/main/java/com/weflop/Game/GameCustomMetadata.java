@@ -3,8 +3,8 @@ package com.weflop.Game;
 import java.time.Duration;
 
 /**
- * Defines class that acts as a wrapper for information that users
- * can manually define when creating a game. For instance, names of tables, game owners, 
+ * Defines class that acts as a wrapper for information that users can manually
+ * define when creating a game. For instance, names of tables, game owners,
  * admins, etc... should all be stored in this class.
  * 
  * @author abrevnov
@@ -19,10 +19,10 @@ public class GameCustomMetadata {
 	private int tableSize;
 	private String createdBy;
 	private GameType type;
-	
-	
+
 	/**
 	 * Constructor used for createing quick games.
+	 * 
 	 * @param smallBlind
 	 * @param createdBy
 	 * @param type
@@ -31,13 +31,13 @@ public class GameCustomMetadata {
 		this.name = null;
 		this.description = null;
 		this.smallBlind = smallBlind;
-		this.bigBlind = smallBlind*2;
+		this.bigBlind = smallBlind * 2;
 		this.turnDuration = Duration.ofSeconds(90);
 		this.tableSize = 9;
 		this.createdBy = createdBy;
 		this.type = GameType.STANDARD_REPRESENTATION;
 	}
-	
+
 	public GameCustomMetadata(String name, String description, float smallBlind, float bigBlind, Duration turnDuration,
 			int tableSize, String createdBy, GameType type) {
 		this.name = name;
@@ -113,5 +113,5 @@ public class GameCustomMetadata {
 	public void setType(GameType type) {
 		this.type = type;
 	}
-	
+
 }

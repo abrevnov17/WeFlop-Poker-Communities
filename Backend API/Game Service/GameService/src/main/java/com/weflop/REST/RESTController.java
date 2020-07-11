@@ -15,24 +15,24 @@ public class RESTController {
 
 	@PostMapping("/create-game")
 	@ResponseBody
-	public String createGame(@RequestParam(name="user_id", required=true) String userId,
-			@RequestParam(name="small_blind", required=true) float smallBlind) {
-		
+	public String createGame(@RequestParam(name = "user_id", required = true) String userId,
+			@RequestParam(name = "small_blind", required = true) float smallBlind) {
+
 		if (smallBlind < 0.5) {
 			throw new IllegalArgumentException("Small blind must be greater than or equal to 0.5");
 		}
-		
+
 		return GameFactory.generateStandardPokerGame(userId, smallBlind); // returning id of newly created game
 	}
-	
+
 	@GetMapping("/game-metadata")
 	@ResponseBody
-	public GameCustomMetadata getGameMetadata(@RequestParam(name="game_id", required=true) String gameId) {
+	public GameCustomMetadata getGameMetadata(@RequestParam(name = "game_id", required = true) String gameId) {
 		Game game = GameFactory.ID_TO_GAME.get(gameId);
 		if (game == null) {
 			throw new IllegalArgumentException("No game exists with id: " + gameId);
 		}
-		
+
 		return game.getGameMetadata();
 	}
 }
