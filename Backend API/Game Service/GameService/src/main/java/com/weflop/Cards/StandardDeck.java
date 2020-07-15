@@ -27,8 +27,8 @@ public class StandardDeck implements Deck {
 		// initialize an UNSHUFFLED deck of cards
 		deck = new ArrayList<Card>();
 		for (int suitInt = 0; suitInt <= 3; suitInt++) {
-			for (int cardValueInt = 1; cardValueInt <= 13; cardValueInt++) {
-				deck.add(new Card(suitInts[cardValueInt], cardValueInts[cardValueInt]));
+			for (int cardValueInt = 0; cardValueInt <= 12; cardValueInt++) {
+				deck.add(new Card(suitInts[suitInt], cardValueInts[cardValueInt]));
 			}
 		}
 	}

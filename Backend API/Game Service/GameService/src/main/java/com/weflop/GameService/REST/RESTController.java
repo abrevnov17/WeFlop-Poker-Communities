@@ -1,16 +1,17 @@
-package com.weflop.REST;
+package com.weflop.GameService.REST;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.weflop.Game.Game;
 import com.weflop.Game.GameCustomMetadata;
 import com.weflop.Game.GameFactory;
 
-@Controller
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@RestController
 public class RESTController {
 
 	@PostMapping("/create-game")

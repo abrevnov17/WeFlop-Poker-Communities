@@ -1,4 +1,4 @@
-package com.weflop.REST.Errors;
+package com.weflop.GameService.REST.Errors;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.core.Ordered;

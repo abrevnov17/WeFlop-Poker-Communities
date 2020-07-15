@@ -39,7 +39,7 @@ import com.weflop.Evaluation.HandRankEvaluator;
  */
 public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 
-	private static final String HAND_RANKS = "/HandRanks.dat";
+	private static final String HAND_RANKS = "data/evaluator_data/TwoPlusTwo/HandRanks.dat";
 	private int[] handRanks;
 
 	private static TwoPlusTwoHandEvaluator instance;

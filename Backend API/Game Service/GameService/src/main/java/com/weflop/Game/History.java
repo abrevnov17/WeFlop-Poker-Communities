@@ -3,8 +3,8 @@ package com.weflop.Game;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.weflop.Database.DomainObjects.ActionPOJO;
-import com.weflop.Database.DomainObjects.HistoryPOJO;
+import com.weflop.GameService.Database.DomainObjects.ActionPOJO;
+import com.weflop.GameService.Database.DomainObjects.HistoryPOJO;
 
 /**
  * Describes history of game.

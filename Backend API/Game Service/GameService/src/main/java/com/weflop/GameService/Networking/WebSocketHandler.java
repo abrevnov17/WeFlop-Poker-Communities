@@ -1,9 +1,10 @@
-package com.weflop.Networking;
+package com.weflop.GameService.Networking;
 
 import java.io.IOException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.stereotype.Component;
@@ -23,7 +24,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
 	private static List<WebSocketSession> sessions = new CopyOnWriteArrayList<WebSocketSession>();
 
-	public static Map<WebSocketSession, String> sessionToPlayerId;
+	public static Map<WebSocketSession, String> sessionToPlayerId = new ConcurrentHashMap<WebSocketSession, String>();
 
 	@Override
 	public void handleTextMessage(WebSocketSession session, TextMessage message)

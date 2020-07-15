@@ -14,16 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.TextMessage;
 
 import com.weflop.Cards.Card;
-import com.weflop.Database.GameRepository;
-import com.weflop.Database.DomainObjects.CardPOJO;
-import com.weflop.Database.DomainObjects.GameDocument;
-import com.weflop.Database.DomainObjects.PlayerPOJO;
-import com.weflop.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
-import com.weflop.Networking.GameStatePOJO;
-import com.weflop.Networking.LimitedPlayerPOJO;
-import com.weflop.Networking.MessageSendingHandlers;
+import com.weflop.GameService.Database.GameRepository;
+import com.weflop.GameService.Database.DomainObjects.CardPOJO;
+import com.weflop.GameService.Database.DomainObjects.GameDocument;
+import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
+import com.weflop.GameService.Networking.GameStatePOJO;
+import com.weflop.GameService.Networking.LimitedPlayerPOJO;
+import com.weflop.GameService.Networking.MessageSendingHandlers;
 import com.weflop.Utils.ThreadExecution.TurnTimerManager;
 
 import java.util.concurrent.Executors;
@@ -192,7 +192,7 @@ public abstract class AbstractGame implements Game {
 			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch,
 					millisecondsRemaining);
 		} catch (Exception e) {
-			System.out.println(e.getStackTrace());
+			e.printStackTrace();
 		}
 	}
 
@@ -437,8 +437,10 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void propagateAction(Action action) {
 		// add action to game history
-		this.history.appendActionToSequence(action);
-		this.incrementEpoch();
+		if (started) {
+			this.history.appendActionToSequence(action);
+			this.incrementEpoch();
+		}
 
 		// propagate action to members of group
 		try {
@@ -457,7 +459,7 @@ public abstract class AbstractGame implements Game {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println(e.getStackTrace());
+			e.printStackTrace();
 		}
 	}
 
@@ -473,7 +475,7 @@ public abstract class AbstractGame implements Game {
 		try {
 			MessageSendingHandlers.sendGameState(player, getGameStatePOJO(player));
 		} catch (Exception e) {
-			System.out.println(e.getStackTrace());
+			e.printStackTrace();
 		}
 	}
 
@@ -494,7 +496,7 @@ public abstract class AbstractGame implements Game {
 				.map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPlayerPOJO())).collect(Collectors.toList());
 
 		return new GameStatePOJO(this.getGameId(), centerCardsPOJO, pot, otherPlayers, player.toPlayerPOJO(),
-				turn.getPlayer().getId(), this.getEpoch());
+				turn != null ? turn.getPlayer().getId() : null, this.getEpoch());
 	}
 
 	/* Getters and setters for universal game properties */

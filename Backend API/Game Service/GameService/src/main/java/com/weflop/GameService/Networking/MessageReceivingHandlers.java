@@ -1,4 +1,4 @@
-package com.weflop.Networking;
+package com.weflop.GameService.Networking;
 
 import com.google.gson.JsonObject;
 import com.weflop.Game.Action;
@@ -22,8 +22,10 @@ public class MessageReceivingHandlers {
 
 		// adding player to game
 		try {
-			game.performAction(new Action(ActionType.JOIN, playerId));
+			game.performAction(new Action(ActionType.JOIN, playerId, session));
 		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("failing to join");
 			session.sendMessage(new TextMessage("Error attempting to join game."));
 		}
 
@@ -37,10 +39,19 @@ public class MessageReceivingHandlers {
 
 		// handling various action types
 		switch (type) {
+		case START: {
+			try {
+				game.performAction(new Action(ActionType.START, playerId));
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to start game."));
+			}
+		}
 		case CALL: {
 			try {
 				game.performAction(new Action(ActionType.CALL, playerId));
 			} catch (Exception e) {
+				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to call."));
 			}
 		}
@@ -49,6 +60,7 @@ public class MessageReceivingHandlers {
 			try {
 				game.performAction(new Action(ActionType.CHECK, playerId));
 			} catch (Exception e) {
+				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to check."));
 			}
 		}
@@ -57,6 +69,7 @@ public class MessageReceivingHandlers {
 			try {
 				game.performAction(new Action(ActionType.FOLD, playerId));
 			} catch (Exception e) {
+				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to fold."));
 			}
 		}
@@ -66,14 +79,18 @@ public class MessageReceivingHandlers {
 				float amount = payload.get("value").getAsFloat();
 				game.performAction(new Action(ActionType.RAISE, playerId, amount));
 			} catch (Exception e) {
+				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to raise."));
 			}
 		}
 			break;
 		case SIT: {
 			try {
-				game.performAction(new Action(ActionType.SIT, playerId));
+				int slot = payload.get("slot").getAsInt();
+				float buyIn = payload.get("buy_in").getAsFloat();
+				game.performAction(new Action(ActionType.SIT, playerId, slot, buyIn));
 			} catch (Exception e) {
+				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to sit."));
 			}
 		}
@@ -82,6 +99,7 @@ public class MessageReceivingHandlers {
 			try {
 				game.performAction(new Action(ActionType.STAND, playerId));
 			} catch (Exception e) {
+				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to stand."));
 			}
 		}

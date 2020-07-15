@@ -27,6 +27,8 @@ THE SOFTWARE.
 package com.weflop.Evaluation.TwoPlusTwo;
 
 import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -45,22 +47,24 @@ public class TwoPlusTwoHandsTableLoader {
 	 * Load hand rank lookup table for poker hands. This will load the file and do
 	 * the byte conversions so we get a nice integer array back.
 	 * 
-	 * @param name
-	 *            file name of the precomputed hand rank file
+	 * @param path
+	 *            path to the precomputed hand rank file
 	 * @return integer array of hand rank lookup values in accordance with the 2+2
 	 *         hand evaluation algorithm.
 	 * @throws RuntimeException
 	 *             If loading this file fails, prepare to crash because hand evals
 	 *             will not work
 	 */
-	public int[] loadHandRankResource(String name) throws RuntimeException {
+	public int[] loadHandRankResource(String path) throws RuntimeException {
 		int handRankArray[] = new int[HAND_RANK_SIZE];
 		try {
 			int tableSize = HAND_RANK_SIZE * 4;
 			byte[] b = new byte[tableSize];
 			InputStream br = null;
 			try {
-				br = new BufferedInputStream(TwoPlusTwoHandsTableLoader.class.getResourceAsStream(name));
+				FileInputStream fis = new FileInputStream(new File(path));
+				br = new BufferedInputStream(fis);
+
 				int bytesRead = br.read(b, 0, tableSize);
 				if (bytesRead != tableSize) {
 					throw new IOException("Read " + bytesRead + " bytes out of " + tableSize);
@@ -73,7 +77,7 @@ public class TwoPlusTwoHandsTableLoader {
 			}
 			return handRankArray;
 		} catch (IOException e) {
-			throw new RuntimeException("cannot read resource " + name, e);
+			throw new RuntimeException("cannot read resource " + path, e);
 		}
 	}
 

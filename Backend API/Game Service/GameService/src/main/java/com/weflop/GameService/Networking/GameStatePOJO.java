@@ -1,9 +1,9 @@
-package com.weflop.Networking;
+package com.weflop.GameService.Networking;
 
 import java.util.List;
 
-import com.weflop.Database.DomainObjects.CardPOJO;
-import com.weflop.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Database.DomainObjects.CardPOJO;
+import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 
 /**
  * CRUD class containing properties that are propogated to individual players

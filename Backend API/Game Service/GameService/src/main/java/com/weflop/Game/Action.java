@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.weflop.Cards.Card;
-import com.weflop.Database.DomainObjects.ActionPOJO;
-import com.weflop.Database.DomainObjects.CardPOJO;
+import com.weflop.GameService.Database.DomainObjects.ActionPOJO;
+import com.weflop.GameService.Database.DomainObjects.CardPOJO;
 
 /**
  * Actions have an associated type and an optional parameter value (as some
@@ -45,8 +45,8 @@ public class Action {
 		this.setValue(value);
 	}
 
-	public Action(ActionType type, String playerId, Integer slot) {
-		this(type, playerId);
+	public Action(ActionType type, String playerId, Integer slot, float value) {
+		this(type, playerId, value);
 		this.setSlot(slot);
 	}
 
@@ -58,6 +58,11 @@ public class Action {
 	public Action(ActionType type, List<String> playerIds) {
 		this.setType(type);
 		this.setPlayerIds(playerIds);
+	}
+	
+	public Action(ActionType type, String playerId, WebSocketSession session) {
+		this(type, playerId);
+		this.setSession(session);
 	}
 
 	/* Methods */

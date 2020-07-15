@@ -8,6 +8,7 @@ import org.springframework.util.Assert;
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
 import com.weflop.Evaluation.HandRankEvaluator;
+import com.weflop.Game.AbstractGame;
 import com.weflop.Game.Action;
 import com.weflop.Game.ActionType;
 import com.weflop.Game.GameCustomMetadata;
@@ -15,7 +16,6 @@ import com.weflop.Game.History;
 import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
 import com.weflop.Game.PlayerState;
-import com.weflop.Game.AbstractGame;
 
 /**
  * This class represents an actual Poker game following the
@@ -56,6 +56,8 @@ public class BasicPokerGame extends AbstractGame {
 				Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
 				Assert.isTrue(!this.isStarted(), "Game has already begun");
 
+				System.out.printf("Player %s starting\n", action.getPlayerId());
+
 				// initializing game history
 				InitialState state = new InitialState(this.getGroup().getPlayers());
 				this.setHistory(new History(state, new ArrayList<Action>()));
@@ -69,6 +71,9 @@ public class BasicPokerGame extends AbstractGame {
 
 				// spawning a thread that periodically saves the game
 				spawnSaveGameThread();
+				
+				// spawning a thread that updates player states
+				spawnSynchronizationPacketSendingThread();
 
 			}
 				break;
@@ -173,17 +178,25 @@ public class BasicPokerGame extends AbstractGame {
 			case JOIN: {
 				// add player as spectator
 				this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
+				
+				System.out.printf("Player %s joining game\n", action.getPlayerId());
 
 				// need to send the player the current game state
 				Player participant = this.getParticipantById(action.getPlayerId());
+				System.out.println(participant);
+				System.out.println(participant.getSession());
 				this.sendUserGameState(participant);
 			}
 				break;
 			case SIT: {
 				Player participant = this.getParticipantById(action.getPlayerId());
+				
 
-				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot()); // helper method performs
-																							// necessary validation
+				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot());
+											
+				participant.setBalance(action.getValue()); // updating player balance based on buy-in
+
+				System.out.printf("Player %s sitting\n", action.getPlayerId());
 
 				// propagate action to members of group
 				this.propagateAction(action);

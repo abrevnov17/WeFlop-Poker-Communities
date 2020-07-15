@@ -1,4 +1,4 @@
-package com.weflop.REST.Errors;
+package com.weflop.GameService.REST.Errors;
 
 import java.time.LocalDateTime;
 import java.util.List;

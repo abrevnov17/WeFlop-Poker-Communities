@@ -3,8 +3,8 @@ package com.weflop.Game;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.weflop.Database.DomainObjects.InitialStatePOJO;
-import com.weflop.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Database.DomainObjects.InitialStatePOJO;
+import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 
 /**
  * Describes initial state of game.

@@ -1,4 +1,4 @@
-package com.weflop.REST.Errors;
+package com.weflop.GameService.REST.Errors;
 
 public class ApiValidationError extends ApiSubError {
 	private String object;

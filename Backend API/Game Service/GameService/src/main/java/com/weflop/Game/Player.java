@@ -8,9 +8,9 @@ import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.weflop.Cards.Card;
-import com.weflop.Database.DomainObjects.CardPOJO;
-import com.weflop.Database.DomainObjects.PlayerPOJO;
-import com.weflop.Database.DomainObjects.SpectatorPOJO;
+import com.weflop.GameService.Database.DomainObjects.CardPOJO;
+import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
 
 /**
  * Player.java

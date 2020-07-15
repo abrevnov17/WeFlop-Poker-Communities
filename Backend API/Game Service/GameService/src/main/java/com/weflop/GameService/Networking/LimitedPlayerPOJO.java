@@ -1,6 +1,6 @@
-package com.weflop.Networking;
+package com.weflop.GameService.Networking;
 
-import com.weflop.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 
 /**
  * CRUD object wrapping player information for another player (that is not the

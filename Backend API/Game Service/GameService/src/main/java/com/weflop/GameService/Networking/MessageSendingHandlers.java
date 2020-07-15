@@ -1,14 +1,14 @@
-package com.weflop.Networking;
+package com.weflop.GameService.Networking;
 
 import java.io.IOException;
 
 import org.springframework.web.socket.TextMessage;
 
 import com.google.gson.JsonObject;
-import com.weflop.Database.DomainObjects.ActionPOJO;
 import com.weflop.Game.Action;
 import com.weflop.Game.Group;
 import com.weflop.Game.Player;
+import com.weflop.GameService.Database.DomainObjects.ActionPOJO;
 
 public class MessageSendingHandlers {
 	/**
@@ -41,7 +41,7 @@ public class MessageSendingHandlers {
 
 		message.add("payload", payload);
 
-		String messageString = message.getAsString();
+		String messageString = message.toString();
 
 		// propagating message to players
 		for (Player player : group.getPlayers()) {
@@ -85,7 +85,7 @@ public class MessageSendingHandlers {
 
 		message.add("payload", payload);
 
-		String messageString = message.getAsString();
+		String messageString = message.toString();
 
 		// propagating message to players
 		player.getSession().sendMessage(new TextMessage(messageString));
@@ -113,10 +113,10 @@ public class MessageSendingHandlers {
 		JsonObject message = new JsonObject();
 		message.addProperty("type", MessageType.GAME_STATE.getValue());
 		message.addProperty("payload", WebSocketHandler.GSON.toJson(gameState));
+		
+		String messageString = message.toString();
 
-		String messageString = message.getAsString();
-
-		// propogating state information to player
+		// propagating state information to player
 		player.getSession().sendMessage(new TextMessage(messageString));
 	}
 
@@ -134,7 +134,7 @@ public class MessageSendingHandlers {
 
 		message.add("payload", payload);
 
-		String messageString = message.getAsString();
+		String messageString = message.toString();
 
 		// propagating message to players
 		for (Player player : group.getPlayers()) {

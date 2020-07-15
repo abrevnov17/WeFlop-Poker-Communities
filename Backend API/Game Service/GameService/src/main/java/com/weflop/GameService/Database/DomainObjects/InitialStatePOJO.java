@@ -1,4 +1,4 @@
-package com.weflop.Database.DomainObjects;
+package com.weflop.GameService.Database.DomainObjects;
 
 import java.util.List;
 

@@ -1,3 +1,4 @@
 node_modules
 Game Service/GameService/data/evaluator_data/TwoPlusTwo/HandRanks.dat
 *.dat
+Backend API/Game Service/GameService/data/db/**

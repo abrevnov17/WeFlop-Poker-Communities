@@ -1,4 +1,4 @@
-package com.weflop.Networking;
+package com.weflop.GameService.Networking;
 
 public enum MessageType {
 	JOIN_GAME(0), ACTION(1), GAME_STATE(2), SYNCHRONIZATION(3);
