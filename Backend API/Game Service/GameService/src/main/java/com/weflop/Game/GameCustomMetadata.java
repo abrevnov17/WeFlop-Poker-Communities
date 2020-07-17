@@ -32,7 +32,7 @@ public class GameCustomMetadata {
 		this.description = null;
 		this.smallBlind = smallBlind;
 		this.bigBlind = smallBlind * 2;
-		this.turnDuration = Duration.ofSeconds(90);
+		this.turnDuration = Duration.ofSeconds(60);
 		this.tableSize = 9;
 		this.createdBy = createdBy;
 		this.type = GameType.STANDARD_REPRESENTATION;

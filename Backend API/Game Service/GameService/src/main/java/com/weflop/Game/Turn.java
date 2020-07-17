@@ -26,6 +26,18 @@ public class Turn {
 		this.setStartTime(startTime);
 		this.setCount(count);
 	}
+	
+	/**
+	 * Takes in a player instance and increments the turn and sets the given
+	 * player to be the player associated with the turn. Updates turn time
+	 * @param player
+	 */
+	synchronized public void nextTurn(Player player) {
+		this.setPlayer(player);
+		this.setStartTime(System.nanoTime());
+		this.setCount(this.getCount() + 1);
+		this.getPlayer().setState(PlayerState.CURRENT_TURN);
+	}
 
 	synchronized public Player getPlayer() {
 		return player;

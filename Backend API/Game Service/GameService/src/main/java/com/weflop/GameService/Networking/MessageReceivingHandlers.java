@@ -47,6 +47,7 @@ public class MessageReceivingHandlers {
 				session.sendMessage(new TextMessage("Error attempting to start game."));
 			}
 		}
+			break;
 		case CALL: {
 			try {
 				game.performAction(new Action(ActionType.CALL, playerId));

@@ -65,6 +65,9 @@ public class BasicPokerGame extends AbstractGame {
 				// start game clock
 				this.setStarted(true);
 				this.setStartTime(Instant.now());
+				
+				// propagate action that game has started to all members of group
+				this.propagateAction(new Action(ActionType.START, action.getPlayerId()));
 
 				// start betting rounds
 				this.beginBettingRounds();
@@ -74,7 +77,6 @@ public class BasicPokerGame extends AbstractGame {
 				
 				// spawning a thread that updates player states
 				spawnSynchronizationPacketSendingThread();
-
 			}
 				break;
 			case FOLD: {
@@ -160,6 +162,7 @@ public class BasicPokerGame extends AbstractGame {
 			}
 				break;
 			case TURN_TIMEOUT: {
+				System.out.println("inside turn timeout");
 				Player participant = this.getParticipantById(action.getPlayerId());
 
 				assertIsPlayerTurn(participant);
@@ -244,8 +247,9 @@ public class BasicPokerGame extends AbstractGame {
 	protected void deal(boolean dealNewHands) {
 		// shuffling deck
 		deck.shuffle();
-
+		System.out.println("dealing...");
 		if (dealNewHands) {
+			System.out.println("dealing new hands");
 			// deal cards to players
 			int numDealt = this.variant.getNumDealt();
 			for (Player player : this.getGroup().getPlayers()) {
@@ -261,14 +265,11 @@ public class BasicPokerGame extends AbstractGame {
 			}
 
 			this.discardCenterCards();
-
-			if (numDealt > 0) {
-				this.incrementEpoch();
-			}
 		}
 
 		// deal center cards
-		int newCenterCards = this.variant.getCardDealtBeforeRound(this.getRound());
+		int newCenterCards = this.variant.getCardsDealtBeforeRound(this.getRound());
+		System.out.printf("dealing %d center cards for round %d\n", newCenterCards, this.getRound());
 		for (int i = 0; i < newCenterCards; i++) {
 			this.addToCenterCards(deck.dealCard());
 		}
@@ -278,9 +279,6 @@ public class BasicPokerGame extends AbstractGame {
 			this.propagateAction(new Action(ActionType.CENTER_DEAL, null, this.getCenterCards()));
 			this.incrementEpoch();
 		}
-
-		// updating round
-		this.incrementRound();
 	}
 
 	/**
@@ -292,6 +290,19 @@ public class BasicPokerGame extends AbstractGame {
 		if (this.getRound() == this.variant.getBettingRounds()) {
 			return true;
 		}
-		return false;
+		
+		// if all players have folded or are all-in, the round is over
+		int count = 0;
+		for (Player player : getGroup().getPlayers()) {
+			if (!(player.getState() == PlayerState.FOLDED || player.getState() == PlayerState.ALL_IN)) {
+				count++;
+			}
+		}
+		
+		if (count > 1) {
+			return false;
+		}
+		
+		return true;
 	}
 }

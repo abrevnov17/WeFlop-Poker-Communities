@@ -15,7 +15,10 @@ public enum ActionType {
 	// Outgoing actions:
 	PLAYER_DEAL(10), // cards dealt to individual player
 	CENTER_DEAL(11), // cards dealt to center
-	POT_WON(12); // some player has won a round (and the current pot)
+	POT_WON(12), // some player has won a round (and the current pot)
+	SMALL_BLIND(13), // player has paid small blind
+	BIG_BLIND(14); // player has paid big blind
+	
 
 	private final int value;
 

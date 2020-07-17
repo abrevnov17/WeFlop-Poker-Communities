@@ -81,7 +81,7 @@ public abstract class AbstractGame implements Game {
 		this.dealerIndex = 0;
 		this.setStartTime(null); // do not start clock till start() called
 		this.setGroup(new Group(metadata.getTableSize()));
-		this.turn = null; // is not initialized until game starts
+		this.turn = null; // not updated until game begins
 		this.setStarted(false);
 		this.setLock(new ReentrantLock());
 		this.setRoundBet(this.metadata.getBigBlind());
@@ -113,8 +113,10 @@ public abstract class AbstractGame implements Game {
 	 * Handler for turn expirations. Called by a single thread after execution.
 	 */
 	synchronized public void turnExpired(int turnCount) {
+		System.out.println("Turn expired handler called...");
 		// check to see if provided turn count matches current turn
 		if (turnCount != this.turn.getCount()) {
+			System.out.println("Stale turn expiration...");
 			return; // this call is being applied to a stale turn
 		}
 
@@ -123,6 +125,7 @@ public abstract class AbstractGame implements Game {
 		// likely
 		// be handled in a similar manner as to a fold)
 		try {
+			System.out.println("Performing turn timeout...");
 			this.performAction(new Action(ActionType.TURN_TIMEOUT, this.turn.getPlayer().getId()));
 		} catch (Exception e) {
 			// we do not need to do anything. this is only possible in an incredibly
@@ -152,7 +155,7 @@ public abstract class AbstractGame implements Game {
 		Runnable turnExpirationHandler = new TurnTimerManager(this, this.turn.getCount());
 
 		// resent packets after the duration of the turn has passed
-		threadExecutor.schedule(turnExpirationHandler, metadata.getTurnDuration().getSeconds(), TimeUnit.SECONDS);
+		threadExecutor.schedule(turnExpirationHandler, 10, TimeUnit.SECONDS);
 	}
 
 	/**
@@ -177,7 +180,7 @@ public abstract class AbstractGame implements Game {
 		Runnable packetSender = new Runnable() {
 			@Override
 			public void run() {
-				flushToDatabase();
+				sendSynchronizationPackets();
 			}
 		};
 
@@ -186,6 +189,8 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected void sendSynchronizationPackets() {
+		System.out.println("epoch: " + epoch);
+		System.out.println("Sending sync packet for turn: " + turn.getCount() + " with start: " + turn.getStartTime());
 		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), metadata.getTurnDuration())
 				.toMillis();
 		try {
@@ -206,36 +211,48 @@ public abstract class AbstractGame implements Game {
 	 * 
 	 */
 	synchronized protected void beginBettingRounds() {
-		// first we deal cards
-		this.deal(true); // Note: this also deals center cards and updates round number
 
 		// Note: We do not need to check if the small/big blind can pay or not because
 		// that
 		// should be done before calling this function
 
+		System.out.println("beggining new betting round");
+
 		// small blind pays
 		this.getSmallBlindPlayer().bet(metadata.getSmallBlind());
 		this.pot += metadata.getSmallBlind();
+		
+		System.out.println("Paying small blind...");
+		this.propagateAction(new Action(ActionType.SMALL_BLIND, getSmallBlindPlayer().getId(), metadata.getSmallBlind()));
 
 		// big blind pays
 		this.getBigBlindPlayer().bet(metadata.getBigBlind());
 		this.pot += metadata.getBigBlind();
+		
+		System.out.println("Paying big blind...");
+		this.propagateAction(new Action(ActionType.BIG_BLIND, getBigBlindPlayer().getId(), metadata.getBigBlind()));
 
 		// resetting the current round bet amount (this is the most any player has bet
-		// during
-		// the current round)
+		// during the current round)
 		this.setRoundBet(metadata.getBigBlind());
 
-		this.beginNewRound();
+		// resets all players to the waiting for next turn state
+		this.group.setAllPlayersToState(PlayerState.WAITING_FOR_TURN);
+
+		this.beginNewRound(true);
 	}
 
 	/**
 	 * Begins an individual round of betting.
 	 * 
+	 * @param dealPlayersCards Boolean indicating whether to deal player hands (only
+	 * used after end of set of betting rounds).
 	 */
-	synchronized protected void beginNewRound() {
+	synchronized protected void beginNewRound(boolean dealPlayersCards) {
+		System.out.println("beggining new round");
+
 		// flipping any new center cards
-		this.deal(false);
+		this.deal(dealPlayersCards);
 
 		// cycling to next turn
 		cycleTurn(this.getBigBlindIndex());
@@ -248,6 +265,7 @@ public abstract class AbstractGame implements Game {
 	 * 
 	 */
 	synchronized protected void endOfBettingRounds() {
+		System.out.println("End of betting rounds...");
 		// calculate winning hand(s)
 		List<Player> playersWithMaxRank = new ArrayList<Player>();
 		HandRank maxRank = null;
@@ -285,9 +303,12 @@ public abstract class AbstractGame implements Game {
 		// checking to see if we have enough players to continue
 		if (this.group.getPlayers().size() < 2) {
 			// TODO: this needs to be fleshed out
+			System.out.println("Ending game due to insufficient players...");
 			this.setStarted(false);
 			this.threadExecutor.shutdown();
 		}
+
+		System.out.println("Sending hand win/loss messages...");
 
 		// propagating winners
 		this.propagateAction(new Action(ActionType.POT_WON,
@@ -297,8 +318,10 @@ public abstract class AbstractGame implements Game {
 		// update dealer index
 		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
 
-		// resets all players to the waiting for next turn state
-		this.group.setAllPlayersToState(PlayerState.WAITING_FOR_TURN);
+		System.out.println("New dealer index: " + dealerIndex);
+		
+		// updating round
+		this.setRound(0);
 
 		// resetting and starting next set of betting rounds
 		this.beginBettingRounds();
@@ -343,7 +366,8 @@ public abstract class AbstractGame implements Game {
 		if (this.isLastBettingRound()) {
 			this.endOfBettingRounds();
 		} else {
-			this.beginNewRound();
+			this.incrementRound();
+			this.beginNewRound(false);
 		}
 	}
 
@@ -358,8 +382,11 @@ public abstract class AbstractGame implements Game {
 	 * @param lastTurnIndex
 	 */
 	synchronized protected void cycleTurn(int lastTurnIndex) {
+		System.out.println("Cycling turn...");
+
 		// checking to see if the round is over
 		if (isRoundOver()) {
+			System.out.println("Round over, ending betting round...");
 			this.endBettingRound();
 		}
 		// setting current turn to be person
@@ -368,12 +395,18 @@ public abstract class AbstractGame implements Game {
 
 		while (nextPlayer.getState() == PlayerState.ALL_IN || nextPlayer.getState() == PlayerState.WAITING_FOR_ROUND) {
 			// this player is either all-in or not playing this round, so we skip over them
-			nextPlayerIndex++;
+			nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
 			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
 		}
 
-		this.turn = new Turn(getNextPlayer(lastTurnIndex), System.nanoTime());
-		this.turn.getPlayer().setState(PlayerState.CURRENT_TURN);
+		// updating turn state
+		if (turn == null) {
+			turn = new Turn(nextPlayer, System.nanoTime());
+		} else {
+			turn.nextTurn(nextPlayer);
+		}
+
+		System.out.printf("old turn index: %d and new turn index %d\n", lastTurnIndex, nextPlayerIndex);
 
 		// starting the turn timer
 		this.beginTurnTimer();
@@ -490,9 +523,9 @@ public abstract class AbstractGame implements Game {
 				.collect(Collectors.toList());
 
 		List<LimitedPlayerPOJO> otherPlayers = this.group.getPlayers().stream().filter(p -> !p.equals(player)) // filtering
-																												// out
-																												// current
-																												// player
+				// out
+				// current
+				// player
 				.map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPlayerPOJO())).collect(Collectors.toList());
 
 		return new GameStatePOJO(this.getGameId(), centerCardsPOJO, pot, otherPlayers, player.toPlayerPOJO(),

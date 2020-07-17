@@ -58,6 +58,7 @@ public class Action {
 	public Action(ActionType type, List<String> playerIds) {
 		this.setType(type);
 		this.setPlayerIds(playerIds);
+		this.setTimestamp(Instant.now());
 	}
 	
 	public Action(ActionType type, String playerId, WebSocketSession session) {
@@ -73,10 +74,10 @@ public class Action {
 	 * @return Corresponding ActionPOJO instance
 	 */
 	public ActionPOJO toPojo() {
-		List<CardPOJO> cards = this.cards.stream()
+		List<CardPOJO> cards = this.cards == null ? null : this.cards.stream()
 				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
 				.collect(Collectors.toList());
-		return new ActionPOJO(type.getValue(), playerId, timestamp.toEpochMilli(), value, cards, playerIds, slot);
+		return new ActionPOJO(type.getValue(), playerId, timestamp != null ? timestamp.toEpochMilli() : null, value, cards, playerIds, slot);
 	}
 
 	/**
@@ -86,8 +87,11 @@ public class Action {
 	 * @returns True if user action, false otherwise
 	 */
 	public boolean isUserAction() {
-		return !(this.type == ActionType.PLAYER_DEAL || this.type == ActionType.CENTER_DEAL
-				|| this.type == ActionType.POT_WON);
+		return !(this.type == ActionType.PLAYER_DEAL 
+				|| this.type == ActionType.CENTER_DEAL
+				|| this.type == ActionType.POT_WON 
+				|| this.type != ActionType.SMALL_BLIND 
+				|| this.type != ActionType.BIG_BLIND);
 	}
 
 	/* Getters and Setters */

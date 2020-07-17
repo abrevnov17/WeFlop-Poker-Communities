@@ -32,11 +32,11 @@ public class VariantRepresentation {
 		this.cardsDealtBeforeRound = cardsDiscardedAfterRound;
 	}
 
-	public int getCardDealtBeforeRound(int round) {
+	public int getCardsDealtBeforeRound(int round) {
 		return this.cardsDealtBeforeRound[round];
 	}
 
-	public int getCardDiscardedAfterRound(int round) {
+	public int getCardsDiscardedAfterRound(int round) {
 		return this.cardsDiscardedAfterRound[round];
 	}
 
