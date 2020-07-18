@@ -1,6 +1,7 @@
 package com.weflop.GameService.Networking;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.web.socket.TextMessage;
 
@@ -22,7 +23,7 @@ public class MessageSendingHandlers {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static void propagateIncomingAction(String gameId, Group group, Action action, int epoch)
+	public static void propagateIncomingAction(String gameId, Group group, Action action, int epoch, List<Player> targets)
 			throws InterruptedException, IOException {
 		// creating message
 		JsonObject message = new JsonObject();
@@ -43,14 +44,9 @@ public class MessageSendingHandlers {
 
 		String messageString = message.toString();
 
-		// propagating message to players
-		for (Player player : group.getPlayers()) {
-			player.getSession().sendMessage(new TextMessage(messageString));
-		}
-
-		// propagating message to spectators
-		for (Player spectator : group.getSpectators()) {
-			spectator.getSession().sendMessage(new TextMessage(messageString));
+		// propagating message to targets
+		for (Player participant : targets) {
+			participant.getSession().sendMessage(new TextMessage(messageString));
 		}
 	}
 
@@ -65,7 +61,7 @@ public class MessageSendingHandlers {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public static void propagateOutgoingActionToPlayer(String gameId, Player player, Action action, int epoch)
+	public static void propagateOutgoingAction(String gameId, Action action, int epoch, List<Player> targets)
 			throws InterruptedException, IOException {
 		ActionPOJO actionPOJO = action.toPojo();
 
@@ -82,33 +78,26 @@ public class MessageSendingHandlers {
 		if (action.getCards() != null) {
 			payload.addProperty("cards", WebSocketHandler.GSON.toJson(actionPOJO.getCards()));
 		}
+		
+		if (action.getPlayerIds() != null) {
+			payload.addProperty("players", WebSocketHandler.GSON.toJson(action.getPlayerIds()));
+		}
+		
+		if (action.getPlayerId() != null) {
+			payload.addProperty("partipant_id", action.getPlayerId());
+		}
 
 		message.add("payload", payload);
 
 		String messageString = message.toString();
 
-		// propagating message to players
-		player.getSession().sendMessage(new TextMessage(messageString));
-	}
-
-	/**
-	 * Propagates outgoing message to group of players in game.
-	 * 
-	 * @param gameId
-	 * @param group
-	 * @param action
-	 * @param epoch
-	 * @throws InterruptedException
-	 * @throws IOException
-	 */
-	public static void propagateOutgoingAction(String gameId, Group group, Action action, int epoch)
-			throws InterruptedException, IOException {
-		for (Player player : group.getPlayers()) {
-			propagateOutgoingActionToPlayer(gameId, player, action, epoch);
+		// propagating message to targets
+		for (Player participant : targets) {
+			participant.getSession().sendMessage(new TextMessage(messageString));
 		}
 	}
 
-	public static void sendGameState(Player player, GameStatePOJO gameState) throws InterruptedException, IOException {
+	public static void sendGameState(Player target, GameStatePOJO gameState) throws InterruptedException, IOException {
 		// creating message
 		JsonObject message = new JsonObject();
 		message.addProperty("type", MessageType.GAME_STATE.getValue());
@@ -117,7 +106,7 @@ public class MessageSendingHandlers {
 		String messageString = message.toString();
 
 		// propagating state information to player
-		player.getSession().sendMessage(new TextMessage(messageString));
+		target.getSession().sendMessage(new TextMessage(messageString));
 	}
 
 	public static void sendSynchronizationPackets(String gameId, Group group, int epoch, long turnTimeRemaining)
@@ -136,14 +125,9 @@ public class MessageSendingHandlers {
 
 		String messageString = message.toString();
 
-		// propagating message to players
-		for (Player player : group.getPlayers()) {
-			player.getSession().sendMessage(new TextMessage(messageString));
-		}
-
-		// propagating message to spectators
-		for (Player spectator : group.getSpectators()) {
-			spectator.getSession().sendMessage(new TextMessage(messageString));
+		// propagating message to all participants
+		for (Player participant : group.getAllParticipants()) {
+			participant.getSession().sendMessage(new TextMessage(messageString));
 		}
 	}
 }

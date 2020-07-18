@@ -22,7 +22,10 @@ public class MessageReceivingHandlers {
 
 		// adding player to game
 		try {
-			game.performAction(new Action(ActionType.JOIN, playerId, session));
+			game.performAction(new Action.ActionBuilder(ActionType.JOIN)
+					.withPlayerId(playerId)
+					.withSession(session)
+					.build());
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("failing to join");
@@ -41,7 +44,7 @@ public class MessageReceivingHandlers {
 		switch (type) {
 		case START: {
 			try {
-				game.performAction(new Action(ActionType.START, playerId));
+				game.performAction(new Action.ActionBuilder(ActionType.START).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to start game."));
@@ -50,7 +53,7 @@ public class MessageReceivingHandlers {
 			break;
 		case CALL: {
 			try {
-				game.performAction(new Action(ActionType.CALL, playerId));
+				game.performAction(new Action.ActionBuilder(ActionType.CALL).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to call."));
@@ -59,7 +62,7 @@ public class MessageReceivingHandlers {
 			break;
 		case CHECK: {
 			try {
-				game.performAction(new Action(ActionType.CHECK, playerId));
+				game.performAction(new Action.ActionBuilder(ActionType.CHECK).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to check."));
@@ -68,7 +71,7 @@ public class MessageReceivingHandlers {
 			break;
 		case FOLD: {
 			try {
-				game.performAction(new Action(ActionType.FOLD, playerId));
+				game.performAction(new Action.ActionBuilder(ActionType.FOLD).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to fold."));
@@ -78,7 +81,9 @@ public class MessageReceivingHandlers {
 		case RAISE: {
 			try {
 				float amount = payload.get("value").getAsFloat();
-				game.performAction(new Action(ActionType.RAISE, playerId, amount));
+				game.performAction(new Action.ActionBuilder(ActionType.RAISE)
+						.withPlayerId(playerId)
+						.withValue(amount).build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to raise."));
@@ -89,7 +94,11 @@ public class MessageReceivingHandlers {
 			try {
 				int slot = payload.get("slot").getAsInt();
 				float buyIn = payload.get("buy_in").getAsFloat();
-				game.performAction(new Action(ActionType.SIT, playerId, slot, buyIn));
+				game.performAction(new Action.ActionBuilder(ActionType.SIT)
+						.withPlayerId(playerId)
+						.withSlot(slot)
+						.withValue(buyIn)
+						.build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to sit."));
@@ -98,7 +107,7 @@ public class MessageReceivingHandlers {
 			break;
 		case STAND: {
 			try {
-				game.performAction(new Action(ActionType.STAND, playerId));
+				game.performAction(new Action.ActionBuilder(ActionType.STAND).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.sendMessage(new TextMessage("Error attempting to stand."));

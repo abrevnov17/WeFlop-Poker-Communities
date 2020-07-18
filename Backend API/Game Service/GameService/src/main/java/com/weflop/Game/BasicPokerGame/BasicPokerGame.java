@@ -67,7 +67,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.setStartTime(Instant.now());
 				
 				// propagate action that game has started to all members of group
-				this.propagateAction(new Action(ActionType.START, action.getPlayerId()));
+				this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).withPlayerId(action.getPlayerId()).build());
 
 				// start betting rounds
 				this.beginBettingRounds();
@@ -93,7 +93,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case RAISE: {
@@ -119,7 +119,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case CALL: {
@@ -145,7 +145,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case CHECK: {
@@ -158,7 +158,7 @@ public class BasicPokerGame extends AbstractGame {
 				participant.setState(PlayerState.WAITING_FOR_TURN);
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case TURN_TIMEOUT: {
@@ -175,7 +175,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case JOIN: {
@@ -202,7 +202,7 @@ public class BasicPokerGame extends AbstractGame {
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case STAND: {
@@ -212,7 +212,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.getGroup().movePlayerToSpectator(participant);
 
 				// propagate action to members of group
-				this.propagateAction(action);
+				this.propagateActionToGroup(action);
 			}
 				break;
 			case DISCONNECT: {
@@ -222,7 +222,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group if not spectator
 				if (participant.isPlaying()) {
-					this.propagateAction(action);
+					this.propagateActionToGroup(action);
 				}
 			}
 				break;
@@ -260,7 +260,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				if (numDealt > 0) {
 					// sending message to player with new cards
-					this.propagateAction(new Action(ActionType.PLAYER_DEAL, player.getId(), player.getCards()));
+					this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.PLAYER_DEAL).withCards(player.getCards()).build(), player);
 				}
 			}
 
@@ -276,7 +276,7 @@ public class BasicPokerGame extends AbstractGame {
 
 		// messaging players regarding new center cards
 		if (newCenterCards > 0) {
-			this.propagateAction(new Action(ActionType.CENTER_DEAL, null, this.getCenterCards()));
+			this.propagateActionToGroup(new Action.ActionBuilder(ActionType.CENTER_DEAL).withCards(getCenterCards()).build());
 			this.incrementEpoch();
 		}
 	}

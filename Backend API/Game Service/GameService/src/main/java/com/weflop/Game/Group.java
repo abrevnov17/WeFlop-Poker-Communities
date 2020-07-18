@@ -138,6 +138,12 @@ public class Group {
 			removePlayerFromTable(participant);
 		}
 	}
+	
+	synchronized public List<Player> getAllParticipants() {
+		List<Player> participants = new ArrayList<Player>(this.getPlayers());
+		participants.addAll(this.getSpectators());
+		return participants;
+	}
 
 	/**
 	 * Creates a spectator and adds it to list of spectators.

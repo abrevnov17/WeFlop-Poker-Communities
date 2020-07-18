@@ -126,7 +126,7 @@ public abstract class AbstractGame implements Game {
 		// be handled in a similar manner as to a fold)
 		try {
 			System.out.println("Performing turn timeout...");
-			this.performAction(new Action(ActionType.TURN_TIMEOUT, this.turn.getPlayer().getId()));
+			this.performAction(new Action.ActionBuilder(ActionType.TURN_TIMEOUT).withPlayerId(this.turn.getPlayer().getId()).build());
 		} catch (Exception e) {
 			// we do not need to do anything. this is only possible in an incredibly
 			// unlikely
@@ -155,7 +155,7 @@ public abstract class AbstractGame implements Game {
 		Runnable turnExpirationHandler = new TurnTimerManager(this, this.turn.getCount());
 
 		// resent packets after the duration of the turn has passed
-		threadExecutor.schedule(turnExpirationHandler, 10, TimeUnit.SECONDS);
+		threadExecutor.schedule(turnExpirationHandler, metadata.getTurnDuration().getSeconds(), TimeUnit.SECONDS);
 	}
 
 	/**
@@ -223,14 +223,18 @@ public abstract class AbstractGame implements Game {
 		this.pot += metadata.getSmallBlind();
 		
 		System.out.println("Paying small blind...");
-		this.propagateAction(new Action(ActionType.SMALL_BLIND, getSmallBlindPlayer().getId(), metadata.getSmallBlind()));
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.SMALL_BLIND)
+				.withPlayerId(getSmallBlindPlayer().getId())
+				.withValue(metadata.getSmallBlind()).build());
 
 		// big blind pays
 		this.getBigBlindPlayer().bet(metadata.getBigBlind());
 		this.pot += metadata.getBigBlind();
 		
 		System.out.println("Paying big blind...");
-		this.propagateAction(new Action(ActionType.BIG_BLIND, getBigBlindPlayer().getId(), metadata.getBigBlind()));
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BIG_BLIND)
+				.withPlayerId(getBigBlindPlayer().getId())
+				.withValue(metadata.getBigBlind()).build());
 
 		// resetting the current round bet amount (this is the most any player has bet
 		// during the current round)
@@ -311,9 +315,8 @@ public abstract class AbstractGame implements Game {
 		System.out.println("Sending hand win/loss messages...");
 
 		// propagating winners
-		this.propagateAction(new Action(ActionType.POT_WON,
-				playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList())));
-		this.incrementEpoch();
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.POT_WON).withPlayerIds(
+				playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList())).build());
 
 		// update dealer index
 		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
@@ -359,7 +362,7 @@ public abstract class AbstractGame implements Game {
 			}
 			break;
 		}
-		this.propagateAction(new Action(ActionType.DISCONNECT, player.getId()));
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.DISCONNECT).withPlayerId(player.getId()).build());
 	}
 
 	synchronized protected void endBettingRound() {
@@ -461,6 +464,25 @@ public abstract class AbstractGame implements Game {
 				metadata.getSmallBlind(), metadata.getBigBlind(), centerCards, pot, dealerIndex, players, spectators,
 				history.toPOJO());
 	}
+	
+	/**
+	 * Takes in an action and propagates it to individual participant.
+	 * @param action
+	 */
+	synchronized protected void propagateActionToPlayer(Action action, Player participant) {
+		List<Player> targets = new ArrayList<Player>();
+		targets.add(participant);
+		propagateAction(action, targets);
+	}
+
+	
+	/**
+	 * Takes in an action and propagates it to entire group (spectators + players).
+	 * @param action
+	 */
+	synchronized protected void propagateActionToGroup(Action action) {
+		propagateAction(action, group.getAllParticipants());
+	}
 
 	/**
 	 * Once an action has been verified by the server, we save it to our game
@@ -468,28 +490,20 @@ public abstract class AbstractGame implements Game {
 	 * 
 	 * @param action
 	 */
-	synchronized protected void propagateAction(Action action) {
+	synchronized protected void propagateAction(Action action, List<Player> targets) {
 		// add action to game history
 		if (started) {
 			this.history.appendActionToSequence(action);
 			this.incrementEpoch();
 		}
 
-		// propagate action to members of group
 		try {
 			if (action.isUserAction()) {
 				MessageSendingHandlers.propagateIncomingAction(this.getGameId(), this.getGroup(), action,
-						this.getEpoch());
+						this.getEpoch(), targets);
 			} else {
-				if (action.getPlayerId() != null) {
-					// message is sent to individual player
-					MessageSendingHandlers.propagateOutgoingActionToPlayer(this.getGameId(),
-							this.getParticipantById(action.getPlayerId()), action, this.getEpoch());
-				} else {
-					// message is sent to all players
-					MessageSendingHandlers.propagateOutgoingAction(this.getGameId(), this.group, action,
-							this.getEpoch());
-				}
+				MessageSendingHandlers.propagateOutgoingAction(this.getGameId(), action,
+							this.getEpoch(), targets);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

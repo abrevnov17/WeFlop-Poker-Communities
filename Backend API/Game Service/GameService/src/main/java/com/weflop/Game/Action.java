@@ -28,43 +28,72 @@ public class Action {
 	private Integer slot; // some actions have associated integer slot value as payload
 	private List<Card> cards; // some actions have associated cards as payload
 	private List<String> playerIds; // some actions have associated lists of player ids as payload
-
+	
 	// automatically set values
 	private Instant timestamp;
 
-	/* Constructors */
+	public static class ActionBuilder {
+		private ActionType type;
+		private String playerId;
+		private WebSocketSession session;
+		private Float value;
+		private Integer slot;
+		private List<Card> cards;
+		private List<String> playerIds;
+		private Instant timestamp;
 
-	public Action(ActionType type, String playerId) {
-		this.setType(type);
-		this.setPlayerId(playerId);
-		this.setTimestamp(Instant.now());
-	}
+		/* Constructors */
 
-	public Action(ActionType type, String playerId, float value) {
-		this(type, playerId);
-		this.setValue(value);
-	}
+		public ActionBuilder(ActionType type) {
+			this.type = type;
+			this.timestamp = Instant.now();
+		}
 
-	public Action(ActionType type, String playerId, Integer slot, float value) {
-		this(type, playerId, value);
-		this.setSlot(slot);
-	}
+		public ActionBuilder withPlayerId(String playerId){
+			this.playerId = playerId;
+			return this;
+		}
 
-	public Action(ActionType type, String playerId, List<Card> cards) {
-		this(type, playerId);
-		this.setCards(cards);
-	}
+		public ActionBuilder withSession(WebSocketSession session){
+			this.session = session;
+			return this;
+		}
 
-	public Action(ActionType type, List<String> playerIds) {
-		this.setType(type);
-		this.setPlayerIds(playerIds);
-		this.setTimestamp(Instant.now());
+		public ActionBuilder withValue(Float value){
+			this.value = value;
+			return this;
+		}
+
+		public ActionBuilder withSlot(Integer slot){
+			this.slot = slot;
+			return this;
+		}
+
+		public ActionBuilder withCards(List<Card> cards){
+			this.cards = cards;
+			return this;
+		}
+
+		public ActionBuilder withPlayerIds(List<String> playerIds){
+			this.playerIds = playerIds;
+			return this;
+		}
+		
+		public Action build(){
+            Action action = new Action();
+            action.type = this.type;
+            action.timestamp = this.timestamp;
+            action.playerId = this.playerId;
+            action.session = this.session;
+            action.value = this.value;
+            action.slot = this.slot;
+            action.cards = this.cards;
+            action.playerIds = this.playerIds;
+            return action;
+        }
 	}
 	
-	public Action(ActionType type, String playerId, WebSocketSession session) {
-		this(type, playerId);
-		this.setSession(session);
-	}
+	private Action() { }
 
 	/* Methods */
 
