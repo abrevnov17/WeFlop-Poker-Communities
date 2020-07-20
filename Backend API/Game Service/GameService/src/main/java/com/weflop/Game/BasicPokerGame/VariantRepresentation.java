@@ -29,7 +29,7 @@ public class VariantRepresentation {
 		this.setBettingRounds(bettingRounds);
 		this.cardsDealtBeforeRound = cardsDealtBeforeRound;
 		this.setHoleCards(holeCards);
-		this.cardsDealtBeforeRound = cardsDiscardedAfterRound;
+		this.cardsDiscardedAfterRound = cardsDiscardedAfterRound;
 	}
 
 	public int getCardsDealtBeforeRound(int round) {

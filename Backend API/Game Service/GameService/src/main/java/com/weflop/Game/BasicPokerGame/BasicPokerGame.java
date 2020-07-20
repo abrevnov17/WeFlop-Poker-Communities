@@ -56,7 +56,7 @@ public class BasicPokerGame extends AbstractGame {
 				Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
 				Assert.isTrue(!this.isStarted(), "Game has already begun");
 
-				System.out.printf("Player %s starting\n", action.getPlayerId());
+				System.out.printf("Player %s starting game\n", action.getPlayerId());
 
 				// initializing game history
 				InitialState state = new InitialState(this.getGroup().getPlayers());
@@ -94,6 +94,8 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				System.out.printf("Player %s folded", action.getPlayerId());
 			}
 				break;
 			case RAISE: {
@@ -120,6 +122,8 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				System.out.printf("Player %s raised by: %d", action.getPlayerId(), bet);
 			}
 				break;
 			case CALL: {
@@ -130,9 +134,7 @@ public class BasicPokerGame extends AbstractGame {
 				assertIsPlayerTurn(participant);
 
 				// update player balances and pot
-				float bet = action.getValue();
-				Assert.isTrue(participant.getCurrentBet() + bet == this.getRoundBet(),
-						"You have to call with same amount as prior bet");
+				float bet = this.getRoundBet() - participant.getCurrentBet();
 
 				// update player balances and pot
 				participant.bet(bet); // verification performed in 'bet' method
@@ -141,11 +143,13 @@ public class BasicPokerGame extends AbstractGame {
 				// update player state to waiting for turn
 				participant.setState(PlayerState.WAITING_FOR_TURN);
 
-				// move on to next turn
-				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+				
+				System.out.printf("Player %s called", action.getPlayerId());
 			}
 				break;
 			case CHECK: {
@@ -159,6 +163,11 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+				
+				System.out.printf("Player %s checked", action.getPlayerId());
 			}
 				break;
 			case TURN_TIMEOUT: {
@@ -171,14 +180,17 @@ public class BasicPokerGame extends AbstractGame {
 				// update player state to folded
 				participant.setState(PlayerState.FOLDED);
 
-				// move on to next turn
-				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+				
+				System.out.printf("Player %s timed out", action.getPlayerId());
 			}
 				break;
 			case JOIN: {
+				printGameState();
 				// add player as spectator
 				this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
 				
@@ -213,6 +225,8 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				System.out.printf("Player %s stood", action.getPlayerId());
 			}
 				break;
 			case DISCONNECT: {
@@ -224,6 +238,7 @@ public class BasicPokerGame extends AbstractGame {
 				if (participant.isPlaying()) {
 					this.propagateActionToGroup(action);
 				}
+				System.out.printf("Player %s disconnected", action.getPlayerId());
 			}
 				break;
 			default:

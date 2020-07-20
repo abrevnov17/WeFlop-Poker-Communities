@@ -24,6 +24,7 @@ import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.GameService.Networking.GameStatePOJO;
 import com.weflop.GameService.Networking.LimitedPlayerPOJO;
 import com.weflop.GameService.Networking.MessageSendingHandlers;
+import com.weflop.GameService.Networking.WebSocketHandler;
 import com.weflop.Utils.ThreadExecution.TurnTimerManager;
 
 import java.util.concurrent.Executors;
@@ -189,16 +190,17 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected void sendSynchronizationPackets() {
-		System.out.println("epoch: " + epoch);
 		System.out.println("Sending sync packet for turn: " + turn.getCount() + " with start: " + turn.getStartTime());
-		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), metadata.getTurnDuration())
-				.toMillis();
-		try {
-			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch,
-					millisecondsRemaining);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		printGameState();
+		
+//		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), metadata.getTurnDuration())
+//				.toMillis();
+//		try {
+//			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch,
+//					millisecondsRemaining);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	/**
@@ -217,6 +219,9 @@ public abstract class AbstractGame implements Game {
 		// should be done before calling this function
 
 		System.out.println("beggining new betting round");
+		
+		System.out.printf("Dealer index: %d, small blind index: %d, big blind index: %d\n", 
+				this.dealerIndex, this.getSmallBlindIndex(), this.getBigBlindIndex());
 
 		// small blind pays
 		this.getSmallBlindPlayer().bet(metadata.getSmallBlind());
@@ -546,6 +551,26 @@ public abstract class AbstractGame implements Game {
 				turn != null ? turn.getPlayer().getId() : null, this.getEpoch());
 	}
 
+	/**
+	 * Prints information about the game useful for testing and debugging.
+	 */
+	synchronized protected void printGameState() {
+		System.out.println("------------------------GAME STATE------------------------");
+		System.out.printf("Pot: %.2f\n", this.pot);
+		System.out.printf("Round: %d, Round bet: %.2f\n", this.round, this.roundBet);
+		System.out.printf("Center cards: %s\n", WebSocketHandler.GSON.toJson(this.centerCards));
+
+		for (Player player : group.getPlayers()) {
+			System.out.printf("Player id: %s, state: %s, current_bet: %.2f, balance: %.2f, slot: %d, cards: %s\n", 
+					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getCurrentBet(), 
+					player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getCards()));
+		}
+		
+		System.out.printf("Turn player id: %s\n", turn != null ? turn.getPlayer().getId() : "no turn exists yet");
+		System.out.printf("Dealer index: %d\n", this.dealerIndex);
+		System.out.println("------------------------END GAME STATE------------------------");
+	}
+	
 	/* Getters and setters for universal game properties */
 
 	/**
@@ -565,7 +590,7 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected int getSmallBlindIndex() {
-		return getNextPlayerIndex(dealerIndex + 1);
+		return getNextPlayerIndex(dealerIndex);
 	}
 
 	synchronized protected Player getSmallBlindPlayer() {
@@ -573,7 +598,7 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected int getBigBlindIndex() {
-		return getNextPlayerIndex(dealerIndex + 2);
+		return getNextPlayerIndex(getSmallBlindIndex());
 	}
 
 	synchronized protected Player getBigBlindPlayer() {

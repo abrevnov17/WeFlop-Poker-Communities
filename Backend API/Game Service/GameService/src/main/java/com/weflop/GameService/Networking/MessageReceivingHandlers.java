@@ -56,6 +56,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(ActionType.CALL).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.out.println(e.getMessage());
+				System.out.println("Error attempting to call");
 				session.sendMessage(new TextMessage("Error attempting to call."));
 			}
 		}
