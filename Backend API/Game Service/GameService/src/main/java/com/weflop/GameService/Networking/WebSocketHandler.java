@@ -3,8 +3,6 @@ package com.weflop.GameService.Networking;
 import java.io.IOException;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.stereotype.Component;
@@ -23,8 +21,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
 	public static final Gson GSON = new Gson();
 
 	private static List<WebSocketSession> sessions = new CopyOnWriteArrayList<WebSocketSession>();
-
-	public static Map<WebSocketSession, String> sessionToPlayerId = new ConcurrentHashMap<WebSocketSession, String>();
 
 	@Override
 	public void handleTextMessage(WebSocketSession session, TextMessage message)
@@ -45,9 +41,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
 		JsonObject payload = received.get("payload").getAsJsonObject();
 
 		switch (type) {
-		case JOIN_GAME:
-			MessageReceivingHandlers.handleJoinGame(session, game, payload);
-			break;
 		case ACTION:
 			MessageReceivingHandlers.handleAction(session, game, payload);
 			break;

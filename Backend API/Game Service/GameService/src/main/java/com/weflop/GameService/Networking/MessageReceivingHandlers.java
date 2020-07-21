@@ -12,36 +12,27 @@ import org.springframework.web.socket.WebSocketSession;
 
 public class MessageReceivingHandlers {
 
-	public static void handleJoinGame(WebSocketSession session, Game game, JsonObject payload)
-			throws InterruptedException, IOException {
-		// parsing out properties
-		String playerId = payload.get("user_id").getAsString();
-
-		// storing user id and mapping session to id
-		WebSocketHandler.sessionToPlayerId.put(session, playerId);
-
-		// adding player to game
-		try {
-			game.performAction(new Action.ActionBuilder(ActionType.JOIN)
-					.withPlayerId(playerId)
-					.withSession(session)
-					.build());
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("failing to join");
-			session.sendMessage(new TextMessage("Error attempting to join game."));
-		}
-
-	}
-
 	public static void handleAction(WebSocketSession session, Game game, JsonObject payload)
 			throws InterruptedException, IOException {
 		// parsing out properties
 		ActionType type = ActionType.getTypeFromInt(payload.get("type").getAsInt());
-		String playerId = WebSocketHandler.sessionToPlayerId.get(session);
+		String playerId = payload.get("user_id").getAsString();
 
 		// handling various action types
 		switch (type) {
+		case JOIN: {
+			try {
+				game.performAction(new Action.ActionBuilder(ActionType.JOIN)
+						.withPlayerId(playerId)
+						.withSession(session)
+						.build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("failing to join");
+				session.sendMessage(new TextMessage("Error attempting to join game."));
+			}
+		}
+			break;
 		case START: {
 			try {
 				game.performAction(new Action.ActionBuilder(ActionType.START).withPlayerId(playerId).build());
