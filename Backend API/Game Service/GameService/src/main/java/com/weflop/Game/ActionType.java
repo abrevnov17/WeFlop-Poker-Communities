@@ -9,15 +9,15 @@ package com.weflop.Game;
  */
 public enum ActionType {
 	// Gameplay-related actions:
-	START(0), FOLD(1), RAISE(2), CALL(3), CHECK(4), TURN_TIMEOUT(5),
+	START(0), FOLD(1), RAISE(2), CALL(3), CHECK(4), ALL_IN(5), TURN_TIMEOUT(6),
 	// Logistics-related actions:
-	JOIN(6), SIT(7), STAND(8), DISCONNECT(9),
+	JOIN(7), SIT(8), STAND(9), DISCONNECT(10),
 	// Outgoing actions:
-	PLAYER_DEAL(10), // cards dealt to individual player
-	CENTER_DEAL(11), // cards dealt to center
-	POT_WON(12), // some player has won a round (and the current pot)
-	SMALL_BLIND(13), // player has paid small blind
-	BIG_BLIND(14); // player has paid big blind
+	PLAYER_DEAL(11), // cards dealt to individual player
+	CENTER_DEAL(12), // cards dealt to center
+	POT_WON(13), // some player has won a round (and the current pot)
+	SMALL_BLIND(14), // player has paid small blind
+	BIG_BLIND(15); // player has paid big blind
 	
 
 	private final int value;

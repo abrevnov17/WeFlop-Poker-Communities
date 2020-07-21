@@ -91,6 +91,14 @@ public class MessageReceivingHandlers {
 				session.sendMessage(new TextMessage("Error attempting to raise."));
 			}
 		}
+		case ALL_IN: {
+			try {
+				game.performAction(new Action.ActionBuilder(ActionType.ALL_IN).withPlayerId(playerId).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to go all-in."));
+			}
+		}
 			break;
 		case SIT: {
 			try {

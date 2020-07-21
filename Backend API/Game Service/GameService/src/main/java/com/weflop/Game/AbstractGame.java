@@ -401,8 +401,8 @@ public abstract class AbstractGame implements Game {
 		int nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
 		Player nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
 
-		while (nextPlayer.getState() == PlayerState.ALL_IN || nextPlayer.getState() == PlayerState.WAITING_FOR_ROUND) {
-			// this player is either all-in or not playing this round, so we skip over them
+		while (nextPlayer.getState() != PlayerState.WAITING_FOR_TURN) {
+			// this player is either all-in, folded, or not playing this round
 			nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
 			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
 		}
@@ -428,7 +428,7 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected boolean isRoundOver() {
 		for (Player player : this.group.getPlayers()) {
-			if (!(player.getState() == PlayerState.FOLDED || player.getState() == PlayerState.ALL_IN
+			if (!(player.getState() != PlayerState.WAITING_FOR_TURN 
 					|| player.getCurrentBet() == this.roundBet)) {
 				return false;
 			}

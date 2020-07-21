@@ -95,7 +95,7 @@ public class BasicPokerGame extends AbstractGame {
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
 				
-				System.out.printf("Player %s folded", action.getPlayerId());
+				System.out.printf("Player %s folded\n", action.getPlayerId());
 			}
 				break;
 			case RAISE: {
@@ -123,7 +123,7 @@ public class BasicPokerGame extends AbstractGame {
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
 				
-				System.out.printf("Player %s raised by: %d", action.getPlayerId(), bet);
+				System.out.printf("Player %s raised by: %d\n", action.getPlayerId(), bet);
 			}
 				break;
 			case CALL: {
@@ -149,13 +149,15 @@ public class BasicPokerGame extends AbstractGame {
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 				
-				System.out.printf("Player %s called", action.getPlayerId());
+				System.out.printf("Player %s called\n", action.getPlayerId());
 			}
 				break;
 			case CHECK: {
 				Assert.isTrue(this.isStarted(), "Game has not begun");
 
 				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Assert.isTrue(this.getRoundBet() == participant.getCurrentBet(), "Current player bet is insufficient to check.");
 
 				assertIsPlayerTurn(participant);
 				// update player state to waiting for turn
@@ -167,7 +169,24 @@ public class BasicPokerGame extends AbstractGame {
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 				
-				System.out.printf("Player %s checked", action.getPlayerId());
+				System.out.printf("Player %s checked\n", action.getPlayerId());
+			}
+				break;
+			case ALL_IN: {
+				Assert.isTrue(this.isStarted(), "Game has not begun");
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				assertIsPlayerTurn(participant);
+				
+				participant.goAllIn();
+				
+				// propagate action to members of group
+				this.propagateActionToGroup(action);
+				
+				// move on to next turn
+				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
+				
+				System.out.printf("Player %s went all-in\n", action.getPlayerId());
 			}
 				break;
 			case TURN_TIMEOUT: {
@@ -186,7 +205,7 @@ public class BasicPokerGame extends AbstractGame {
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 				
-				System.out.printf("Player %s timed out", action.getPlayerId());
+				System.out.printf("Player %s timed out\n", action.getPlayerId());
 			}
 				break;
 			case JOIN: {
@@ -226,7 +245,7 @@ public class BasicPokerGame extends AbstractGame {
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
 				
-				System.out.printf("Player %s stood", action.getPlayerId());
+				System.out.printf("Player %s stood\n", action.getPlayerId());
 			}
 				break;
 			case DISCONNECT: {
@@ -238,7 +257,7 @@ public class BasicPokerGame extends AbstractGame {
 				if (participant.isPlaying()) {
 					this.propagateActionToGroup(action);
 				}
-				System.out.printf("Player %s disconnected", action.getPlayerId());
+				System.out.printf("Player %s disconnected\n", action.getPlayerId());
 			}
 				break;
 			default:

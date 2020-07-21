@@ -46,13 +46,15 @@ public class Player {
 
 	/**
 	 * Returns whether the player has a sufficient balance to place a given bet.
+	 * Note: Players cannot place bets that make them go all in. That is done only
+	 * through the ALL_IN action.
 	 * 
 	 * @param amount
 	 *            Amount to bet
 	 * @return Whether or not the player has a sufficient balance
 	 */
 	synchronized private boolean canBet(float amount) {
-		if (this.balance >= amount) {
+		if (this.balance - amount >= 0.01) {
 			return true;
 		}
 
@@ -76,7 +78,7 @@ public class Player {
 	 * 
 	 * @return The balance they forfeited to the pot to go all in
 	 */
-	synchronized float goAllIn() {
+	synchronized public float goAllIn() {
 		float currBalance = this.balance;
 
 		this.balance = 0.0f;
