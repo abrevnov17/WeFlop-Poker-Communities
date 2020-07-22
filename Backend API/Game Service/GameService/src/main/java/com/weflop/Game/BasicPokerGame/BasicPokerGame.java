@@ -161,7 +161,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				assertIsPlayerTurn(participant);
 				// update player state to waiting for turn
-				participant.setState(PlayerState.WAITING_FOR_TURN);
+				participant.setState(PlayerState.CHECKED);
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);

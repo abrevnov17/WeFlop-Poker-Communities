@@ -154,7 +154,7 @@ public class Player {
 		Player p = (Player) o;
 
 		// Compare the data members and return accordingly
-		return id == p.id;
+		return id.equals(p.id);
 	}
 
 	/* Getters and Setters */
@@ -205,6 +205,14 @@ public class Player {
 
 	synchronized public boolean isSpectating() {
 		return this.state == PlayerState.WATCHING;
+	}
+	
+	/**
+	 * Returns true if a player is waiting for their turn (including
+	 * if they have checked or bet already in round but are still eligible to play).
+	 */
+	synchronized public boolean canMoveInRound() {
+		return this.state == PlayerState.WAITING_FOR_TURN || this.state == PlayerState.CHECKED;
 	}
 
 	synchronized public WebSocketSession getSession() {

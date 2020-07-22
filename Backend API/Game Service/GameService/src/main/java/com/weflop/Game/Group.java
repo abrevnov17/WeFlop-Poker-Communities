@@ -144,6 +144,15 @@ public class Group {
 		participants.addAll(this.getSpectators());
 		return participants;
 	}
+	
+	synchronized public boolean allWaitingPlayersInCheckedState() {
+		for (Player player : getPlayers()) {
+			if (player.canMoveInRound() && player.getState() != PlayerState.CHECKED) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	/**
 	 * Creates a spectator and adds it to list of spectators.

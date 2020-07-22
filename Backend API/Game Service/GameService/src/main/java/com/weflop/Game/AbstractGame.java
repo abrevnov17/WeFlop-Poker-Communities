@@ -264,7 +264,11 @@ public abstract class AbstractGame implements Game {
 		this.deal(dealPlayersCards);
 
 		// cycling to next turn
-		cycleTurn(this.getBigBlindIndex());
+		if (dealPlayersCards) {
+			cycleTurn(this.getBigBlindIndex()); // after paying blinds, player clockwise to big blind goes first
+		} else {
+			cycleTurn(this.dealerIndex); // during normal round without player cards dealt, start with player to right of dealer
+		}
 	}
 
 	/**
@@ -391,30 +395,24 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void cycleTurn(int lastTurnIndex) {
 		System.out.println("Cycling turn...");
-
+		
 		// checking to see if the round is over
 		if (isRoundOver()) {
 			System.out.println("Round over, ending betting round...");
 			this.endBettingRound();
 		}
-		// setting current turn to be person
-		int nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
-		Player nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
 
-		while (nextPlayer.getState() != PlayerState.WAITING_FOR_TURN) {
-			// this player is either all-in, folded, or not playing this round
-			nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
-			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
-		}
+		Player nextPlayer = getNextValidPlayer(lastTurnIndex);
 
 		// updating turn state
 		if (turn == null) {
 			turn = new Turn(nextPlayer, System.nanoTime());
+			nextPlayer.setState(PlayerState.CURRENT_TURN);
 		} else {
 			turn.nextTurn(nextPlayer);
 		}
 
-		System.out.printf("old turn index: %d and new turn index %d\n", lastTurnIndex, nextPlayerIndex);
+		System.out.printf("new player id: %s \n", nextPlayer.getId());
 
 		// starting the turn timer
 		this.beginTurnTimer();
@@ -422,13 +420,19 @@ public abstract class AbstractGame implements Game {
 
 	/**
 	 * A round is over when every player has either folded, bet the 'roundBet' (i.e.
-	 * bet as much as the most any player has bet that round), or has gone all in.
+	 * bet as much as the most any player has bet that round), or has gone all in. Or, 
+	 * when considering a non-preflop round, if every player has checked.
 	 * 
 	 * @return A boolean indicating if the round is over.
 	 */
 	synchronized protected boolean isRoundOver() {
+		// checking case applicable for non-preflop rounds where everyone has checked
+		if (this.roundBet == 0.0f && group.allWaitingPlayersInCheckedState()) {
+			return true;
+		}
+		
 		for (Player player : this.group.getPlayers()) {
-			if (!(player.getState() != PlayerState.WAITING_FOR_TURN 
+			if (!(!player.canMoveInRound() 
 					|| player.getCurrentBet() == this.roundBet)) {
 				return false;
 			}
@@ -574,6 +578,27 @@ public abstract class AbstractGame implements Game {
 	/* Getters and setters for universal game properties */
 
 	/**
+	 * Gets index of next valid player (i.e. not folded, all-in, etc...)
+	 * given index of player with last turn.
+	 * 
+	 * @param lastTurnIndex
+	 * @return Next player that is eligible to hold a turn.
+	 */
+	synchronized protected Player getNextValidPlayer(int lastTurnIndex) {
+		int nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
+		Player nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
+
+		while (!nextPlayer.canMoveInRound()) {
+			// this player is either all-in, folded, or not playing this round
+			nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
+			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
+		}
+		
+		return nextPlayer;
+	}
+	
+	
+	/**
 	 * Gets the index of the next player (clockwise) in our group of players given
 	 * the index of the previous player in the group.
 	 * 
@@ -606,16 +631,9 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected Player getParticipantById(String id) throws Exception {
-		// looping through players
-		for (Player player : group.getPlayers()) {
-			if (player.getId() == id) {
-				return player;
-			}
-		}
-		// looping through spectators
-		for (Player spectator : group.getSpectators()) {
-			if (spectator.getId() == id) {
-				return spectator;
+		for (Player participant : group.getAllParticipants()) {
+			if (participant.getId().equals(id)) {
+				return participant;
 			}
 		}
 
