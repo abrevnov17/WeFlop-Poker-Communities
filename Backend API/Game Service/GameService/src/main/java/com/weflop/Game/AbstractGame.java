@@ -396,12 +396,13 @@ public abstract class AbstractGame implements Game {
 	 * @param lastTurnIndex
 	 */
 	synchronized protected void cycleTurn(int lastTurnIndex) {
-		System.out.println("Cycling turn...");
+		System.out.printf("Cycling turn from %d...\n", lastTurnIndex);
 		
 		// checking to see if the round is over
 		if (isRoundOver()) {
 			System.out.println("Round over, ending betting round...");
 			this.endBettingRound();
+			return;
 		}
 
 		Player nextPlayer = getNextValidPlayer(lastTurnIndex);
@@ -412,9 +413,10 @@ public abstract class AbstractGame implements Game {
 			nextPlayer.setState(PlayerState.CURRENT_TURN);
 		} else {
 			turn.nextTurn(nextPlayer);
+			
 		}
 
-		System.out.printf("new player id: %s \n", nextPlayer.getId());
+		System.out.printf("new turn player id: %s\n", nextPlayer.getId());
 
 		// starting the turn timer
 		this.beginTurnTimer();
@@ -431,11 +433,13 @@ public abstract class AbstractGame implements Game {
 		// checking case applicable for non-preflop rounds where everyone has checked
 		if (this.roundBet == 0.0f && group.allWaitingPlayersInCheckedState()) {
 			return true;
+		} else if (this.roundBet == 0.0f) {
+			return false;
 		}
 		
 		for (Player player : this.group.getPlayers()) {
 			if (!(!player.canMoveInRound() 
-					|| player.getCurrentBet() == this.roundBet)) {
+					|| player.getCurrentRoundBet() == this.roundBet)) {
 				return false;
 			}
 		}
@@ -567,8 +571,8 @@ public abstract class AbstractGame implements Game {
 		System.out.printf("Center cards: %s\n", WebSocketHandler.GSON.toJson(this.centerCards));
 
 		for (Player player : group.getPlayers()) {
-			System.out.printf("Player id: %s, state: %s, current_bet: %.2f, balance: %.2f, slot: %d, cards: %s\n", 
-					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getCurrentBet(), 
+			System.out.printf("Player id: %s, state: %s, round_bet: %.2f, current_bet: %.2f, balance: %.2f, slot: %d, cards: %s\n", 
+					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getCurrentRoundBet(), player.getCurrentBet(), 
 					player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getCards()));
 		}
 		

@@ -55,6 +55,9 @@ public class BasicPokerGame extends AbstractGame {
 			case START: {
 				Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
 				Assert.isTrue(!this.isStarted(), "Game has already begun");
+				
+				Player participant = this.getParticipantById(action.getPlayerId());
+				Assert.isTrue(!participant.isSpectating(), "Only seated players can start a game.");
 
 				System.out.printf("Player %s starting game\n", action.getPlayerId());
 
@@ -107,7 +110,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				// get bet and check that it is valid
 				float bet = action.getValue();
-				Assert.isTrue(participant.getCurrentBet() + bet > this.getRoundBet(),
+				Assert.isTrue(participant.getCurrentRoundBet() + bet > this.getRoundBet(),
 						"You have to raise more than the prior bet");
 
 				// update player balances and pot
@@ -134,7 +137,7 @@ public class BasicPokerGame extends AbstractGame {
 				assertIsPlayerTurn(participant);
 
 				// update player balances and pot
-				float bet = this.getRoundBet() - participant.getCurrentBet();
+				float bet = this.getRoundBet() - participant.getCurrentRoundBet();
 
 				// update player balances and pot
 				participant.bet(bet); // verification performed in 'bet' method
@@ -157,7 +160,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				Player participant = this.getParticipantById(action.getPlayerId());
 				
-				Assert.isTrue(this.getRoundBet() == participant.getCurrentBet(), "Current player bet is insufficient to check.");
+				Assert.isTrue(this.getRoundBet() == participant.getCurrentRoundBet(), "Current player bet is insufficient to check.");
 
 				assertIsPlayerTurn(participant);
 				// update player state to waiting for turn
