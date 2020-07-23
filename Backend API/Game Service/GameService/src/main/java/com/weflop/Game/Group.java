@@ -153,6 +153,17 @@ public class Group {
 		}
 		return true;
 	}
+	
+	/**
+	 * Resets all player round-bets to zero (called at ends of rounds).
+	 */
+	synchronized public void resetPlayerRoundBets() {
+		for (int i = 0; i < players.length; i++) {
+			if (players[i] != null) {
+				players[i].setCurrentRoundBet(0);
+			}
+		}
+	}
 
 	/**
 	 * Creates a spectator and adds it to list of spectators.

@@ -15,6 +15,8 @@ public class PlayerPOJO {
 	private float balance;
 
 	private float currentBet;
+	
+	private float currentRoundBet;
 
 	private List<CardPOJO> cards;
 
@@ -22,10 +24,11 @@ public class PlayerPOJO {
 
 	private int slot;
 
-	public PlayerPOJO(String id, float balance, float currentBet, List<CardPOJO> cards, int state, int slot) {
+	public PlayerPOJO(String id, float balance, float currentBet, float currentRoundBet, List<CardPOJO> cards, int state, int slot) {
 		this.id = id;
 		this.balance = balance;
 		this.currentBet = currentBet;
+		this.setCurrentRoundBet(currentRoundBet);
 		this.cards = cards;
 		this.state = state;
 		this.slot = slot;
@@ -77,5 +80,13 @@ public class PlayerPOJO {
 
 	public void setSlot(int slot) {
 		this.slot = slot;
+	}
+
+	public float getCurrentRoundBet() {
+		return currentRoundBet;
+	}
+
+	public void setCurrentRoundBet(float currentRoundBet) {
+		this.currentRoundBet = currentRoundBet;
 	}
 }

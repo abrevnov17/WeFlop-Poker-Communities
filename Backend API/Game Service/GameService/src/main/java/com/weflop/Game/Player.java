@@ -25,6 +25,7 @@ public class Player {
 	private List<Card> cards;
 	private float balance;
 	private float currentBet;
+	private float currentRoundBet;
 	private PlayerState state;
 	int slot; // position of player in table (clockwise increasing, -1 if spectator)
 
@@ -40,6 +41,7 @@ public class Player {
 		this.setCards(cards);
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
+		this.setCurrentRoundBet(0.00f);
 		this.setState(PlayerState.WATCHING);
 		this.setSlot(-1);
 	}
@@ -71,6 +73,7 @@ public class Player {
 		Assert.isTrue(this.canBet(amount), "Insufficient funds to place bet");
 		this.balance -= amount;
 		this.currentBet += amount;
+		this.currentRoundBet += amount;
 	}
 
 	/**
@@ -85,6 +88,7 @@ public class Player {
 		this.state = PlayerState.ALL_IN;
 
 		this.currentBet += currBalance;
+		this.currentRoundBet += currBalance;
 
 		return currBalance;
 	}
@@ -123,7 +127,8 @@ public class Player {
 		List<CardPOJO> cards = this.cards.stream()
 				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
 				.collect(Collectors.toList());
-		return new PlayerPOJO(this.id, this.balance, this.currentBet, cards, this.state.getValue(), this.slot);
+		return new PlayerPOJO(this.id, this.balance, this.currentBet, this.currentRoundBet,
+				cards, this.state.getValue(), this.slot);
 	}
 
 	/**
@@ -229,5 +234,13 @@ public class Player {
 
 	public void setSlot(int slot) {
 		this.slot = slot;
+	}
+
+	public float getCurrentRoundBet() {
+		return currentRoundBet;
+	}
+
+	public void setCurrentRoundBet(float currentRoundBet) {
+		this.currentRoundBet = currentRoundBet;
 	}
 }
