@@ -101,7 +101,9 @@ public abstract class AbstractGame implements Game {
 	public abstract void performAction(Action action) throws Exception; // performs an action as a given participant
 
 	/* Required methods (internally used) for all subclasses */
-	protected abstract void deal(boolean dealNewHands); // deals cards to players
+	protected abstract void dealHands(); // deals cards to players
+	protected abstract void dealCenterCards(); // deals center cards for current round
+	protected abstract void dealRemainingCenterCards(); // deals any center cards that have not yet been dealt
 
 	protected abstract boolean isLastBettingRound(); // returns whether current round was last round of betting
 
@@ -247,8 +249,8 @@ public abstract class AbstractGame implements Game {
 
 		// resets all players to the waiting for next turn state
 		this.group.setAllPlayersToState(PlayerState.WAITING_FOR_TURN);
-
-		this.beginNewRound(true);
+		
+		beginNewRound(true);
 	}
 
 	/**
@@ -259,10 +261,14 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void beginNewRound(boolean dealPlayersCards) {
 		System.out.println("beggining new round");
+		
+		if (dealPlayersCards) {
+			dealHands(); // dealing hands to players
+		}
 
 		// flipping any new center cards
-		this.deal(dealPlayersCards);
-
+		dealCenterCards();
+		
 		// cycling to next turn
 		if (dealPlayersCards) {
 			cycleTurn(this.getBigBlindIndex()); // after paying blinds, player clockwise to big blind goes first
@@ -279,6 +285,9 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void endOfBettingRounds() {
 		System.out.println("End of betting rounds...");
+		// need to deal the remaining center cards (if any)
+		this.dealRemainingCenterCards();
+		
 		// calculate winning hand(s)
 		List<Player> playersWithMaxRank = new ArrayList<Player>();
 		HandRank maxRank = null;
@@ -286,7 +295,7 @@ public abstract class AbstractGame implements Game {
 			if (player.getState() != PlayerState.FOLDED) {
 				HandRank rank = this.evaluator.evaluate(this.centerCards, player.getCards());
 				if (maxRank == null || rank.compareTo(maxRank) == 0) {
-					// either first handrank we have found or tied with best hand rank we have found
+					// either first hand rank we have found or tied with best hand rank we have found
 					maxRank = rank;
 					playersWithMaxRank.add(player);
 				} else if (rank.compareTo(maxRank) < 0) {

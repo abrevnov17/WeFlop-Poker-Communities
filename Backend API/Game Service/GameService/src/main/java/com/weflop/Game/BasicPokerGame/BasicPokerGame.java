@@ -1,6 +1,7 @@
 package com.weflop.Game.BasicPokerGame;
 
 import java.time.Instant;
+
 import java.util.ArrayList;
 
 import org.springframework.util.Assert;
@@ -55,7 +56,7 @@ public class BasicPokerGame extends AbstractGame {
 			case START: {
 				Assert.isTrue(this.getGroup().getPlayers().size() >= 2, "A game requires at least two players");
 				Assert.isTrue(!this.isStarted(), "Game has already begun");
-				
+
 				Player participant = this.getParticipantById(action.getPlayerId());
 				Assert.isTrue(!participant.isSpectating(), "Only seated players can start a game.");
 
@@ -68,7 +69,7 @@ public class BasicPokerGame extends AbstractGame {
 				// start game clock
 				this.setStarted(true);
 				this.setStartTime(Instant.now());
-				
+
 				// propagate action that game has started to all members of group
 				this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).withPlayerId(action.getPlayerId()).build());
 
@@ -77,11 +78,11 @@ public class BasicPokerGame extends AbstractGame {
 
 				// spawning a thread that periodically saves the game
 				spawnSaveGameThread();
-				
+
 				// spawning a thread that updates player states
 				spawnSynchronizationPacketSendingThread();
 			}
-				break;
+			break;
 			case FOLD: {
 				Assert.isTrue(this.isStarted(), "Game has not begun");
 
@@ -97,10 +98,10 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				System.out.printf("Player %s folded\n", action.getPlayerId());
 			}
-				break;
+			break;
 			case RAISE: {
 				Assert.isTrue(this.isStarted(), "Game has not begun");
 
@@ -125,10 +126,10 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				System.out.printf("Player %s raised by: %d\n", action.getPlayerId(), bet);
 			}
-				break;
+			break;
 			case CALL: {
 				Assert.isTrue(this.isStarted(), "Game has not begun");
 
@@ -148,18 +149,18 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-				
+
 				System.out.printf("Player %s called\n", action.getPlayerId());
 			}
-				break;
+			break;
 			case CHECK: {
 				Assert.isTrue(this.isStarted(), "Game has not begun");
 
 				Player participant = this.getParticipantById(action.getPlayerId());
-				
+
 				Assert.isTrue(this.getRoundBet() == participant.getCurrentRoundBet(), "Current player bet is insufficient to check.");
 
 				assertIsPlayerTurn(participant);
@@ -168,30 +169,30 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-				
+
 				System.out.printf("Player %s checked\n", action.getPlayerId());
 			}
-				break;
+			break;
 			case ALL_IN: {
 				Assert.isTrue(this.isStarted(), "Game has not begun");
 				Player participant = this.getParticipantById(action.getPlayerId());
-				
+
 				assertIsPlayerTurn(participant);
-				
+
 				participant.goAllIn();
-				
+
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-				
+
 				System.out.printf("Player %s went all-in\n", action.getPlayerId());
 			}
-				break;
+			break;
 			case TURN_TIMEOUT: {
 				System.out.println("inside turn timeout");
 				Player participant = this.getParticipantById(action.getPlayerId());
@@ -204,18 +205,18 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				// move on to next turn
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
-				
+
 				System.out.printf("Player %s timed out\n", action.getPlayerId());
 			}
-				break;
+			break;
 			case JOIN: {
 				printGameState();
 				// add player as spectator
 				this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
-				
+
 				System.out.printf("Player %s joining game\n", action.getPlayerId());
 
 				// need to send the player the current game state
@@ -224,13 +225,13 @@ public class BasicPokerGame extends AbstractGame {
 				System.out.println(participant.getSession());
 				this.sendUserGameState(participant);
 			}
-				break;
+			break;
 			case SIT: {
 				Player participant = this.getParticipantById(action.getPlayerId());
-				
+
 
 				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot());
-											
+
 				participant.setBalance(action.getValue()); // updating player balance based on buy-in
 
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
@@ -238,7 +239,7 @@ public class BasicPokerGame extends AbstractGame {
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
 			}
-				break;
+			break;
 			case STAND: {
 				Player participant = this.getParticipantById(action.getPlayerId());
 
@@ -247,10 +248,10 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-				
+
 				System.out.printf("Player %s stood\n", action.getPlayerId());
 			}
-				break;
+			break;
 			case DISCONNECT: {
 				Player participant = this.getParticipantById(action.getPlayerId());
 
@@ -262,7 +263,7 @@ public class BasicPokerGame extends AbstractGame {
 				}
 				System.out.printf("Player %s disconnected\n", action.getPlayerId());
 			}
-				break;
+			break;
 			default:
 				throw new Exception("Unsopported action for this game mode");
 			}
@@ -275,44 +276,64 @@ public class BasicPokerGame extends AbstractGame {
 
 	/**
 	 * Deals new hands to each player
-	 * 
-	 * @param Boolean
-	 *            describing whether to deal all players new hands and clear old
-	 *            center cards.
 	 */
 	@Override
-	protected void deal(boolean dealNewHands) {
+	protected void dealHands() {
 		// shuffling deck
 		deck.shuffle();
-		System.out.println("dealing...");
-		if (dealNewHands) {
-			System.out.println("dealing new hands");
-			// deal cards to players
-			int numDealt = this.variant.getNumDealt();
-			for (Player player : this.getGroup().getPlayers()) {
-				player.discardHand(); // discarding any old hands
-				for (int i = 0; i < numDealt; i++) {
-					player.addCard(deck.dealCard());
-				}
-
-				if (numDealt > 0) {
-					// sending message to player with new cards
-					this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.PLAYER_DEAL).withCards(player.getCards()).build(), player);
-				}
+		System.out.println("dealing new hands");
+		// deal cards to players
+		int numDealt = this.variant.getNumDealt();
+		for (Player player : this.getGroup().getPlayers()) {
+			player.discardHand(); // discarding any old hands
+			for (int i = 0; i < numDealt; i++) {
+				player.addCard(deck.dealCard());
 			}
 
-			this.discardCenterCards();
+			if (numDealt > 0) {
+				// sending message to player with new cards
+				this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.PLAYER_DEAL).withCards(player.getCards()).build(), player);
+			}
 		}
 
-		// deal center cards
+		this.discardCenterCards();
+	}
+
+	/**
+	 * Given a list of integers representing round numbers, deals center cards for each
+	 * round and propagates that update to players and spectators.
+	 * 
+	 * @param rounds
+	 */
+	@Override
+	protected void dealCenterCards() {
 		int newCenterCards = this.variant.getCardsDealtBeforeRound(this.getRound());
 		System.out.printf("dealing %d center cards for round %d\n", newCenterCards, this.getRound());
-		for (int i = 0; i < newCenterCards; i++) {
+		dealCenterCards(newCenterCards);
+	}
+	
+	/**
+	 * Deals all center cards that have yet to be dealt.
+	 */
+	@Override
+	protected void dealRemainingCenterCards() {
+		int newCenterCards = this.getCenterCards().size() - this.variant.getTotalCardsDealt();
+		System.out.printf("dealing %d remaining center cards\n", newCenterCards);
+		dealCenterCards(newCenterCards);
+	}
+	
+	/**
+	 * Helper method that deals a set number of center cards and propagates updates to participants.
+	 * @param numCards
+	 */
+	private void dealCenterCards(int numCards) {
+		// deal center cards
+		for (int i = 0; i < numCards; i++) {
 			this.addToCenterCards(deck.dealCard());
 		}
 
 		// messaging players regarding new center cards
-		if (newCenterCards > 0) {
+		if (numCards > 0) {
 			this.propagateActionToGroup(new Action.ActionBuilder(ActionType.CENTER_DEAL).withCards(getCenterCards()).build());
 			this.incrementEpoch();
 		}
@@ -327,7 +348,7 @@ public class BasicPokerGame extends AbstractGame {
 		if (this.getRound() == this.variant.getBettingRounds()) {
 			return true;
 		}
-		
+
 		// if all players have folded or are all-in, the round is over
 		int count = 0;
 		for (Player player : getGroup().getPlayers()) {
@@ -335,11 +356,11 @@ public class BasicPokerGame extends AbstractGame {
 				count++;
 			}
 		}
-		
+
 		if (count > 1) {
 			return false;
 		}
-		
+
 		return true;
 	}
 }

@@ -28,8 +28,6 @@ public class Group {
 	 * @param player
 	 */
 	synchronized public void movePlayerToSpectator(Player player) {
-		Assert.isTrue(player.isSpectating(), "Must be spectator to sit");
-
 		for (int i = 0; i < players.length; i++) {
 			if (players[i].equals(player)) {
 				players[i] = null; // removing player from players

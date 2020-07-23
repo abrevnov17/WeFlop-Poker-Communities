@@ -32,6 +32,24 @@ public class VariantRepresentation {
 		this.cardsDiscardedAfterRound = cardsDiscardedAfterRound;
 	}
 
+	public int getTotalCardsDealt() {
+		int numCards = 0;
+		for (int i = 0; i < cardsDealtBeforeRound.length; i++) {
+			numCards += cardsDealtBeforeRound[i];
+		}
+		
+		return numCards;
+	}
+	
+	public int getTotalCardsDiscarded() {
+		int numCards = 0;
+		for (int i = 0; i < cardsDiscardedAfterRound.length; i++) {
+			numCards += cardsDiscardedAfterRound[i];
+		}
+		
+		return numCards;
+	}
+	
 	public int getCardsDealtBeforeRound(int round) {
 		return this.cardsDealtBeforeRound[round];
 	}
