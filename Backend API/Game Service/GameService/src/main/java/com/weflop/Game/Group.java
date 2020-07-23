@@ -164,6 +164,17 @@ public class Group {
 			}
 		}
 	}
+	
+	/**
+	 * Resets player states where appropriate (such as flipping from CHECKED to WAITING_FOR_TURN).
+	 */
+	synchronized public void preparePlayerStatesForNewRound() {
+		for (int i = 0; i < players.length; i++) {
+			if (players[i] != null && players[i].getState() == PlayerState.CHECKED) {
+				players[i].setState(PlayerState.WAITING_FOR_TURN);
+			}
+		}
+	}
 
 	/**
 	 * Creates a spectator and adds it to list of spectators.

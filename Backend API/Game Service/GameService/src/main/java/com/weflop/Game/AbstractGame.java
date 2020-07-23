@@ -377,6 +377,7 @@ public abstract class AbstractGame implements Game {
 	synchronized protected void endBettingRound() {
 		setRoundBet(0.0f); // resetting round bet
 		group.resetPlayerRoundBets(); // setting all player round bets to 0
+		group.preparePlayerStatesForNewRound(); // prepares player states for new round
 		if (this.isLastBettingRound()) {
 			this.endOfBettingRounds();
 		} else {
