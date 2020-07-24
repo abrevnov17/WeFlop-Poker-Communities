@@ -317,7 +317,7 @@ public class BasicPokerGame extends AbstractGame {
 	 */
 	@Override
 	protected void dealRemainingCenterCards() {
-		int newCenterCards = this.getCenterCards().size() - this.variant.getTotalCardsDealt();
+		int newCenterCards =  this.variant.getTotalCardsDealt() - this.getCenterCards().size();
 		System.out.printf("dealing %d remaining center cards\n", newCenterCards);
 		dealCenterCards(newCenterCards);
 	}

@@ -25,6 +25,7 @@ THE SOFTWARE.
 */
 package com.weflop.Evaluation.TwoPlusTwo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.weflop.Cards.Card;
@@ -65,10 +66,12 @@ public class TwoPlusTwoHandEvaluator implements HandRankEvaluator {
 
 	@Override
 	public HandRank evaluate(List<Card> board, List<Card> hand) {
-		board.addAll(hand); // concatenating all cards
+		List<Card> boardCopy = new ArrayList<Card>(board);
+		
+		boardCopy.addAll(hand); // concatenating all cards
 
 		int p = 53;
-		for (Card card : board) {
+		for (Card card : boardCopy) {
 			p = handRanks[p + cardToIntegerRepresentation(card)];
 		}
 		return new TwoPlusTwoHandRank(p);

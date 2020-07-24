@@ -298,7 +298,7 @@ public abstract class AbstractGame implements Game {
 					// either first hand rank we have found or tied with best hand rank we have found
 					maxRank = rank;
 					playersWithMaxRank.add(player);
-				} else if (rank.compareTo(maxRank) < 0) {
+				} else if (rank.compareTo(maxRank) > 0) {
 					// hand rank is best we have found so far
 					playersWithMaxRank.clear();
 					maxRank = rank;
@@ -306,12 +306,16 @@ public abstract class AbstractGame implements Game {
 				}
 			}
 		}
+		
+		this.printGameState();
 
 		// distribute funds to winner(s)
 		float perPlayerWinnings = this.pot / playersWithMaxRank.size(); // split pot between winners
 		for (Player player : playersWithMaxRank) {
 			player.increaseBalance(perPlayerWinnings);
 		}
+		
+		this.printGameState();
 
 		this.pot = 0.0f; // resetting pot
 
@@ -328,6 +332,7 @@ public abstract class AbstractGame implements Game {
 			System.out.println("Ending game due to insufficient players...");
 			this.setStarted(false);
 			this.threadExecutor.shutdown();
+			return;
 		}
 
 		System.out.println("Sending hand win/loss messages...");

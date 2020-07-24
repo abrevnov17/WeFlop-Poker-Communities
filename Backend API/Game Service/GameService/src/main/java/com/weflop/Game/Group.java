@@ -29,7 +29,7 @@ public class Group {
 	 */
 	synchronized public void movePlayerToSpectator(Player player) {
 		for (int i = 0; i < players.length; i++) {
-			if (players[i].equals(player)) {
+			if (players[i] != null && players[i].equals(player)) {
 				players[i] = null; // removing player from players
 				player.convertToSpectator(); // converting player to spectator
 				spectators.add(player); // adding player to spectators list
