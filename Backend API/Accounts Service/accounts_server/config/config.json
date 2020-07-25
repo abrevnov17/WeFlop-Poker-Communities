@@ -13,7 +13,8 @@
         "base_url": "/api",
         "create_account_route": "/create-account",
         "login_route": "/login",
-        "delete_account_route": "/delete-account"
+        "delete_account_route": "/delete-account",
+        "username_taken_route": "/username-taken"
     },
     "default": {
         "app_name": "Accounts Service",

@@ -26,62 +26,62 @@ router.post(global.gConfig.create_account_route, function(req, res) {
   // ensuring username, email, and password are provided
 
   if (username == undefined) {
-	res.status(400).send({ error: "Missing required parameter: 'username'" });
-	return
-  }
+   res.status(400).send({ error: "Missing required parameter: 'username'" });
+   return
+ }
 
-  if (email == undefined) {
-	res.status(400).send({ error: "Missing required parameter: 'email'" });
-	return
-  }
+ if (email == undefined) {
+   res.status(400).send({ error: "Missing required parameter: 'email'" });
+   return
+ }
 
-  if (password == undefined) {
-	res.status(400).send({ error: "Missing required parameter: 'password'" });
-	return
-  }
+ if (password == undefined) {
+   res.status(400).send({ error: "Missing required parameter: 'password'" });
+   return
+ }
 
 
  // first we ensure that username, email, and password are of valid format
 
  if (!inputValidator.validateUsername(username)) {
  	// invalid username format
-	res.status(400).send({ error: "Invalid username formatting." });
-	return
+   res.status(400).send({ error: "Invalid username formatting." });
+   return
  }
 
  if (!inputValidator.validateEmail(email)) {
  	// invalid email format
-	res.status(400).send({ error: "Invalid email formatting." });
-	return
+   res.status(400).send({ error: "Invalid email formatting." });
+   return
  }
 
  if (!inputValidator.validatePassword(password)) {
  	// invalid password format
-	res.status(400).send({ error: "Invalid password formatting." });
-	return
+   res.status(400).send({ error: "Invalid password formatting." });
+   return
  }
 
  // we need to compute the hashed password value to store in our database
  bcrypt.hash(password, global.gConfig.salt_rounds, function(err, hash) {
  	if (err != undefined) {
-		res.status(500).send({ error: "Error generating hash of password. Please retry." });
- 	}
-    
+    res.status(500).send({ error: "Error generating hash of password. Please retry." });
+  }
+
     // we now store a user with email, username, and hashed-password (with salt) in our DB
     db.insertUser(username, email, hash).then(user_id => {
     	// successfully inserted user into database...generating a session token and responding with success
     	crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
     		if (err) { 
-				res.status(500).send({ error: "Error generating session token. Try logging in.." })
-			} else { 
-				token = buff.toString('hex')
+          res.status(500).send({ error: "Error generating session token. Try logging in.." })
+        } else { 
+          token = buff.toString('hex')
 				res.status(200).send({ userID: user_id, sessionID: token }); // success
 			}
 		});
     }).catch(err =>
-		res.status(500).send({ error: "Error generating hash of password. Please retry." })
+    res.status(500).send({ error: "Error generating hash of password. Please retry." })
     )
- });
+  });
 });
 
 // Define the create_account route
@@ -92,33 +92,33 @@ router.get(global.gConfig.login_route, function(req, res) {
   // ensuring username and password are provided as parameters
 
   if (username == undefined) {
-	res.status(400).send({ error: "Missing required parameter: 'username'" });
-	return
-  }
+   res.status(400).send({ error: "Missing required parameter: 'username'" });
+   return
+ }
 
-  if (password == undefined) {
-	res.status(400).send({ error: "Missing required parameter: 'password'" });
-	return
-  }
+ if (password == undefined) {
+   res.status(400).send({ error: "Missing required parameter: 'password'" });
+   return
+ }
 
   // validating the provided user credentials
   db.getUserId(username, hash).then(user_id => {
   	if (user_id === -1) {
-		res.status(400).send({ error: "Invalid username/password combination." })
-  	} else {
+      res.status(400).send({ error: "Invalid username/password combination." })
+    } else {
 		// successfully found user in database...generating a session token and responding with success
-    	crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
-    		if (err) { 
-				res.status(500).send({ error: "Error generating session token. Try logging in.." })
-			} else { 
-				token = buff.toString('hex')
+   crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
+    if (err) { 
+      res.status(500).send({ error: "Error generating session token. Try logging in.." })
+    } else { 
+      token = buff.toString('hex')
 				res.status(200).send({ userID: user_id, sessionID: token }); // success
 			}
 		});
-  	}
-  }).catch(err =>
-		res.status(500).send({ error: "Error querying database for user. Please retry." })
-   );
+ }
+}).catch(err =>
+res.status(500).send({ error: "Error querying database for user. Please retry." })
+);
 });
 
 
@@ -129,14 +129,32 @@ router.delete(global.gConfig.delete_account_route, function(req, res) {
 
   // ensuring user_id was provided as a parameter
   if (user_id == undefined) {
-	res.status(400).send({ error: "Missing required parameter: 'user_id'" });
-	return
+   res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+   return
+ }
+
+ db.deleteEntry(user_id).then(() => {
+   res.sendStatus(200);
+ }).catch(err =>
+ res.status(400).send({ error: err })
+ )
+});
+
+// Define route that returns whether a username is taken or not
+router.GET(global.gConfig.username_taken_route, function(req, res) {
+  // parsing out request parameters
+  const { username } = req.body
+
+  // ensuring user_id was provided as a parameter
+  if (username == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'username'" });
+    return
   }
 
-  db.deleteEntry(user_id).then(() => {
-	res.sendStatus(200);
+  db.isUsernameTaken(username).then(isTaken => {
+    res.status(200).send({ isTaken: isTaken });
   }).catch(err =>
-	res.status(400).send({ error: err })
+  res.status(400).send({ error: err })
   )
 });
 

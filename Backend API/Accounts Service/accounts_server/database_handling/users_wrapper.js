@@ -45,6 +45,23 @@ function deleteEntry(user_id) {
 	})
 }
 
+// checks if username exists (resolves to true if it does, false otherwise)
+function isUsernameTaken(username) {
+	return new Promise(function (resolve, reject) {
+		pool.query('SELECT * FROM Users WHERE username = $1', [username], (err, results) => {
+		    if (err) {
+		      reject(err)
+		    }
+
+		    if (results.rows.length != 1) {
+		    	resolve(false)
+		    }
+
+		    resolve(true)
+	  	})
+	})
+}
+
 module.exports = {
 	insertUser: insertUser,
 	getUserId: getUserId,
