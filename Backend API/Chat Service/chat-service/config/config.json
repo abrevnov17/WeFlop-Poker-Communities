@@ -1,0 +1,18 @@
+{
+    "api": {
+        "base_url": "/api",
+        "create_account_route": "/create-account"
+    },
+    "default": {
+        "app_name": "Chat Service",
+        "description": "Serves api calls related to user chat-rooms."
+    },
+    "development": {
+        "config_id": "development",
+        "port": 8002
+    },
+    "production": {
+        "config_id": "production",
+        "port": 8082
+    }
+}
