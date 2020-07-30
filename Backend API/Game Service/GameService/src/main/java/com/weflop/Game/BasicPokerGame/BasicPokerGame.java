@@ -234,7 +234,6 @@ public class BasicPokerGame extends AbstractGame {
 			case SIT: {
 				Player participant = this.getParticipantById(action.getPlayerId());
 
-
 				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot());
 
 				participant.setBalance(action.getValue()); // updating player balance based on buy-in
@@ -243,6 +242,30 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				
+				if (!this.isStarted() && this.getGroup().getPlayers().size() >= 2) {
+					// starting game:
+					
+					// initializing game history
+					InitialState state = new InitialState(this.getGroup().getPlayers());
+					this.setHistory(new History(state, new ArrayList<Action>()));
+
+					// start game clock
+					this.setStarted(true);
+					this.setStartTime(Instant.now());
+
+					// propagate action that game has started to all members of group
+					this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).build());
+
+					// start betting rounds
+					this.beginBettingRounds();
+
+					// spawning a thread that periodically saves the game
+					spawnSaveGameThread();
+					
+					// spawning a thread that updates player states
+					spawnSynchronizationPacketSendingThread();
+				}
 			}
 			break;
 			case STAND: {
