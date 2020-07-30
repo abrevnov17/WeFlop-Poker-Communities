@@ -3,9 +3,14 @@ package com.weflop.GameService.REST;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.weflop.Game.Game;
-import com.weflop.Game.GameCustomMetadata;
 import com.weflop.Game.GameFactory;
+import com.weflop.GameService.Database.GameRepository;
+import com.weflop.GameService.Database.DomainObjects.GameDocument;
 
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,6 +18,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @RestController
 public class RESTController {
+
+	@Autowired
+	private GameRepository repository;
 
 	@PostMapping("/create-game")
 	@ResponseBody
@@ -28,12 +36,45 @@ public class RESTController {
 
 	@GetMapping("/game-metadata")
 	@ResponseBody
-	public GameCustomMetadata getGameMetadata(@RequestParam(name = "game_id", required = true) String gameId) {
+	public GameMetadata getGameMetadata(@RequestParam(name = "game_id", required = true) String gameId) {
 		Game game = GameFactory.ID_TO_GAME.get(gameId);
-		if (game == null) {
+		
+		// first, we check to see if game is on this replica
+		if (game != null) {
+			return game.getGameMetadata();
+		}
+		
+		// otherwise, we need to load from database
+		Optional<GameDocument> gameDocument = repository.findById(gameId);
+		
+		if (!gameDocument.isPresent()) {
 			throw new IllegalArgumentException("No game exists with id: " + gameId);
 		}
-
-		return game.getGameMetadata();
+		
+	    GameDocument doc = gameDocument.get();
+		
+		return new GameMetadata(doc.getStartTime(), doc.getPot(), doc.getMetadata(), doc.getLedger());
+	}
+	
+	@GetMapping("/ledger")
+	@ResponseBody
+	public Map<String, Float> getGameLedger(@RequestParam(name = "game_id", required = true) String gameId) {
+		Game game = GameFactory.ID_TO_GAME.get(gameId);
+		
+		// first, we check to see if game is on this replica
+		if (game != null) {
+			return game.getGameMetadata().getLedger();
+		}
+		
+		// otherwise, we need to load from database
+		Optional<GameDocument> gameDocument = repository.findById(gameId);
+		
+		if (!gameDocument.isPresent()) {
+			throw new IllegalArgumentException("No game exists with id: " + gameId);
+		}
+		
+	    GameDocument doc = gameDocument.get();
+		
+		return doc.getLedger();
 	}
 }

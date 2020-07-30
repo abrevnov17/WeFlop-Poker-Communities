@@ -24,6 +24,7 @@ public class GameDocument {
 
 	private int type;
 
+	// -1 if game has not started yet
 	private long startTime;
 
 	// dynamic attributes

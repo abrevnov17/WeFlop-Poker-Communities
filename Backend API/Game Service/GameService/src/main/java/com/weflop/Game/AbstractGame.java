@@ -25,6 +25,7 @@ import com.weflop.GameService.Networking.GameStatePOJO;
 import com.weflop.GameService.Networking.LimitedPlayerPOJO;
 import com.weflop.GameService.Networking.MessageSendingHandlers;
 import com.weflop.GameService.Networking.WebSocketHandler;
+import com.weflop.GameService.REST.GameMetadata;
 import com.weflop.Utils.ThreadExecution.TurnTimerManager;
 
 import java.util.concurrent.Executors;
@@ -111,8 +112,8 @@ public abstract class AbstractGame implements Game {
 	protected abstract boolean isLastBettingRound(); // returns whether current round was last round of betting
 
 	@Override
-	public GameCustomMetadata getGameMetadata() {
-		return this.metadata;
+	public GameMetadata getGameMetadata() {
+		return new GameMetadata(started ? startTime.toEpochMilli() : -1, pot, metadata, ledger.toPOJO());
 	}
 
 	/**
@@ -496,8 +497,8 @@ public abstract class AbstractGame implements Game {
 		List<SpectatorPOJO> spectators = this.group.getSpectators().stream()
 				.map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
 
-		return new GameDocument(id.toString(), metadata.getType().getValue(), startTime.toEpochMilli(), 
-				centerCards, pot, dealerIndex, players, spectators, history.toPOJO(), ledger.toPOJO(), getGameMetadata());
+		return new GameDocument(id.toString(), metadata.getType().getValue(), started ? startTime.toEpochMilli() : -1, 
+				centerCards, pot, dealerIndex, players, spectators, history.toPOJO(), ledger.toPOJO(), this.metadata);
 	}
 	
 	/**
