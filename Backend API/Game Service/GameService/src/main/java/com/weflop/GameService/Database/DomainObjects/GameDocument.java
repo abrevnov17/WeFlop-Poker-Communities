@@ -1,9 +1,12 @@
 package com.weflop.GameService.Database.DomainObjects;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.weflop.Game.GameCustomMetadata;
 
 /**
  * CRUD object containing game information as stored on database.
@@ -23,9 +26,6 @@ public class GameDocument {
 
 	private long startTime;
 
-	private float smallBlind;
-	private float bigBlind;
-
 	// dynamic attributes
 
 	private List<CardPOJO> centerCards;
@@ -39,24 +39,28 @@ public class GameDocument {
 	private List<SpectatorPOJO> spectators;
 
 	private HistoryPOJO history;
+	
+	private Map<String, Float> ledger;
+	
+	private GameCustomMetadata metadata;
 
 	// Constructors:
 
-	public GameDocument(String id, int type, long startTime, float smallBlind, float bigBlind,
+	public GameDocument(String id, int type, long startTime,
 			List<CardPOJO> centerCards, float pot, int dealerIndex, List<PlayerPOJO> players,
-			List<SpectatorPOJO> spectators, HistoryPOJO history) {
+			List<SpectatorPOJO> spectators, HistoryPOJO history, Map<String, Float> ledger, GameCustomMetadata metadata) {
 		super();
 		this.id = id;
 		this.type = type;
 		this.startTime = startTime;
-		this.smallBlind = smallBlind;
-		this.bigBlind = bigBlind;
 		this.centerCards = centerCards;
 		this.pot = pot;
 		this.dealerIndex = dealerIndex;
 		this.players = players;
 		this.spectators = spectators;
 		this.history = history;
+		this.setLedger(ledger);
+		this.setMetadata(metadata);
 	}
 
 	// getters and setters
@@ -83,22 +87,6 @@ public class GameDocument {
 
 	public void setStartTime(long startTime) {
 		this.startTime = startTime;
-	}
-
-	public float getSmallBlind() {
-		return smallBlind;
-	}
-
-	public void setSmallBlind(float smallBlind) {
-		this.smallBlind = smallBlind;
-	}
-
-	public float getBigBlind() {
-		return bigBlind;
-	}
-
-	public void setBigBlind(float bigBlind) {
-		this.bigBlind = bigBlind;
 	}
 
 	public List<CardPOJO> getCenterCards() {
@@ -147,5 +135,21 @@ public class GameDocument {
 
 	public void setHistory(HistoryPOJO history) {
 		this.history = history;
+	}
+
+	public Map<String, Float> getLedger() {
+		return ledger;
+	}
+
+	public void setLedger(Map<String, Float> ledger) {
+		this.ledger = ledger;
+	}
+
+	public GameCustomMetadata getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(GameCustomMetadata metadata) {
+		this.metadata = metadata;
 	}
 }

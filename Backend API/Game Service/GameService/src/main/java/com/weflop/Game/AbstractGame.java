@@ -70,6 +70,8 @@ public abstract class AbstractGame implements Game {
 	private int epoch; // value we increment on changes in state; keeps track of state versions
 
 	private GameCustomMetadata metadata;
+	
+	private Ledger ledger;
 
 	@Autowired
 	private GameRepository gameRepository;
@@ -90,6 +92,7 @@ public abstract class AbstractGame implements Game {
 		this.setRound(0);
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.epoch = 0;
+		this.setLedger(new Ledger());
 	}
 
 	public String getGameId() {
@@ -228,6 +231,7 @@ public abstract class AbstractGame implements Game {
 		// small blind pays
 		this.getSmallBlindPlayer().bet(metadata.getSmallBlind());
 		this.pot += metadata.getSmallBlind();
+		getLedger().updateEntry(getSmallBlindPlayer().getId(), -metadata.getSmallBlind());
 		
 		System.out.println("Paying small blind...");
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.SMALL_BLIND)
@@ -237,6 +241,7 @@ public abstract class AbstractGame implements Game {
 		// big blind pays
 		this.getBigBlindPlayer().bet(metadata.getBigBlind());
 		this.pot += metadata.getBigBlind();
+		getLedger().updateEntry(getBigBlindPlayer().getId(), -metadata.getBigBlind());
 		
 		System.out.println("Paying big blind...");
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BIG_BLIND)
@@ -313,6 +318,7 @@ public abstract class AbstractGame implements Game {
 		float perPlayerWinnings = this.pot / playersWithMaxRank.size(); // split pot between winners
 		for (Player player : playersWithMaxRank) {
 			player.increaseBalance(perPlayerWinnings);
+			ledger.updateEntry(player.getId(), perPlayerWinnings);
 		}
 		
 		this.printGameState();
@@ -490,9 +496,8 @@ public abstract class AbstractGame implements Game {
 		List<SpectatorPOJO> spectators = this.group.getSpectators().stream()
 				.map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
 
-		return new GameDocument(id.toString(), metadata.getType().getValue(), startTime.toEpochMilli(),
-				metadata.getSmallBlind(), metadata.getBigBlind(), centerCards, pot, dealerIndex, players, spectators,
-				history.toPOJO());
+		return new GameDocument(id.toString(), metadata.getType().getValue(), startTime.toEpochMilli(), 
+				centerCards, pot, dealerIndex, players, spectators, history.toPOJO(), ledger.toPOJO(), getGameMetadata());
 	}
 	
 	/**
@@ -783,5 +788,13 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void incrementEpoch() {
 		this.epoch++;
+	}
+
+	synchronized protected Ledger getLedger() {
+		return ledger;
+	}
+
+	synchronized protected  void setLedger(Ledger ledger) {
+		this.ledger = ledger;
 	}
 }

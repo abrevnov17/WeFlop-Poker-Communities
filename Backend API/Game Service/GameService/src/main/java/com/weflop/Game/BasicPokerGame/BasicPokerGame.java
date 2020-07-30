@@ -117,6 +117,7 @@ public class BasicPokerGame extends AbstractGame {
 				// update player balances and pot
 				participant.bet(bet); // verification performed in 'bet' method
 				this.addToPot(bet);
+				getLedger().updateEntry(participant.getId(), -bet);
 
 				// update player state to waiting for turn
 				participant.setState(PlayerState.WAITING_FOR_TURN);
@@ -143,6 +144,7 @@ public class BasicPokerGame extends AbstractGame {
 				// update player balances and pot
 				participant.bet(bet); // verification performed in 'bet' method
 				this.addToPot(bet);
+				getLedger().updateEntry(participant.getId(), -bet);
 
 				// update player state to waiting for turn
 				participant.setState(PlayerState.WAITING_FOR_TURN);
@@ -182,7 +184,9 @@ public class BasicPokerGame extends AbstractGame {
 
 				assertIsPlayerTurn(participant);
 
-				participant.goAllIn();
+				float bet = participant.goAllIn();
+				this.addToPot(bet);
+				getLedger().updateEntry(participant.getId(), -bet);
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
@@ -221,8 +225,9 @@ public class BasicPokerGame extends AbstractGame {
 
 				// need to send the player the current game state
 				Player participant = this.getParticipantById(action.getPlayerId());
+				getLedger().updateEntry(participant.getId(), 0.00f); // adding player to ledger (if not already present)
+
 				System.out.println(participant);
-				System.out.println(participant.getSession());
 				this.sendUserGameState(participant);
 			}
 			break;
