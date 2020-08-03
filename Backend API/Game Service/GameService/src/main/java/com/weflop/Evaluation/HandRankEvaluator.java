@@ -1,8 +1,7 @@
 package com.weflop.Evaluation;
 
-import java.util.List;
-
-import com.weflop.Cards.Card;
+import com.weflop.Cards.Board;
+import com.weflop.Cards.Hand;
 
 /**
  * HandRankEvaluator.java
@@ -14,5 +13,5 @@ import com.weflop.Cards.Card;
  *
  */
 public interface HandRankEvaluator {
-	public HandRank evaluate(List<Card> tableCards, List<Card> hand);
+	public HandRank evaluate(Board tableCards, Hand hand);
 }

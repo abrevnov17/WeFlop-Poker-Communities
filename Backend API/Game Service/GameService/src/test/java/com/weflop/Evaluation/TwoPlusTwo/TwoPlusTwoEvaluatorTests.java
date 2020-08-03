@@ -7,8 +7,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.weflop.Cards.Board;
 import com.weflop.Cards.Card;
 import com.weflop.Cards.CardValue;
+import com.weflop.Cards.Hand;
 import com.weflop.Cards.Suit;
 import com.weflop.Evaluation.HandClassification;
 import com.weflop.Evaluation.HandRank;
@@ -311,8 +313,13 @@ public class TwoPlusTwoEvaluatorTests {
 	
 	private int compareAndAssertHandTypes(HandRankEvaluator evaluator, List<Card> h1, HandClassification type1, 
 			List<Card> h2, HandClassification type2, List<Card> table){
-		HandRank rank1 = evaluator.evaluate(table, h1);
-		HandRank rank2 = evaluator.evaluate(table, h2);
+		Hand hand1 = new Hand(h1);
+		Hand hand2 = new Hand(h2);
+		
+		Board board = new Board(table);
+		
+		HandRank rank1 = evaluator.evaluate(board, hand1);
+		HandRank rank2 = evaluator.evaluate(board, hand2);
 		assertTrue(rank1.getHandType() == type1, String.format("Expected: %s, got: %s\n", type1.toString(), rank1.getHandType().toString()));
 		assertTrue(rank2.getHandType() == type2, String.format("Expected: %s, got: %s\n", type2.toString(), rank2.getHandType().toString()));
 		return rank1.compareTo(rank2);

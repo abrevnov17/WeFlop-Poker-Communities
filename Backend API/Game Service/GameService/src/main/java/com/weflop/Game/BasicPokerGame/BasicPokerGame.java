@@ -8,6 +8,7 @@ import org.springframework.util.Assert;
 
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
+import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.AbstractGame;
 import com.weflop.Game.Action;
@@ -111,13 +112,11 @@ public class BasicPokerGame extends AbstractGame {
 
 				// get bet and check that it is valid
 				float bet = action.getValue();
-				Assert.isTrue(participant.getCurrentRoundBet() + bet > this.getRoundBet(),
+				Assert.isTrue(participant.getCurrentRoundBet() + bet > getBetController().getRoundBet(),
 						"You have to raise more than the prior bet");
 
 				// update player balances and pot
-				participant.bet(bet); // verification performed in 'bet' method
-				this.addToPot(bet);
-				getLedger().updateEntry(participant.getId(), -bet);
+				getBetController().raise(participant, bet); // verification performed in 'bet' method
 
 				// update player state to waiting for turn
 				participant.setState(PlayerState.WAITING_FOR_TURN);
@@ -139,13 +138,11 @@ public class BasicPokerGame extends AbstractGame {
 				assertIsPlayerTurn(participant);
 
 				// update player balances and pot
-				float bet = this.getRoundBet() - participant.getCurrentRoundBet();
+				float bet = getBetController().getRoundBet() - participant.getCurrentRoundBet();
 
 				// update player balances and pot
-				participant.bet(bet); // verification performed in 'bet' method
-				this.addToPot(bet);
-				getLedger().updateEntry(participant.getId(), -bet);
-
+				getBetController().bet(participant, bet); // verification performed in 'bet' method
+				
 				// update player state to waiting for turn
 				participant.setState(PlayerState.WAITING_FOR_TURN);
 
@@ -163,7 +160,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				Player participant = this.getParticipantById(action.getPlayerId());
 
-				Assert.isTrue(this.getRoundBet() == participant.getCurrentRoundBet(), "Current player bet is insufficient to check.");
+				Assert.isTrue(getBetController().getRoundBet() == participant.getCurrentRoundBet(), "Current player bet is insufficient to check.");
 
 				assertIsPlayerTurn(participant);
 				// update player state to waiting for turn
@@ -184,9 +181,9 @@ public class BasicPokerGame extends AbstractGame {
 
 				assertIsPlayerTurn(participant);
 
-				float bet = participant.goAllIn();
-				this.addToPot(bet);
-				getLedger().updateEntry(participant.getId(), -bet);
+				float bet = getBetController().goAllIn(participant);
+				
+				action.setValue(bet); // appending bet value to action
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
@@ -225,8 +222,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				// need to send the player the current game state
 				Player participant = this.getParticipantById(action.getPlayerId());
-				getLedger().updateEntry(participant.getId(), 0.00f); // adding player to ledger (if not already present)
-
+				
 				System.out.println(participant);
 				this.sendUserGameState(participant);
 			}
@@ -235,8 +231,10 @@ public class BasicPokerGame extends AbstractGame {
 				Player participant = this.getParticipantById(action.getPlayerId());
 
 				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot());
-
+				
 				participant.setBalance(action.getValue()); // updating player balance based on buy-in
+				
+				getBetController().addPlayerToLedger(participant.getId()); // adding player to ledger (if not already present)
 
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
 
@@ -313,18 +311,22 @@ public class BasicPokerGame extends AbstractGame {
 		// deal cards to players
 		int numDealt = this.variant.getNumDealt();
 		for (Player player : this.getGroup().getPlayers()) {
-			player.discardHand(); // discarding any old hands
+			player.discardHand();; // discarding any old hands
 			for (int i = 0; i < numDealt; i++) {
 				player.addCard(deck.dealCard());
 			}
+			
+			// calculating hand ranks
+			HandRank rank = this.getEvaluator().evaluate(getBoard(), player.getHand());
+			player.getHand().setRank(rank);
 
 			if (numDealt > 0) {
 				// sending message to player with new cards
-				this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.PLAYER_DEAL).withCards(player.getCards()).build(), player);
+				this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.PLAYER_DEAL).withCards(player.getHand().getCards()).build(), player);
 			}
 		}
 
-		this.discardCenterCards();
+		getBoard().discard();
 	}
 
 	/**
@@ -345,7 +347,7 @@ public class BasicPokerGame extends AbstractGame {
 	 */
 	@Override
 	protected void dealRemainingCenterCards() {
-		int newCenterCards =  this.variant.getTotalCardsDealt() - this.getCenterCards().size();
+		int newCenterCards =  this.variant.getTotalCardsDealt() - this.getBoard().getCards().size();
 		System.out.printf("dealing %d remaining center cards\n", newCenterCards);
 		dealCenterCards(newCenterCards);
 	}
@@ -362,7 +364,7 @@ public class BasicPokerGame extends AbstractGame {
 
 		// messaging players regarding new center cards
 		if (numCards > 0) {
-			this.propagateActionToGroup(new Action.ActionBuilder(ActionType.CENTER_DEAL).withCards(getCenterCards()).build());
+			this.propagateActionToGroup(new Action.ActionBuilder(ActionType.CENTER_DEAL).withCards(getBoard().getCards()).build());
 			this.incrementEpoch();
 		}
 	}

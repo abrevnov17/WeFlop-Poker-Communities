@@ -1,14 +1,10 @@
 package com.weflop.Game;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.weflop.Cards.Card;
-import com.weflop.GameService.Database.DomainObjects.CardPOJO;
+import com.weflop.Cards.Hand;
 import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
 
@@ -22,7 +18,7 @@ import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
  */
 public class Player {
 	private final String id;
-	private List<Card> cards;
+	private Hand hand;
 	private float balance;
 	private float currentBet;
 	private float currentRoundBet;
@@ -32,13 +28,13 @@ public class Player {
 	private WebSocketSession session;
 
 	Player(String id, WebSocketSession session) {
-		this(id, session, new ArrayList<Card>());
+		this(id, session, new Hand());
 	}
 
-	Player(String id, WebSocketSession session, List<Card> cards) {
+	Player(String id, WebSocketSession session, Hand hand) {
 		this.id = id;
 		this.setSession(session);
-		this.setCards(cards);
+		this.setHand(hand);
 		this.setBalance(0.00f);
 		this.setCurrentBet(0.00f);
 		this.setCurrentRoundBet(0.00f);
@@ -94,18 +90,14 @@ public class Player {
 	}
 
 	synchronized void convertToSpectator() {
-		this.cards.clear();
+		this.discardHand();
 		this.currentBet = 0.0f;
 		this.state = PlayerState.WATCHING;
 		this.slot = -1;
 	}
-
-	/**
-	 * Discards all player cards.
-	 * 
-	 */
+	
 	synchronized public void discardHand() {
-		this.cards.clear();
+		this.hand.discard();
 	}
 
 	/**
@@ -124,11 +116,8 @@ public class Player {
 	 * @return Corresponding instance of PlayerPOJO
 	 */
 	synchronized public PlayerPOJO toPlayerPOJO() {
-		List<CardPOJO> cards = this.cards.stream()
-				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
-				.collect(Collectors.toList());
 		return new PlayerPOJO(this.id, this.balance, this.currentBet, this.currentRoundBet,
-				cards, this.state.getValue(), this.slot);
+				hand.toPOJO(), this.state.getValue(), this.slot);
 	}
 
 	/**
@@ -168,14 +157,6 @@ public class Player {
 		return id;
 	}
 
-	synchronized public List<Card> getCards() {
-		return cards;
-	}
-
-	synchronized public void setCards(List<Card> cards) {
-		this.cards = cards;
-	}
-
 	synchronized public float getBalance() {
 		return balance;
 	}
@@ -201,7 +182,7 @@ public class Player {
 	}
 
 	synchronized public void addCard(Card card) {
-		this.cards.add(card);
+		this.hand.addCardToHand(card);
 	}
 
 	synchronized public boolean isPlaying() {
@@ -210,6 +191,15 @@ public class Player {
 
 	synchronized public boolean isSpectating() {
 		return this.state == PlayerState.WATCHING;
+	}
+	
+	/**
+	 * Returns whether player is not spectating, not waiting for next round,
+	 * and has not folded.
+	 * @return
+	 */
+	synchronized public boolean isActive() {
+		return !isSpectating() && state != PlayerState.FOLDED && state != PlayerState.WAITING_FOR_ROUND;
 	}
 	
 	/**
@@ -236,11 +226,19 @@ public class Player {
 		this.slot = slot;
 	}
 
-	public float getCurrentRoundBet() {
+	synchronized public float getCurrentRoundBet() {
 		return currentRoundBet;
 	}
 
-	public void setCurrentRoundBet(float currentRoundBet) {
+	synchronized public void setCurrentRoundBet(float currentRoundBet) {
 		this.currentRoundBet = currentRoundBet;
+	}
+
+	synchronized public Hand getHand() {
+		return hand;
+	}
+
+	synchronized public void setHand(Hand hand) {
+		this.hand = hand;
 	}
 }

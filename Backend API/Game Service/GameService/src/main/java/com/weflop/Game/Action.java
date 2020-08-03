@@ -28,6 +28,7 @@ public class Action {
 	private Integer slot; // some actions have associated integer slot value as payload
 	private List<Card> cards; // some actions have associated cards as payload
 	private List<String> playerIds; // some actions have associated lists of player ids as payload
+	private List<Float> pots; // some actions have associated lists of float values
 	
 	// automatically set values
 	private Instant timestamp;
@@ -41,6 +42,7 @@ public class Action {
 		private List<Card> cards;
 		private List<String> playerIds;
 		private Instant timestamp;
+		private List<Float> pots;
 
 		/* Constructors */
 
@@ -79,6 +81,11 @@ public class Action {
 			return this;
 		}
 		
+		public ActionBuilder withPots(List<Float> pots) {
+			this.pots = pots;
+			return this;
+		}
+		
 		public Action build(){
             Action action = new Action();
             action.type = this.type;
@@ -89,6 +96,7 @@ public class Action {
             action.slot = this.slot;
             action.cards = this.cards;
             action.playerIds = this.playerIds;
+            action.pots = this.pots;
             return action;
         }
 	}
@@ -106,7 +114,8 @@ public class Action {
 		List<CardPOJO> cards = this.cards == null ? null : this.cards.stream()
 				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
 				.collect(Collectors.toList());
-		return new ActionPOJO(type.getValue(), playerId, timestamp != null ? timestamp.toEpochMilli() : null, value, cards, playerIds, slot);
+		return new ActionPOJO(type.getValue(), playerId, timestamp != null ? timestamp.toEpochMilli() : null, 
+				value, cards, playerIds, slot, pots);
 	}
 
 	/**

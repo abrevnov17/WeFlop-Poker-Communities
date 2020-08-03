@@ -13,11 +13,10 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.TextMessage;
 
+import com.weflop.Cards.Board;
 import com.weflop.Cards.Card;
-import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.GameService.Database.GameRepository;
-import com.weflop.GameService.Database.DomainObjects.CardPOJO;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
 import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
@@ -49,12 +48,10 @@ public abstract class AbstractGame implements Game {
 	private boolean started;
 	private Instant startTime;
 
-	private float pot;
+	private BetController betController;
 
-	private List<Card> centerCards;
+	private Board board;
 	private int dealerIndex;
-
-	private float roundBet;
 
 	private Group group; // our group of players
 
@@ -72,28 +69,24 @@ public abstract class AbstractGame implements Game {
 
 	private GameCustomMetadata metadata;
 	
-	private Ledger ledger;
-
 	@Autowired
 	private GameRepository gameRepository;
 
 	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
 		this.metadata = metadata;
 		this.id = UUID.randomUUID();
-		this.setPot(0.0f);
-		this.centerCards = new ArrayList<Card>();
+		this.betController = new BetController();
+		this.setBoard(new Board());
 		this.dealerIndex = 0;
 		this.setStartTime(null); // do not start clock till start() called
 		this.setGroup(new Group(metadata.getTableSize()));
 		this.turn = null; // not updated until game begins
 		this.setStarted(false);
 		this.setLock(new ReentrantLock());
-		this.setRoundBet(this.metadata.getBigBlind());
 		this.evaluator = evaluator;
 		this.setRound(0);
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.epoch = 0;
-		this.setLedger(new Ledger());
 	}
 
 	public String getGameId() {
@@ -113,7 +106,8 @@ public abstract class AbstractGame implements Game {
 
 	@Override
 	public GameMetadata getGameMetadata() {
-		return new GameMetadata(started ? startTime.toEpochMilli() : -1, pot, metadata, ledger.toPOJO());
+		return new GameMetadata(started ? startTime.toEpochMilli() : -1, betController.getTotalPot(), 
+				metadata, betController.getLedger().toPOJO());
 	}
 
 	/**
@@ -230,9 +224,7 @@ public abstract class AbstractGame implements Game {
 				this.dealerIndex, this.getSmallBlindIndex(), this.getBigBlindIndex());
 
 		// small blind pays
-		this.getSmallBlindPlayer().bet(metadata.getSmallBlind());
-		this.pot += metadata.getSmallBlind();
-		getLedger().updateEntry(getSmallBlindPlayer().getId(), -metadata.getSmallBlind());
+		betController.bet(getSmallBlindPlayer(), metadata.getSmallBlind());
 		
 		System.out.println("Paying small blind...");
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.SMALL_BLIND)
@@ -240,9 +232,7 @@ public abstract class AbstractGame implements Game {
 				.withValue(metadata.getSmallBlind()).build());
 
 		// big blind pays
-		this.getBigBlindPlayer().bet(metadata.getBigBlind());
-		this.pot += metadata.getBigBlind();
-		getLedger().updateEntry(getBigBlindPlayer().getId(), -metadata.getBigBlind());
+		betController.bet(getBigBlindPlayer(), metadata.getBigBlind());
 		
 		System.out.println("Paying big blind...");
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BIG_BLIND)
@@ -251,7 +241,7 @@ public abstract class AbstractGame implements Game {
 
 		// resetting the current round bet amount (this is the most any player has bet
 		// during the current round)
-		this.setRoundBet(metadata.getBigBlind());
+		betController.setRoundBet(metadata.getBigBlind());
 
 		// resets all players to the waiting for next turn state
 		this.group.setAllPlayersToState(PlayerState.WAITING_FOR_TURN);
@@ -294,37 +284,21 @@ public abstract class AbstractGame implements Game {
 		// need to deal the remaining center cards (if any)
 		this.dealRemainingCenterCards();
 		
-		// calculate winning hand(s)
-		List<Player> playersWithMaxRank = new ArrayList<Player>();
-		HandRank maxRank = null;
-		for (Player player : this.group.getPlayers()) {
-			if (player.getState() != PlayerState.FOLDED) {
-				HandRank rank = this.evaluator.evaluate(this.centerCards, player.getCards());
-				if (maxRank == null || rank.compareTo(maxRank) == 0) {
-					// either first hand rank we have found or tied with best hand rank we have found
-					maxRank = rank;
-					playersWithMaxRank.add(player);
-				} else if (rank.compareTo(maxRank) > 0) {
-					// hand rank is best we have found so far
-					playersWithMaxRank.clear();
-					maxRank = rank;
-					playersWithMaxRank.add(player);
-				}
-			}
+		// calculate side pots
+		List<Player> activePlayers = group.getActivePlayers();
+		List<Pot> pots = betController.endOfBettingRoundGeneratePots(activePlayers);
+		
+		// calculate winners and distribute side pots
+		List<Action> actionsToPropagate = betController.distributePots(pots);
+		
+		// propagate information about pot winners
+		for (Action action : actionsToPropagate) {
+			this.propagateActionToGroup(action);
 		}
 		
 		this.printGameState();
-
-		// distribute funds to winner(s)
-		float perPlayerWinnings = this.pot / playersWithMaxRank.size(); // split pot between winners
-		for (Player player : playersWithMaxRank) {
-			player.increaseBalance(perPlayerWinnings);
-			ledger.updateEntry(player.getId(), perPlayerWinnings);
-		}
 		
-		this.printGameState();
-
-		this.pot = 0.0f; // resetting pot
+		this.betController.resetForNewHand();; // resetting betting information
 
 		// removing any players with insufficient funds
 		for (Player player : this.group.getPlayers()) {
@@ -343,10 +317,6 @@ public abstract class AbstractGame implements Game {
 		}
 
 		System.out.println("Sending hand win/loss messages...");
-
-		// propagating winners
-		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.POT_WON).withPlayerIds(
-				playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList())).build());
 
 		// update dealer index
 		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
@@ -396,15 +366,27 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected void endBettingRound() {
-		setRoundBet(0.0f); // resetting round bet
 		group.resetPlayerRoundBets(); // setting all player round bets to 0
 		group.preparePlayerStatesForNewRound(); // prepares player states for new round
+		
 		if (this.isLastBettingRound()) {
 			this.endOfBettingRounds();
 		} else {
+			calculatePotsAndPropagateEndOfRound();
 			this.incrementRound();
 			this.beginNewRound(false);
 		}
+	}
+	
+	/**
+	 * Propagates messages to group updating current pot information and conveys
+	 * that new betting round has begun.
+	 */
+	synchronized protected void calculatePotsAndPropagateEndOfRound() {
+		List<Float> pots = betController.endOfBettingRoundGeneratePots(group.getActivePlayers())
+				.stream().map(pot -> pot.getSize()).collect(Collectors.toList());
+		
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BETTING_ROUND_OVER).withPots(pots).build());
 	}
 
 	/**
@@ -453,15 +435,15 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected boolean isRoundOver() {
 		// checking case applicable for non-preflop rounds where everyone has checked
-		if (this.roundBet == 0.0f && group.allWaitingPlayersInCheckedState()) {
+		if (betController.getRoundBet() == 0.0f && group.allWaitingPlayersInCheckedState()) {
 			return true;
-		} else if (this.roundBet == 0.0f) {
+		} else if (betController.getRoundBet()  == 0.0f) {
 			return false;
 		}
 		
 		for (Player player : this.group.getPlayers()) {
 			if (!(!player.canMoveInRound() 
-					|| player.getCurrentRoundBet() == this.roundBet)) {
+					|| player.getCurrentRoundBet() == betController.getRoundBet() )) {
 				return false;
 			}
 		}
@@ -487,10 +469,6 @@ public abstract class AbstractGame implements Game {
 	 * @return Game state as GameDocument
 	 */
 	synchronized protected GameDocument toDocument() {
-		List<CardPOJO> centerCards = this.centerCards.stream()
-				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
-				.collect(Collectors.toList());
-
 		List<PlayerPOJO> players = this.group.getPlayers().stream().map(player -> player.toPlayerPOJO())
 				.collect(Collectors.toList());
 
@@ -498,7 +476,8 @@ public abstract class AbstractGame implements Game {
 				.map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
 
 		return new GameDocument(id.toString(), metadata.getType().getValue(), started ? startTime.toEpochMilli() : -1, 
-				centerCards, pot, dealerIndex, players, spectators, history.toPOJO(), ledger.toPOJO(), this.metadata);
+				board.toPOJO(), betController.getTotalPot(), dealerIndex, players, spectators, history.toPOJO(), 
+				betController.getLedger().toPOJO(), this.metadata);
 	}
 	
 	/**
@@ -568,17 +547,13 @@ public abstract class AbstractGame implements Game {
 	 * @return Instance of GameStatePOJO
 	 */
 	synchronized protected GameStatePOJO getGameStatePOJO(Player player) {
-		List<CardPOJO> centerCardsPOJO = this.centerCards.stream()
-				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
-				.collect(Collectors.toList());
-
 		List<LimitedPlayerPOJO> otherPlayers = this.group.getPlayers().stream().filter(p -> !p.equals(player)) // filtering
 				// out
 				// current
 				// player
 				.map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPlayerPOJO())).collect(Collectors.toList());
 
-		return new GameStatePOJO(this.getGameId(), centerCardsPOJO, pot, otherPlayers, player.toPlayerPOJO(),
+		return new GameStatePOJO(this.getGameId(), board.toPOJO(), betController.getTotalPot(), otherPlayers, player.toPlayerPOJO(),
 				turn != null ? turn.getPlayer().getId() : null, this.getEpoch());
 	}
 
@@ -587,14 +562,14 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void printGameState() {
 		System.out.println("------------------------GAME STATE------------------------");
-		System.out.printf("Pot: %.2f\n", this.pot);
-		System.out.printf("Round: %d, Round bet: %.2f\n", this.round, this.roundBet);
-		System.out.printf("Center cards: %s\n", WebSocketHandler.GSON.toJson(this.centerCards));
+		System.out.printf("Pot: %.2f\n", betController.getTotalPot());
+		System.out.printf("Round: %d, Round bet: %.2f\n", this.round, betController.getRoundBet() );
+		System.out.printf("Center cards: %s\n", WebSocketHandler.GSON.toJson(this.board));
 
 		for (Player player : group.getPlayers()) {
 			System.out.printf("Player id: %s, state: %s, round_bet: %.2f, current_bet: %.2f, balance: %.2f, slot: %d, cards: %s\n", 
 					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getCurrentRoundBet(), player.getCurrentBet(), 
-					player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getCards()));
+					player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getHand()));
 		}
 		
 		System.out.printf("Turn player id: %s\n", turn != null ? turn.getPlayer().getId() : "no turn exists yet");
@@ -687,24 +662,8 @@ public abstract class AbstractGame implements Game {
 		this.startTime = startTime;
 	}
 
-	synchronized protected float getPot() {
-		return pot;
-	}
-
-	synchronized protected void setPot(float pot) {
-		this.pot = pot;
-	}
-
-	synchronized protected List<Card> getCenterCards() {
-		return centerCards;
-	}
-
-	synchronized protected void setCenterCards(List<Card> centerCards) {
-		this.centerCards = centerCards;
-	}
-
 	synchronized protected void addToCenterCards(Card card) {
-		this.getCenterCards().add(card);
+		this.board.addCard(card);
 	}
 
 	synchronized protected int getDealerIndex() {
@@ -739,18 +698,6 @@ public abstract class AbstractGame implements Game {
 		this.group = group;
 	}
 
-	synchronized protected void addToPot(float amount) {
-		this.pot += amount;
-	}
-
-	synchronized protected float getRoundBet() {
-		return roundBet;
-	}
-
-	synchronized protected void setRoundBet(float roundBet) {
-		this.roundBet = roundBet;
-	}
-
 	synchronized protected int getRound() {
 		return round;
 	}
@@ -761,10 +708,6 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void incrementRound() {
 		this.round++;
-	}
-
-	synchronized protected void discardCenterCards() {
-		this.centerCards.clear();
 	}
 
 	synchronized protected History getHistory() {
@@ -791,11 +734,27 @@ public abstract class AbstractGame implements Game {
 		this.epoch++;
 	}
 
-	synchronized protected Ledger getLedger() {
-		return ledger;
+	synchronized protected Board getBoard() {
+		return board;
 	}
 
-	synchronized protected  void setLedger(Ledger ledger) {
-		this.ledger = ledger;
+	synchronized protected void setBoard(Board board) {
+		this.board = board;
+	}
+
+	protected synchronized HandRankEvaluator getEvaluator() {
+		return evaluator;
+	}
+
+	protected synchronized void setEvaluator(HandRankEvaluator evaluator) {
+		this.evaluator = evaluator;
+	}
+
+	protected synchronized BetController getBetController() {
+		return betController;
+	}
+
+	protected synchronized void setBetController(BetController betController) {
+		this.betController = betController;
 	}
 }

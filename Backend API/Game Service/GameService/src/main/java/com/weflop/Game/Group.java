@@ -2,6 +2,7 @@ package com.weflop.Game;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;
@@ -179,5 +180,13 @@ public class Group {
 	 */
 	synchronized public void createSpectator(String id, WebSocketSession session) {
 		this.spectators.add(new Player(id, session));
+	}
+	
+	/**
+	 * Gets all active players (i.e. players who are not spectating, waiting for next round, or have folded).
+	 * @return List of active players.
+	 */
+	synchronized public List<Player> getActivePlayers() {
+		return getPlayers().stream().filter(player -> player.isActive()).collect(Collectors.toList());
 	}
 }

@@ -17,7 +17,8 @@ public enum ActionType {
 	CENTER_DEAL(12), // cards dealt to center
 	POT_WON(13), // some player has won a round (and the current pot)
 	SMALL_BLIND(14), // player has paid small blind
-	BIG_BLIND(15); // player has paid big blind
+	BIG_BLIND(15), // player has paid big blind
+	BETTING_ROUND_OVER(16); // round of betting has concluded
 	
 
 	private final int value;
