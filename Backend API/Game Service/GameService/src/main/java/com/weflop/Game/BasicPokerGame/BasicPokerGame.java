@@ -112,8 +112,6 @@ public class BasicPokerGame extends AbstractGame {
 
 				// get bet and check that it is valid
 				float bet = action.getValue();
-				Assert.isTrue(participant.getCurrentRoundBet() + bet > getBetController().getRoundBet(),
-						"You have to raise more than the prior bet");
 
 				// update player balances and pot
 				getBetController().raise(participant, bet); // verification performed in 'bet' method

@@ -75,7 +75,7 @@ public abstract class AbstractGame implements Game {
 	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
 		this.metadata = metadata;
 		this.id = UUID.randomUUID();
-		this.betController = new BetController();
+		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind());
 		this.setBoard(new Board());
 		this.dealerIndex = 0;
 		this.setStartTime(null); // do not start clock till start() called
@@ -213,7 +213,6 @@ public abstract class AbstractGame implements Game {
 	 * 
 	 */
 	synchronized protected void beginBettingRounds() {
-
 		// Note: We do not need to check if the small/big blind can pay or not because
 		// that
 		// should be done before calling this function
@@ -224,7 +223,7 @@ public abstract class AbstractGame implements Game {
 				this.dealerIndex, this.getSmallBlindIndex(), this.getBigBlindIndex());
 
 		// small blind pays
-		betController.bet(getSmallBlindPlayer(), metadata.getSmallBlind());
+		betController.paySmallBlind(getSmallBlindPlayer());
 		
 		System.out.println("Paying small blind...");
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.SMALL_BLIND)
@@ -232,7 +231,7 @@ public abstract class AbstractGame implements Game {
 				.withValue(metadata.getSmallBlind()).build());
 
 		// big blind pays
-		betController.bet(getBigBlindPlayer(), metadata.getBigBlind());
+		betController.payBigBlind(getBigBlindPlayer());
 		
 		System.out.println("Paying big blind...");
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BIG_BLIND)

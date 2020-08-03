@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.util.Assert;
+
 import com.weflop.Evaluation.HandRank;
 
 /**
@@ -21,22 +23,28 @@ public class BetController {
 	private float lastRaise;
 
 	private Ledger ledger;
-	
-	private float totalPot;
 
-	public BetController() {
+	private float totalPot;
+	
+	private float smallBlind;
+	
+	private float bigBlind;
+	
+	public BetController(float smallBlind, float bigBlind) {
 		this.roundBet = 0.0f;
 		this.lastRaise = 0.0f;
 		this.setLedger(new Ledger());
 		this.setTotalPot(0);
+		this.smallBlind = smallBlind;
+		this.bigBlind = bigBlind;
 	}
 
 	/* Betting Methods */
-	
+
 	synchronized public void bet(Player player, float bet) {
 		player.bet(bet); // verification performed in 'bet' method
 	}
-	
+
 	/**
 	 * Takes in a player and a total bet that is meant to be a raise.
 	 * Verifies that the bet raises by sufficient amount and places
@@ -47,15 +55,16 @@ public class BetController {
 	 */
 	synchronized public void raise(Player player, float bet) {
 		float amountRaised = bet - roundBet;
-		if (amountRaised < 2.0f * lastRaise) {
-			// raise is too small...needs to be at least double last raise amount
-			throw new IllegalArgumentException("Insufficient raise amount");
-		} else {
-			player.bet(bet); // verification performed in 'bet' method
-			lastRaise = amountRaised;
-		}
+
+		Assert.isTrue(player.getCurrentRoundBet() + bet > this.roundBet,
+				"You have to raise more than the prior bet");
+		Assert.isTrue(amountRaised >= 2.00f * lastRaise, "Insufficient raise amount");
+		Assert.isTrue(bet >= this.smallBlind, "Any bet must be at least as large as small blind.");
+
+		player.bet(bet); // verification performed in 'bet' method
+		lastRaise = amountRaised;
 	}
-	
+
 	/**
 	 * Takes player all in and returns amount they contributed.
 	 * @param player
@@ -65,8 +74,15 @@ public class BetController {
 		return player.goAllIn();
 	}
 	
-	/* Ledger Update Methods */
+	synchronized public void paySmallBlind(Player player) {
+		bet(player, smallBlind);
+	}
 	
+	synchronized public void payBigBlind(Player player) {
+		bet(player, bigBlind);
+	}
+	/* Ledger Update Methods */
+
 	/**
 	 * Adds player to ledger (safe operation if player already present in ledger).
 	 * @param playerId
@@ -74,7 +90,7 @@ public class BetController {
 	synchronized public void addPlayerToLedger(String playerId) {
 		ledger.updateEntry(playerId, 0.00f);
 	}
-	
+
 	/* Pot / Distribution Methods */
 
 	/**
@@ -111,7 +127,7 @@ public class BetController {
 
 			// removing all players with no more chips left after contributing to the current pot
 			players = players.stream().filter(player -> player.getCurrentBet() > 0).collect(Collectors.toList());
-			
+
 			// updating total pot
 			this.totalPot += minStack;
 		}
@@ -124,25 +140,25 @@ public class BetController {
 	 */
 	synchronized public List<Action> distributePots(List<Pot> pots) {
 		List<Action> actions = new ArrayList<Action>();
-		
+
 		for (Pot pot : pots) {
 			float potSize = pot.getSize();
 			List<Player> playersWithMaxRank = getPlayersWithMaxRank(pot.getPlayers());
-			
+
 			// distribute funds to winner(s)
 			float perPlayerWinnings = potSize / playersWithMaxRank.size(); // split pot between winners
 			for (Player player : playersWithMaxRank) {
 				player.increaseBalance(perPlayerWinnings);
 				ledger.updateEntry(player.getId(), perPlayerWinnings);
 			}
-			
+
 			// propogating update
 			actions.add(new Action.ActionBuilder(ActionType.POT_WON)
 					.withPlayerIds(playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList()))
 					.withValue(potSize)
 					.build());
 		}
-		
+
 		return actions;
 	}
 
@@ -172,9 +188,9 @@ public class BetController {
 
 		return playersWithMaxRank;
 	}
-	
+
 	/* Reset Methods */
-	
+
 	/**
 	 * Resets betting state for new hand.
 	 */
@@ -182,14 +198,14 @@ public class BetController {
 		resetForNewBettingRound();
 		this.totalPot = 0.00f;
 	}
-	
+
 	/**
 	 * Reset betting state for new betting round.
 	 */
 	public void resetForNewBettingRound() {
 		this.roundBet = 0.00f;
 	}
-	
+
 	/* Getters and Setters */
 
 	public float getRoundBet() {

@@ -21,7 +21,7 @@ public class GameCustomMetadata {
 	private GameType type;
 
 	/**
-	 * Constructor used for createing quick games.
+	 * Constructor used for creating quick games.
 	 * 
 	 * @param smallBlind
 	 * @param createdBy
