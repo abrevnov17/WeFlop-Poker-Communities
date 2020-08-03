@@ -197,4 +197,12 @@ public class Action {
 	public void setSlot(Integer slot) {
 		this.slot = slot;
 	}
+
+	public List<Float> getPots() {
+		return pots;
+	}
+
+	public void setPots(List<Float> pots) {
+		this.pots = pots;
+	}
 }

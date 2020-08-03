@@ -86,7 +86,15 @@ public class MessageSendingHandlers {
 		if (action.getPlayerId() != null) {
 			payload.addProperty("partipant_id", action.getPlayerId());
 		}
-
+		
+		if (action.getValue() != null) {
+			payload.addProperty("value", action.getValue());
+		}
+		
+		if (action.getPots() != null) {
+			payload.addProperty("pots", WebSocketHandler.GSON.toJson(action.getPots()));
+		}
+		
 		message.add("payload", payload);
 
 		String messageString = message.toString();

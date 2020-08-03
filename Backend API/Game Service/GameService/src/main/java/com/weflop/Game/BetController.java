@@ -18,6 +18,7 @@ import com.weflop.Evaluation.HandRank;
  * @author abrevnov
  */
 public class BetController {
+	
 	private float roundBet;
 
 	private float lastRaise;
@@ -27,16 +28,20 @@ public class BetController {
 	private float totalPot;
 	
 	private float smallBlind;
-	
 	private float bigBlind;
 	
-	public BetController(float smallBlind, float bigBlind) {
+	private float minBuyIn;
+	private float maxBuyIn;
+	
+	public BetController(float smallBlind, float bigBlind, float minBuyIn, float maxBuyIn) {
 		this.roundBet = 0.0f;
 		this.lastRaise = 0.0f;
 		this.setLedger(new Ledger());
 		this.setTotalPot(0);
 		this.smallBlind = smallBlind;
 		this.bigBlind = bigBlind;
+		this.minBuyIn = minBuyIn;
+		this.maxBuyIn = maxBuyIn;
 	}
 
 	/* Betting Methods */
@@ -81,6 +86,14 @@ public class BetController {
 	synchronized public void payBigBlind(Player player) {
 		bet(player, bigBlind);
 	}
+	
+	synchronized public void buyIn(Player player, float amount) {
+		Assert.isTrue(amount >= minBuyIn && amount <= maxBuyIn, 
+				"Buy in must be between 10 and 200 BBs");
+		
+		player.setBalance(amount);
+	}
+	
 	/* Ledger Update Methods */
 
 	/**

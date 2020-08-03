@@ -75,7 +75,8 @@ public abstract class AbstractGame implements Game {
 	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
 		this.metadata = metadata;
 		this.id = UUID.randomUUID();
-		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind());
+		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind(), 
+				metadata.getMinBuyIn(), metadata.getMaxBuyIn());
 		this.setBoard(new Board());
 		this.dealerIndex = 0;
 		this.setStartTime(null); // do not start clock till start() called

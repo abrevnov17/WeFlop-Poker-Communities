@@ -24,14 +24,19 @@ public class RESTController {
 
 	@PostMapping("/create-game")
 	@ResponseBody
-	public String createGame(@RequestParam(name = "user_id", required = true) String userId,
-			@RequestParam(name = "small_blind", required = true) float smallBlind) {
+	public String createGame(
+			@RequestParam(name = "user_id", required = true) String userId,
+			@RequestParam(name = "name", required = true) String name,
+			@RequestParam(name = "small_blind", required = true) float smallBlind,
+			@RequestParam(name = "min_buy_in", required = true) int minBuyInBB,
+			@RequestParam(name = "max_buy_in", required = true) int maxBuyInBB
+			) {
 
 		if (smallBlind < 0.5) {
 			throw new IllegalArgumentException("Small blind must be greater than or equal to 0.5");
 		}
 
-		return GameFactory.generateStandardPokerGame(userId, smallBlind); // returning id of newly created game
+		return GameFactory.generateStandardPokerGame(name, smallBlind, minBuyInBB, maxBuyInBB, userId); // returning id of newly created game
 	}
 
 	@GetMapping("/game-metadata")

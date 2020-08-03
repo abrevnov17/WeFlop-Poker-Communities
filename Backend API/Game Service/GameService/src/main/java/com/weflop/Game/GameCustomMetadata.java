@@ -19,6 +19,8 @@ public class GameCustomMetadata {
 	private int tableSize;
 	private String createdBy;
 	private GameType type;
+	private float minBuyIn;
+	private float maxBuyIn;
 
 	/**
 	 * Constructor used for creating quick games.
@@ -27,11 +29,13 @@ public class GameCustomMetadata {
 	 * @param createdBy
 	 * @param type
 	 */
-	public GameCustomMetadata(float smallBlind, String createdBy) {
-		this.name = null;
+	public GameCustomMetadata(String name, float smallBlind, int minBuyInBB, int maxBuyInBB, String createdBy) {
+		this.name = name;
 		this.description = null;
 		this.smallBlind = smallBlind;
-		this.bigBlind = smallBlind * 2;
+		this.bigBlind = smallBlind * 2.00f;
+		this.minBuyIn = minBuyInBB * this.bigBlind;
+		this.maxBuyIn = maxBuyInBB * this.bigBlind;
 		this.turnDuration = Duration.ofSeconds(60);
 		this.tableSize = 9;
 		this.createdBy = createdBy;
@@ -39,7 +43,7 @@ public class GameCustomMetadata {
 	}
 
 	public GameCustomMetadata(String name, String description, float smallBlind, float bigBlind, Duration turnDuration,
-			int tableSize, String createdBy, GameType type) {
+			int tableSize, String createdBy, GameType type, float minBuyIn, float maxBuyIn) {
 		this.name = name;
 		this.description = description;
 		this.smallBlind = smallBlind;
@@ -48,6 +52,8 @@ public class GameCustomMetadata {
 		this.tableSize = tableSize;
 		this.createdBy = createdBy;
 		this.type = type;
+		this.minBuyIn = minBuyIn;
+		this.maxBuyIn = maxBuyIn;
 	}
 
 	public String getName() {
@@ -112,6 +118,22 @@ public class GameCustomMetadata {
 
 	public void setType(GameType type) {
 		this.type = type;
+	}
+
+	public float getMinBuyIn() {
+		return minBuyIn;
+	}
+
+	public void setMinBuyIn(float minBuyIn) {
+		this.minBuyIn = minBuyIn;
+	}
+
+	public float getMaxBuyIn() {
+		return maxBuyIn;
+	}
+
+	public void setMaxBuyIn(float maxBuyIn) {
+		this.maxBuyIn = maxBuyIn;
 	}
 
 }

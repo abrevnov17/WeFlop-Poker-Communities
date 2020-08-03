@@ -21,8 +21,8 @@ public class GameFactory {
 	 * 
 	 * @return Id of newly created game
 	 */
-	public static String generateStandardPokerGame(String creatorId, float smallBlind) {
-		GameCustomMetadata metadata = new GameCustomMetadata(smallBlind, creatorId);
+	public static String generateStandardPokerGame(String name, float smallBlind, int minBuyInBB, int maxBuyInBB, String createdBy) {
+		GameCustomMetadata metadata = new GameCustomMetadata(name, smallBlind, minBuyInBB, maxBuyInBB, createdBy);
 		Game game = new BasicPokerGame(metadata, new TwoPlusTwoHandEvaluator());
 		ID_TO_GAME.put(game.getGameId(), game);
 		return game.getGameId();

@@ -230,7 +230,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot());
 				
-				participant.setBalance(action.getValue()); // updating player balance based on buy-in
+				getBetController().buyIn(participant, action.getValue());
 				
 				getBetController().addPlayerToLedger(participant.getId()); // adding player to ledger (if not already present)
 
