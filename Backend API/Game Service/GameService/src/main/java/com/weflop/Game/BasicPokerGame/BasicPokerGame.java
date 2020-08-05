@@ -282,7 +282,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.getGroup().deleteParticipant(participant);
 
 				// propagate action to members of group if not spectator
-				if (participant.isPlaying()) {
+				if (!participant.isSpectating()) {
 					this.propagateActionToGroup(action);
 				}
 				System.out.printf("Player %s disconnected\n", action.getPlayerId());

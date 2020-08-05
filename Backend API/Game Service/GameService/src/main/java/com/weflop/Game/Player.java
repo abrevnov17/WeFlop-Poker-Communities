@@ -185,10 +185,6 @@ public class Player {
 		this.hand.addCardToHand(card);
 	}
 
-	synchronized public boolean isPlaying() {
-		return this.state != PlayerState.WATCHING;
-	}
-
 	synchronized public boolean isSpectating() {
 		return this.state == PlayerState.WATCHING;
 	}
@@ -199,7 +195,11 @@ public class Player {
 	 * @return
 	 */
 	synchronized public boolean isActive() {
-		return !isSpectating() && state != PlayerState.FOLDED && state != PlayerState.WAITING_FOR_ROUND;
+		return !isSpectating() 
+				&& state != PlayerState.FOLDED 
+				&& state != PlayerState.WAITING_FOR_ROUND
+				&& state != PlayerState.SITTING_OUT
+				&& state != PlayerState.WAITING_FOR_BIG_BLIND;
 	}
 	
 	/**

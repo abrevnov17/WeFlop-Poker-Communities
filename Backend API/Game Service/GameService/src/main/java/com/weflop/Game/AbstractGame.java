@@ -90,12 +90,14 @@ public abstract class AbstractGame implements Game {
 		this.epoch = 0;
 	}
 
+	@Override
 	public String getGameId() {
 		return this.getId().toString();
 	}
 
 	/* These methods are publicly exposed and will be overriden by subclasses: */
 
+	@Override
 	public abstract void performAction(Action action) throws Exception; // performs an action as a given participant
 
 	/* Required methods (internally used) for all subclasses */

@@ -129,7 +129,8 @@ public class Action {
 				|| this.type == ActionType.CENTER_DEAL
 				|| this.type == ActionType.POT_WON 
 				|| this.type != ActionType.SMALL_BLIND 
-				|| this.type != ActionType.BIG_BLIND);
+				|| this.type != ActionType.BIG_BLIND
+				|| this.type != ActionType.BETTING_ROUND_OVER);
 	}
 
 	/* Getters and Setters */

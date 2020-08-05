@@ -17,6 +17,7 @@ public class TwoPlusTwoHandRank extends HandRank {
 		super(rankValue);
 	}
 
+	@Override
 	public HandClassification getHandType() {
 		/*
 		 * The rank value is categorized based on the Two Plus Two (2+2) hand evaluation
