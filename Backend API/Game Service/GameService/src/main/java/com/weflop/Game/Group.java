@@ -132,6 +132,14 @@ public class Group {
 		}
 	}
 	
+	synchronized public void setAllPlayersCurrentAndFutureStates(PlayerState currentState, PlayerState nextState) {
+		for (int i = 0; i < players.length; i++) {
+			if (players[i] != null) {
+				players[i].updateCurrentAndFutureState(currentState, nextState);
+			}
+		}
+	}
+	
 	/**
 	 * Sets current state to nextHandState for players. Does NOT change nextHandState.
 	 */

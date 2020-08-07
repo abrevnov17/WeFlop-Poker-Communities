@@ -233,12 +233,15 @@ public class BasicPokerGame extends AbstractGame {
 				getBetController().buyIn(participant, action.getValue());
 				
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
-
+				
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
 				
 				if (!this.isStarted() && this.getGroup().getPlayers().size() >= 2) {
 					// starting game:
+					
+					// all players who joined before start should be active in first hand
+					getGroup().setAllPlayersCurrentAndFutureStates(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
 					
 					// initializing game history
 					InitialState state = new InitialState(this.getGroup().getPlayers());
@@ -315,6 +318,28 @@ public class BasicPokerGame extends AbstractGame {
 				
 				participant.updateCurrentAndFutureState(PlayerState.POSTING_BIG_BLIND, PlayerState.WAITING_FOR_HAND);
 				
+				this.propagateActionToGroup(action);
+			}
+			break;
+			case TOP_OFF: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				getBetController().buyIn(participant, action.getValue());
+				
+				System.out.printf("Player %s topping off...\n", action.getPlayerId());
+
+				// propagate action to members of group
+				this.propagateActionToGroup(action);
+			}
+			break;
+			case CHANGE_SEAT: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Assert.isTrue(!participant.canChangeSeat(), "Player is not able to change seats.");
+								
+				participant.sit(action.getSlot());
+				
+				// propagate action to members of group
 				this.propagateActionToGroup(action);
 			}
 			break;

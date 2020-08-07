@@ -148,6 +148,10 @@ public class Player {
 		return this.isActive();
 	}
 	
+	synchronized public boolean canChangeSeat() {
+		return !this.isActive() && !this.isSpectating();
+	}
+	
 	synchronized public boolean canPostBigBlind(float bigBlind) {
 		return this.state == PlayerState.WAITING_FOR_BIG_BLIND && balance >= bigBlind;
 	}
