@@ -21,16 +21,20 @@ public class PlayerPOJO {
 	private List<CardPOJO> cards;
 
 	private int state;
+	
+	private int nextHandState;
 
 	private int slot;
 
-	public PlayerPOJO(String id, float balance, float currentBet, float currentRoundBet, List<CardPOJO> cards, int state, int slot) {
+	public PlayerPOJO(String id, float balance, float currentBet, float currentRoundBet, List<CardPOJO> cards, 
+			int state, int nextHandState, int slot) {
 		this.id = id;
 		this.balance = balance;
 		this.currentBet = currentBet;
-		this.setCurrentRoundBet(currentRoundBet);
+		this.currentRoundBet = currentRoundBet;
 		this.cards = cards;
 		this.state = state;
+		this.nextHandState = nextHandState;
 		this.slot = slot;
 	}
 
@@ -88,5 +92,13 @@ public class PlayerPOJO {
 
 	public void setCurrentRoundBet(float currentRoundBet) {
 		this.currentRoundBet = currentRoundBet;
+	}
+
+	public int getNextHandState() {
+		return nextHandState;
+	}
+
+	public void setNextHandState(int nextHandState) {
+		this.nextHandState = nextHandState;
 	}
 }

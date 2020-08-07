@@ -68,7 +68,7 @@ public abstract class AbstractGame implements Game {
 	private int epoch; // value we increment on changes in state; keeps track of state versions
 
 	private GameCustomMetadata metadata;
-	
+
 	@Autowired
 	private GameRepository gameRepository;
 
@@ -133,12 +133,9 @@ public abstract class AbstractGame implements Game {
 			this.performAction(new Action.ActionBuilder(ActionType.TURN_TIMEOUT).withPlayerId(this.turn.getPlayer().getId()).build());
 		} catch (Exception e) {
 			// we do not need to do anything. this is only possible in an incredibly
-			// unlikely
-			// race condition where the current players action is processed between the last
-			// if statement
-			// and the current call to perform the action of a turn timeout. In this case,
-			// we can just
-			// ignore the exception and consider this turn to be stale.
+			// unlikely race condition where the current players action is processed between the last
+			// if statement and the current call to perform the action of a turn timeout. In this case,
+			// we can just ignore the exception and consider this turn to be stale.
 		}
 	}
 
@@ -195,15 +192,15 @@ public abstract class AbstractGame implements Game {
 	synchronized protected void sendSynchronizationPackets() {
 		System.out.println("Sending sync packet for turn: " + turn.getCount() + " with start: " + turn.getStartTime());
 		printGameState();
-		
-//		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), metadata.getTurnDuration())
-//				.toMillis();
-//		try {
-//			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch,
-//					millisecondsRemaining);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
+
+		//		long millisecondsRemaining = this.turn.getTimeRemaining(System.nanoTime(), metadata.getTurnDuration())
+		//				.toMillis();
+		//		try {
+		//			MessageSendingHandlers.sendSynchronizationPackets(this.getGameId(), this.group, this.epoch,
+		//					millisecondsRemaining);
+		//		} catch (Exception e) {
+		//			e.printStackTrace();
+		//		}
 	}
 
 	/**
@@ -212,67 +209,65 @@ public abstract class AbstractGame implements Game {
 	 * thread-safe.
 	 * 
 	 * Additionally, beginBettingRounds() expects an up-to-date dealer index and
-	 * that all players have sufficient funds to play the current round.
+	 * that all players have sufficient funds to play the current round. Player
+	 * states should be up-to-date as well
 	 * 
 	 */
 	synchronized protected void beginBettingRounds() {
 		// Note: We do not need to check if the small/big blind can pay or not because
-		// that
-		// should be done before calling this function
+		// that should be done before calling this function
 
 		System.out.println("beggining new betting round");
-		
+
 		System.out.printf("Dealer index: %d, small blind index: %d, big blind index: %d\n", 
-				this.dealerIndex, this.getSmallBlindIndex(), this.getBigBlindIndex());
+				this.dealerIndex, group.getSmallBlindIndex(), group.getBigBlindIndex());
 
-		// small blind pays
-		betController.paySmallBlind(getSmallBlindPlayer());
-		
-		System.out.println("Paying small blind...");
-		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.SMALL_BLIND)
-				.withPlayerId(getSmallBlindPlayer().getId())
-				.withValue(metadata.getSmallBlind()).build());
+		System.out.println("Paying blinds...");
+		List<Action> blindPaymentActions = betController.payBlinds(group.getSmallBlindPlayer(), group.getBigBlindPlayer());
 
-		// big blind pays
-		betController.payBigBlind(getBigBlindPlayer());
-		
-		System.out.println("Paying big blind...");
-		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BIG_BLIND)
-				.withPlayerId(getBigBlindPlayer().getId())
-				.withValue(metadata.getBigBlind()).build());
+		System.out.println("Propogating blind payments...");
+
+		for (Action action : blindPaymentActions) {
+			this.propagateActionToGroup(action);
+		}
 
 		// resetting the current round bet amount (this is the most any player has bet
 		// during the current round)
 		betController.setRoundBet(metadata.getBigBlind());
-
-		// resets all players to the waiting for next turn state
-		this.group.setAllPlayersToState(PlayerState.WAITING_FOR_TURN);
 		
-		beginNewRound(true);
+		betController.postBigBlinds(group.getPlayersWhoHavePostedBigBlind());
+		
+		// beginning hand
+		beginNewHand(group.getBigBlindIndex());
 	}
 
 	/**
 	 * Begins an individual round of betting.
-	 * 
-	 * @param dealPlayersCards Boolean indicating whether to deal player hands (only
-	 * used after end of set of betting rounds).
 	 */
-	synchronized protected void beginNewRound(boolean dealPlayersCards) {
+	synchronized protected void beginNewRound() {
 		System.out.println("beggining new round");
-		
-		if (dealPlayersCards) {
-			dealHands(); // dealing hands to players
-		}
 
 		// flipping any new center cards
 		dealCenterCards();
-		
+
 		// cycling to next turn
-		if (dealPlayersCards) {
-			cycleTurn(this.getBigBlindIndex()); // after paying blinds, player clockwise to big blind goes first
-		} else {
-			cycleTurn(this.dealerIndex); // during normal round without player cards dealt, start with player to right of dealer
-		}
+		cycleTurn(this.dealerIndex); // during normal round without player cards dealt, start with player to right of dealer
+	}
+
+	/**
+	 * Begins a new hand.
+	 * @param bigBlindIndex Index of big blind (used to determine where to cycle turn to).
+	 */
+	synchronized protected void beginNewHand(int bigBlindIndex) {
+		System.out.println("beggining new hand");
+
+		dealHands(); // dealing hands to players
+
+		// flipping any new center cards
+		dealCenterCards();
+
+		// cycling to next turn
+		cycleTurn(bigBlindIndex); // after paying blinds, player clockwise to big blind goes first
 	}
 
 	/**
@@ -285,21 +280,21 @@ public abstract class AbstractGame implements Game {
 		System.out.println("End of betting rounds...");
 		// need to deal the remaining center cards (if any)
 		this.dealRemainingCenterCards();
-		
+
 		// calculate side pots
-		List<Player> activePlayers = group.getActivePlayers();
+		List<Player> activePlayers = group.getActivePlayersInBettingRound();
 		List<Pot> pots = betController.endOfBettingRoundGeneratePots(activePlayers);
-		
+
 		// calculate winners and distribute side pots
 		List<Action> actionsToPropagate = betController.distributePots(pots);
-		
+
 		// propagate information about pot winners
 		for (Action action : actionsToPropagate) {
 			this.propagateActionToGroup(action);
 		}
-		
+
 		this.printGameState();
-		
+
 		this.betController.resetForNewHand();; // resetting betting information
 
 		// removing any players with insufficient funds
@@ -309,8 +304,11 @@ public abstract class AbstractGame implements Game {
 			}
 		}
 
+		// players transition to next state
+		group.transitionPlayerStates();
+
 		// checking to see if we have enough players to continue
-		if (this.group.getPlayers().size() < 2) {
+		if (this.group.getActivePlayersInHand().size() < 2) {
 			// TODO: this needs to be fleshed out
 			System.out.println("Ending game due to insufficient players...");
 			this.setStarted(false);
@@ -318,13 +316,11 @@ public abstract class AbstractGame implements Game {
 			return;
 		}
 
-		System.out.println("Sending hand win/loss messages...");
-
 		// update dealer index
-		this.dealerIndex = this.getNextPlayerIndex(this.dealerIndex);
+		this.dealerIndex = this.getNextActivePlayerIndex(this.dealerIndex);
 
 		System.out.println("New dealer index: " + dealerIndex);
-		
+
 		// updating round
 		this.setRound(0);
 
@@ -370,24 +366,24 @@ public abstract class AbstractGame implements Game {
 	synchronized protected void endBettingRound() {
 		group.resetPlayerRoundBets(); // setting all player round bets to 0
 		group.preparePlayerStatesForNewRound(); // prepares player states for new round
-		
+
 		if (this.isLastBettingRound()) {
 			this.endOfBettingRounds();
 		} else {
-			calculatePotsAndPropagateEndOfRound();
+			calculatePotsAndPropagateEndOfBettingRound();
 			this.incrementRound();
-			this.beginNewRound(false);
+			this.beginNewRound();
 		}
 	}
-	
+
 	/**
 	 * Propagates messages to group updating current pot information and conveys
 	 * that new betting round has begun.
 	 */
-	synchronized protected void calculatePotsAndPropagateEndOfRound() {
-		List<Float> pots = betController.endOfBettingRoundGeneratePots(group.getActivePlayers())
+	synchronized protected void calculatePotsAndPropagateEndOfBettingRound() {
+		List<Float> pots = betController.endOfBettingRoundGeneratePots(group.getActivePlayersInBettingRound())
 				.stream().map(pot -> pot.getSize()).collect(Collectors.toList());
-		
+
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BETTING_ROUND_OVER).withPots(pots).build());
 	}
 
@@ -403,7 +399,7 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void cycleTurn(int lastTurnIndex) {
 		System.out.printf("Cycling turn from %d...\n", lastTurnIndex);
-		
+
 		// checking to see if the round is over
 		if (isRoundOver()) {
 			System.out.println("Round over, ending betting round...");
@@ -419,7 +415,7 @@ public abstract class AbstractGame implements Game {
 			nextPlayer.setState(PlayerState.CURRENT_TURN);
 		} else {
 			turn.nextTurn(nextPlayer);
-			
+
 		}
 
 		System.out.printf("new turn player id: %s\n", nextPlayer.getId());
@@ -442,7 +438,7 @@ public abstract class AbstractGame implements Game {
 		} else if (betController.getRoundBet()  == 0.0f) {
 			return false;
 		}
-		
+
 		for (Player player : this.group.getPlayers()) {
 			if (!(!player.canMoveInRound() 
 					|| player.getCurrentRoundBet() == betController.getRoundBet() )) {
@@ -481,7 +477,7 @@ public abstract class AbstractGame implements Game {
 				board.toPOJO(), betController.getTotalPot(), dealerIndex, players, spectators, history.toPOJO(), 
 				betController.getLedger().toPOJO(), this.metadata);
 	}
-	
+
 	/**
 	 * Takes in an action and propagates it to individual participant.
 	 * @param action
@@ -492,7 +488,7 @@ public abstract class AbstractGame implements Game {
 		propagateAction(action, targets);
 	}
 
-	
+
 	/**
 	 * Takes in an action and propagates it to entire group (spectators + players).
 	 * @param action
@@ -520,7 +516,7 @@ public abstract class AbstractGame implements Game {
 						this.getEpoch(), targets);
 			} else {
 				MessageSendingHandlers.propagateOutgoingAction(this.getGameId(), action,
-							this.getEpoch(), targets);
+						this.getEpoch(), targets);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -573,12 +569,12 @@ public abstract class AbstractGame implements Game {
 					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getCurrentRoundBet(), player.getCurrentBet(), 
 					player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getHand()));
 		}
-		
+
 		System.out.printf("Turn player id: %s\n", turn != null ? turn.getPlayer().getId() : "no turn exists yet");
 		System.out.printf("Dealer index: %d\n", this.dealerIndex);
 		System.out.println("------------------------END GAME STATE------------------------");
 	}
-	
+
 	/* Getters and setters for universal game properties */
 
 	/**
@@ -589,19 +585,19 @@ public abstract class AbstractGame implements Game {
 	 * @return Next player that is eligible to hold a turn.
 	 */
 	synchronized protected Player getNextValidPlayer(int lastTurnIndex) {
-		int nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
-		Player nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
+		int nextPlayerIndex = getNextActivePlayerIndex(lastTurnIndex);
+		Player nextPlayer = this.group.getActivePlayersInHand().get(nextPlayerIndex);
 
 		while (!nextPlayer.canMoveInRound()) {
 			// this player is either all-in, folded, or not playing this round
-			nextPlayerIndex = getNextPlayerIndex(lastTurnIndex);
-			nextPlayer = this.group.getPlayers().get(nextPlayerIndex);
+			nextPlayerIndex = getNextActivePlayerIndex(lastTurnIndex);
+			nextPlayer = this.group.getActivePlayersInHand().get(nextPlayerIndex);
 		}
-		
+
 		return nextPlayer;
 	}
-	
-	
+
+
 	/**
 	 * Gets the index of the next player (clockwise) in our group of players given
 	 * the index of the previous player in the group.
@@ -610,28 +606,12 @@ public abstract class AbstractGame implements Game {
 	 *            Index of player whose turn is before the current player
 	 * @return The index of the desired player
 	 */
-	synchronized protected int getNextPlayerIndex(int index) {
-		return (index + 1) % this.group.getPlayers().size();
+	synchronized protected int getNextActivePlayerIndex(int index) {
+		return (index + 1) % this.group.getActivePlayersInHand().size();
 	}
 
-	synchronized protected Player getNextPlayer(int index) {
-		return this.group.getPlayers().get(getNextPlayerIndex(index));
-	}
-
-	synchronized protected int getSmallBlindIndex() {
-		return getNextPlayerIndex(dealerIndex);
-	}
-
-	synchronized protected Player getSmallBlindPlayer() {
-		return this.group.getPlayers().get(getSmallBlindIndex());
-	}
-
-	synchronized protected int getBigBlindIndex() {
-		return getNextPlayerIndex(getSmallBlindIndex());
-	}
-
-	synchronized protected Player getBigBlindPlayer() {
-		return this.group.getPlayers().get(getBigBlindIndex());
+	synchronized protected Player getNextActivePlayer(int index) {
+		return this.group.getActivePlayersInHand().get(getNextActivePlayerIndex(index));
 	}
 
 	synchronized protected Player getParticipantById(String id) throws Exception {
@@ -758,5 +738,13 @@ public abstract class AbstractGame implements Game {
 
 	protected synchronized void setBetController(BetController betController) {
 		this.betController = betController;
+	}
+
+	protected GameCustomMetadata getMetadata() {
+		return metadata;
+	}
+
+	protected void setMetadata(GameCustomMetadata metadata) {
+		this.metadata = metadata;
 	}
 }

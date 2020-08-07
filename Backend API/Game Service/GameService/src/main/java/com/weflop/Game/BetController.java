@@ -87,11 +87,49 @@ public class BetController {
 		bet(player, bigBlind);
 	}
 	
+	/**
+	 * Posts big blinds for each player in given list of players.
+	 * @param playersPostingBigBlind
+	 */
+	synchronized public void postBigBlinds(List<Player> playersPostingBigBlind) {		
+		for (Player player : playersPostingBigBlind) {
+			if (player.getCurrentRoundBet() != bigBlind) {
+				bet(player, bigBlind);
+			}
+		}
+	}
+	
+	/**
+	 * Pays blinds. Returns a list of actions that should be propagated as messages to users.
+	 * @param smallBlindPlayer (Null if there is no small blind)
+	 * @param bigBlindPlayer
+	 * @return List of actions to be propagated to participants of group.
+	 */
+	synchronized public List<Action> payBlinds(Player smallBlindPlayer, Player bigBlindPlayer) {
+		List<Action> actionsToPropogate = new ArrayList<Action>();
+		
+		if (smallBlindPlayer != null) {
+			// otherwise, we are in a normal situation where small blind pays blind
+			paySmallBlind(smallBlindPlayer);
+			Action smallBlindAction = new Action.ActionBuilder(ActionType.SMALL_BLIND).withPlayerId(smallBlindPlayer.getId()).build();
+			actionsToPropogate.add(smallBlindAction);
+		}
+		
+		// big blind pays
+		payBigBlind(bigBlindPlayer);
+		bigBlindPlayer.updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
+		Action bigBlindAction = new Action.ActionBuilder(ActionType.BIG_BLIND).withPlayerId(bigBlindPlayer.getId()).build();
+		actionsToPropogate.add(bigBlindAction);
+		
+		return actionsToPropogate;
+	}
+	
 	synchronized public void buyIn(Player player, float amount) {
 		Assert.isTrue(amount >= minBuyIn && amount <= maxBuyIn, 
 				"Buy in must be between 10 and 200 BBs");
 		
 		player.setBalance(amount);
+		addPlayerToLedger(player.getId()); // adding player to ledger (if not already present)
 	}
 	
 	/* Ledger Update Methods */

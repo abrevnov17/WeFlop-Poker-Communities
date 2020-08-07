@@ -232,8 +232,6 @@ public class BasicPokerGame extends AbstractGame {
 				
 				getBetController().buyIn(participant, action.getValue());
 				
-				getBetController().addPlayerToLedger(participant.getId()); // adding player to ledger (if not already present)
-
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
 
 				// propagate action to members of group
@@ -286,6 +284,38 @@ public class BasicPokerGame extends AbstractGame {
 					this.propagateActionToGroup(action);
 				}
 				System.out.printf("Player %s disconnected\n", action.getPlayerId());
+			}
+			break;
+			case SIT_OUT_HAND: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Assert.isTrue(participant.canSitOut(), "Must be an active player to sit out.");
+				
+				// sitting player out for next round
+				participant.setNextHandState(PlayerState.WAITING_FOR_HAND);
+				
+				this.propagateActionToGroup(action);
+			}
+			break;
+			case SIT_OUT_BB: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Assert.isTrue(participant.canSitOut(), "Must be an active player to sit out.");
+				
+				// sitting player out for next round
+				participant.setNextHandState(PlayerState.SITTING_OUT_BB);
+				
+				this.propagateActionToGroup(action);
+			}
+			break;
+			case POST_BIG_BLIND: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Assert.isTrue(participant.canPostBigBlind(getMetadata().getBigBlind()), "Player cannot post big blind.");
+				
+				participant.updateCurrentAndFutureState(PlayerState.POSTING_BIG_BLIND, PlayerState.WAITING_FOR_HAND);
+				
+				this.propagateActionToGroup(action);
 			}
 			break;
 			default:
@@ -380,7 +410,7 @@ public class BasicPokerGame extends AbstractGame {
 		// if all players have folded or are all-in, the round is over
 		int count = 0;
 		for (Player player : getGroup().getPlayers()) {
-			if (!(player.getState() == PlayerState.FOLDED || player.getState() == PlayerState.ALL_IN)) {
+			if (!player.isActive()) {
 				count++;
 			}
 		}

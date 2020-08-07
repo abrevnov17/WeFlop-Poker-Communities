@@ -17,10 +17,18 @@ import org.springframework.web.socket.WebSocketSession;
 public class Group {
 	private Player[] players;
 	private List<Player> spectators;
+	
+	private int smallBlindIndex; // -1 if no small blind
+	private int bigBlindIndex;
+	private int dealerIndex;
 
 	Group(int numPlayers) {
 		this.setPlayerSlots(new Player[numPlayers]);
 		this.setSpectators(new ArrayList<Player>());
+		
+		this.smallBlindIndex = -1;
+		this.bigBlindIndex = -1;
+		this.dealerIndex = -1;
 	}
 
 	/**
@@ -44,14 +52,10 @@ public class Group {
 	 * @param player
 	 */
 	synchronized public void moveSpectatorToActivePlayer(Player spectator, Integer slot) {
-		Assert.isTrue(spectator.isSpectating(), "Must be spectator to sit");
 		Assert.isTrue(slot != null, "Slot must be specified in order to sit");
 		Assert.isTrue(players[slot] == null, "Seat is already taken");
 
-		spectator.setSlot(slot);
-
-		// switch player state to waiting for round
-		spectator.setState(PlayerState.WAITING_FOR_ROUND);
+		spectator.sit(slot);
 
 		// remove participant from spectators and move to active players
 		spectators.remove(spectator);
@@ -95,8 +99,8 @@ public class Group {
 		return this.getPlayers().indexOf(player);
 	}
 
-	synchronized public void getPlayerSlots(Player[] players) {
-		this.players = players;
+	synchronized public Player[] getPlayerSlots() {
+		return this.players;
 	}
 
 	synchronized public void setPlayerSlots(Player[] players) {
@@ -126,6 +130,69 @@ public class Group {
 				players[i].setState(state);
 			}
 		}
+	}
+	
+	/**
+	 * Sets current state to nextHandState for players. Does NOT change nextHandState.
+	 */
+	synchronized public void transitionPlayerStates() {
+		for (int i = 0; i < players.length; i++) {
+			if (players[i] != null) {
+				if (players[i].getState() == PlayerState.WAITING_FOR_HAND) {
+					players[i].setNextHandState(PlayerState.WAITING_FOR_TURN);
+				}
+				players[i].transitionState();
+			}
+		}
+	}
+	
+	/**
+	 * Finds which slot player belongs to. Returns -1 if no slot exists
+	 * @param player
+	 * @return Slot (zero-indexed)
+	 */
+	synchronized public int getPlayerSlot(Player player) {
+		for (int i = 0; i < players.length; i++) {
+			if (players[i] != null && players[i].equals(player)) {
+				return i;
+			}
+		}
+		
+		return -1;
+	}
+	
+	/**
+	 * Returns list of all players that could pay a blind.
+	 */
+	synchronized public List<Player> getPlayersEligibleForBlind() {
+		return getPlayers().stream().filter(player -> player.canBeBlind()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Returns list of players that elected to post big blind (but may not necessarily have paid yet).
+	 */
+	synchronized public List<Player> getPlayersWhoHavePostedBigBlind() {
+		return getPlayers().stream().filter(player -> player.getPrevState() == PlayerState.POSTING_BIG_BLIND).collect(Collectors.toList());
+	}
+	
+	
+	/**
+	 * Returns our list of (non-null) players starting at the player after the inputted slot.
+	 * @param slot
+	 * @return List of players.
+	 */
+	synchronized public List<Player> getPlayersClockwiseAfterSlot(int slot) {
+		List<Player> playersBeginningWithSlot = new ArrayList<Player>();
+		
+		for (int index = (slot+1) % players.length; index != slot; index = (index + 1) % players.length) {
+			if (players[index] != null)
+				playersBeginningWithSlot.add(players[index]);
+		}
+		
+		if (players[slot] != null)
+			playersBeginningWithSlot.add(players[slot]);
+		
+		return playersBeginningWithSlot;
 	}
 
 	synchronized public void deleteParticipant(Player participant) {
@@ -183,10 +250,104 @@ public class Group {
 	}
 	
 	/**
-	 * Gets all active players (i.e. players who are not spectating, waiting for next round, or have folded).
+	 * Gets all active players for the given betting round
+	 * (i.e. players who are not spectating, waiting for next round, or have folded).
 	 * @return List of active players.
 	 */
-	synchronized public List<Player> getActivePlayers() {
+	synchronized public List<Player> getActivePlayersInBettingRound() {
+		return getPlayers().stream().filter(player -> player.isActiveInBettingRound()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Gets all active players for the given hand
+	 * (i.e. players who were or are involved in the current hand).
+	 * @return List of active players.
+	 */
+	synchronized public List<Player> getActivePlayersInHand() {
 		return getPlayers().stream().filter(player -> player.isActive()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Called at end of hand. Updates dealerIndex, smallBlindIndex, and bigBlindIndex.
+	 */
+	synchronized public void cycleDealer() {
+		// resetting bigBlind and smallBlind to -1 (not set)
+		this.smallBlindIndex = -1;
+		this.bigBlindIndex = -1;
+		
+		for (int i=0; i < players.length; i++) {
+			this.dealerIndex = (this.dealerIndex + i) % players.length;
+			
+			if (players[dealerIndex] != null && players[dealerIndex].isActive()) {
+				break;
+			}
+		}
+		
+		for (int i=0; i < players.length; i++) {
+			this.smallBlindIndex = (this.dealerIndex + i) % players.length;
+			
+			if (players[smallBlindIndex] != null && players[smallBlindIndex].canBeBlind()) {
+				if (players[smallBlindIndex].getPrevState() == PlayerState.POSTING_BIG_BLIND) {
+					// player should steal dealer index
+					this.dealerIndex = smallBlindIndex;
+					continue;
+				} else if (players[smallBlindIndex].isWaitingForBigBlind()) {
+					// big blind somehow "jumped" over this player
+					// player should become big blind, and no small blind should be set
+					this.bigBlindIndex = smallBlindIndex;
+					this.smallBlindIndex = -1;
+					
+					// player is waiting for turn as they are now big blind
+					players[bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
+					
+					return;
+				}
+				
+				break;
+			} else if (players[smallBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.WAITING_FOR_HAND) {
+				players[smallBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
+			}
+		}
+		
+		for (int i=0; i < players.length; i++) {
+			this.bigBlindIndex = (this.smallBlindIndex + i) % players.length;
+			
+			if (players[bigBlindIndex] != null && players[bigBlindIndex].canBeBlind()) {
+				players[bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
+				break;
+			} else if (players[bigBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.WAITING_FOR_HAND) {
+				players[smallBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
+			}
+		}
+	}
+	
+	public Player getSmallBlindPlayer() {
+		if (smallBlindIndex == -1) {
+			return null;
+		}
+		return players[smallBlindIndex];
+	}
+	
+	public Player getBigBlindPlayer() {
+		if (bigBlindIndex == -1) {
+			return null;
+		}
+		return players[bigBlindIndex];
+	}
+
+	public int getSmallBlindIndex() {
+		return smallBlindIndex;
+	}
+
+	public void setSmallBlindIndex(int smallBlindIndex) {
+		this.smallBlindIndex = smallBlindIndex;
+	}
+
+	public int getBigBlindIndex() {
+		return bigBlindIndex;
+	}
+
+	public void setBigBlindIndex(int bigBlindIndex) {
+		this.bigBlindIndex = bigBlindIndex;
 	}
 }

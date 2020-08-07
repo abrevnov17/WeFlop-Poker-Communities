@@ -22,7 +22,11 @@ public class Player {
 	private float balance;
 	private float currentBet;
 	private float currentRoundBet;
+	
 	private PlayerState state;
+	private PlayerState nextHandState; // state player will transition to at start of next hand
+	private PlayerState prevState; // prior state that player transitioned from
+	
 	int slot; // position of player in table (clockwise increasing, -1 if spectator)
 
 	private WebSocketSession session;
@@ -39,6 +43,9 @@ public class Player {
 		this.setCurrentBet(0.00f);
 		this.setCurrentRoundBet(0.00f);
 		this.setState(PlayerState.WATCHING);
+		this.setNextHandState(PlayerState.WATCHING);
+		this.setPrevState(PlayerState.WATCHING);
+		
 		this.setSlot(-1);
 	}
 
@@ -81,7 +88,7 @@ public class Player {
 		float currBalance = this.balance;
 
 		this.balance = 0.0f;
-		this.state = PlayerState.ALL_IN;
+		updateCurrentAndFutureState(PlayerState.ALL_IN, PlayerState.WAITING_FOR_TURN);
 
 		this.currentBet += currBalance;
 		this.currentRoundBet += currBalance;
@@ -91,8 +98,11 @@ public class Player {
 
 	synchronized void convertToSpectator() {
 		this.discardHand();
-		this.currentBet = 0.0f;
+		this.currentBet = 0.00f;
 		this.state = PlayerState.WATCHING;
+		this.currentRoundBet = 0.00f;
+		this.nextHandState = PlayerState.WATCHING;
+		this.prevState = PlayerState.WATCHING;
 		this.slot = -1;
 	}
 	
@@ -117,7 +127,47 @@ public class Player {
 	 */
 	synchronized public PlayerPOJO toPlayerPOJO() {
 		return new PlayerPOJO(this.id, this.balance, this.currentBet, this.currentRoundBet,
-				hand.toPOJO(), this.state.getValue(), this.slot);
+				hand.toPOJO(), this.state.getValue(), this.nextHandState.getValue(), this.slot);
+	}
+	
+	/**
+	 * Converts player from spectator to player waiting for big blind.
+	 * 
+	 * @param Seat player is sitting at.
+	 */
+	synchronized public void sit(int slot) {
+		Assert.isTrue(this.isSpectating(), "Must be spectator to sit");
+		
+		this.setSlot(slot);
+
+		// player waits for big blind to reach them before being able to play a hand
+		updateStates(PlayerState.WATCHING, PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
+	}
+	
+	synchronized public boolean canSitOut() {
+		return this.isActive();
+	}
+	
+	synchronized public boolean canPostBigBlind(float bigBlind) {
+		return this.state == PlayerState.WAITING_FOR_BIG_BLIND && balance >= bigBlind;
+	}
+	
+	/**
+	 * Returns whether player can be blind. Note that player who is waiting for a big blind
+	 * is eligible to be any blind, big or small (we do not want to skip over players waiting for big blind
+	 * in edge cases where players who were supposed to be small blind leave or sit out).
+	 * @return true if player can be a blind during the current hand, false otherwise.
+	 */
+	synchronized public boolean canBeBlind() {
+		return this.isActive() || isWaitingForBigBlind();
+	}
+	
+	/**
+	 * Method returns true if player is waiting for big blind (either they are sitting out or just joined).
+	 * Returns false otherwise.
+	 */
+	synchronized public boolean isWaitingForBigBlind() {
+		return this.state == PlayerState.WAITING_FOR_BIG_BLIND || this.state == PlayerState.SITTING_OUT_BB;
 	}
 
 	/**
@@ -150,6 +200,43 @@ public class Player {
 		// Compare the data members and return accordingly
 		return id.equals(p.id);
 	}
+	
+	synchronized public void addCard(Card card) {
+		this.hand.addCardToHand(card);
+	}
+
+	synchronized public boolean isSpectating() {
+		return this.state == PlayerState.WATCHING;
+	}
+	
+	/**
+	 * Returns whether player is active in round
+	 * and has not folded.
+	 * @return
+	 */
+	synchronized public boolean isActiveInBettingRound() {
+		return isActive() && state != PlayerState.FOLDED;
+	}
+	
+	synchronized public boolean isActive() {
+		return !isSpectating() 
+				&& state != PlayerState.WAITING_FOR_HAND
+				&& state != PlayerState.SITTING_OUT_BB
+				&& state != PlayerState.WAITING_FOR_BIG_BLIND
+				&& state != PlayerState.POSTING_BIG_BLIND;
+	}
+	
+	/**
+	 * Returns true if a player is waiting for their turn (including
+	 * if they have checked or bet already in round but are still eligible to play).
+	 */
+	synchronized public boolean canMoveInRound() {
+		return this.state == PlayerState.WAITING_FOR_TURN || this.state == PlayerState.CHECKED;
+	}
+	
+	synchronized public void transitionState() {
+		this.state = nextHandState;
+	}
 
 	/* Getters and Setters */
 
@@ -178,36 +265,8 @@ public class Player {
 	}
 
 	synchronized public void setState(PlayerState state) {
+		this.prevState = this.state; // updating previous state
 		this.state = state;
-	}
-
-	synchronized public void addCard(Card card) {
-		this.hand.addCardToHand(card);
-	}
-
-	synchronized public boolean isSpectating() {
-		return this.state == PlayerState.WATCHING;
-	}
-	
-	/**
-	 * Returns whether player is not spectating, not waiting for next round,
-	 * and has not folded.
-	 * @return
-	 */
-	synchronized public boolean isActive() {
-		return !isSpectating() 
-				&& state != PlayerState.FOLDED 
-				&& state != PlayerState.WAITING_FOR_ROUND
-				&& state != PlayerState.SITTING_OUT
-				&& state != PlayerState.WAITING_FOR_BIG_BLIND;
-	}
-	
-	/**
-	 * Returns true if a player is waiting for their turn (including
-	 * if they have checked or bet already in round but are still eligible to play).
-	 */
-	synchronized public boolean canMoveInRound() {
-		return this.state == PlayerState.WAITING_FOR_TURN || this.state == PlayerState.CHECKED;
 	}
 
 	synchronized public WebSocketSession getSession() {
@@ -240,5 +299,32 @@ public class Player {
 
 	synchronized public void setHand(Hand hand) {
 		this.hand = hand;
+	}
+
+	synchronized public PlayerState getNextHandState() {
+		return nextHandState;
+	}
+
+	synchronized public void setNextHandState(PlayerState nextHandState) {
+		this.nextHandState = nextHandState;
+	}
+	
+	synchronized public void updateCurrentAndFutureState(PlayerState currentState, PlayerState nextHandState) {
+		setState(currentState);
+		setNextHandState(nextHandState);
+	}
+	
+	synchronized public void updateStates(PlayerState prevState, PlayerState currentState, PlayerState nextState) {
+		this.prevState = prevState;
+		this.state = currentState;
+		this.nextHandState = nextState;
+	}
+
+	public PlayerState getPrevState() {
+		return prevState;
+	}
+
+	public void setPrevState(PlayerState prevState) {
+		this.prevState = prevState;
 	}
 }
