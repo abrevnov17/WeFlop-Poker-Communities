@@ -68,6 +68,8 @@ public abstract class AbstractGame implements Game {
 	private int epoch; // value we increment on changes in state; keeps track of state versions
 
 	private GameCustomMetadata metadata;
+	
+	private boolean active;
 
 	@Autowired
 	private GameRepository gameRepository;
@@ -88,6 +90,7 @@ public abstract class AbstractGame implements Game {
 		this.setRound(0);
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.epoch = 0;
+		this.active = true;
 	}
 
 	@Override
@@ -475,7 +478,28 @@ public abstract class AbstractGame implements Game {
 
 		return new GameDocument(id.toString(), metadata.getType().getValue(), started ? startTime.toEpochMilli() : -1, 
 				board.toPOJO(), betController.getTotalPot(), dealerIndex, players, spectators, history.toPOJO(), 
-				betController.getLedger().toPOJO(), this.metadata);
+				betController.getLedger().toPOJO(), this.metadata, this.active);
+	}
+	
+	/**
+	 * Attemps to archive the current game. Returns true if archive is successful, returns false otherwise.
+	 * @return
+	 */
+	@Override
+	public boolean archive() {
+		if (group.getPlayers().size() != 0) {
+			return false;
+		}
+		
+		// updating database entry
+		this.active = false;
+		this.flushToDatabase();
+		
+		// deleting game from replica and shutting down thread executor
+		threadExecutor.shutdown();
+		GameFactory.ID_TO_GAME.remove(id.toString());
+		
+		return true;
 	}
 
 	/**
@@ -487,7 +511,6 @@ public abstract class AbstractGame implements Game {
 		targets.add(participant);
 		propagateAction(action, targets);
 	}
-
 
 	/**
 	 * Takes in an action and propagates it to entire group (spectators + players).

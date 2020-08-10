@@ -8,4 +8,6 @@ public interface Game {
 	public void performAction(Action action) throws Exception; // performs an action as a given player
 
 	public GameMetadata getGameMetadata(); // gets game metadata that is exposed through REST controller
+	
+	public boolean archive();
 }

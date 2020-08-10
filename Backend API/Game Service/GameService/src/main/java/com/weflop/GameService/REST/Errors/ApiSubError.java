@@ -1,4 +1,3 @@
 package com.weflop.GameService.REST.Errors;
 
-abstract public class ApiSubError {
-}
+abstract public class ApiSubError { }

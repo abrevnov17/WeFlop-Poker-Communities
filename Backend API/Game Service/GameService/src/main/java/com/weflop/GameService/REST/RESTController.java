@@ -6,11 +6,14 @@ import com.weflop.Game.Game;
 import com.weflop.Game.GameFactory;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
+import com.weflop.GameService.REST.Errors.ForbiddenOperationException;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -81,5 +84,55 @@ public class RESTController {
 	    GameDocument doc = gameDocument.get();
 		
 		return doc.getLedger();
+	}
+	
+	@GetMapping("/active-games")
+	@ResponseBody
+	public List<GameDocument> getActiveGames(@RequestParam(name = "user_id", required = true) String userId) {
+		// fetching all active games by timestamp in descending order
+		return repository.findByIdAndActiveAndSort(userId, true, Sort.by(Sort.Direction.DESC, "startTime"));
+	}
+	
+	@GetMapping("/archived-games")
+	@ResponseBody
+	public List<GameDocument> getArchivedGames(@RequestParam(name = "user_id", required = true) String userId) {
+		// fetching all archived games by timestamp in descending order
+		return repository.findByIdAndActiveAndSort(userId, false, Sort.by(Sort.Direction.DESC, "startTime"));
+	}
+	
+	@PostMapping("/archive-game")
+	@ResponseBody
+	public void archiveGame(
+			@RequestParam(name = "user_id", required = true) String userId,
+			@RequestParam(name = "game_id", required = true) String gameId
+			) {
+		
+		// first, we check to see if game is being hosted on this replica
+		Game game = GameFactory.ID_TO_GAME.get(gameId);
+		
+		if (game != null) {
+			if (!game.archive()) {
+				throw new ForbiddenOperationException("Cannot archive a game with active players.");
+			}
+			
+			return;
+		}
+		
+		// since game is not on this replica, we must load it from the db
+		Optional<GameDocument> gameDocument = repository.findById(gameId);
+		
+		if (!gameDocument.isPresent()) {
+			throw new IllegalArgumentException("No game exists with id: " + gameId);
+		}
+		
+	    GameDocument doc = gameDocument.get();
+	    
+	    if (!doc.isActive()) {
+	    	throw new IllegalArgumentException("Game is already archived");
+	    }
+	    
+	    doc.setActive(false); // setting game to be inactive
+	    
+	    repository.save(doc); // archiving game
 	}
 }

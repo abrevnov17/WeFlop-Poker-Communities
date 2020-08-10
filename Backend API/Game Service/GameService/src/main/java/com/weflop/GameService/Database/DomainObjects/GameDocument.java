@@ -44,12 +44,14 @@ public class GameDocument {
 	private Map<String, Float> ledger;
 	
 	private GameCustomMetadata metadata;
+	
+	private boolean active;
 
 	// Constructors:
 
 	public GameDocument(String id, int type, long startTime,
 			List<CardPOJO> centerCards, float pot, int dealerIndex, List<PlayerPOJO> players,
-			List<SpectatorPOJO> spectators, HistoryPOJO history, Map<String, Float> ledger, GameCustomMetadata metadata) {
+			List<SpectatorPOJO> spectators, HistoryPOJO history, Map<String, Float> ledger, GameCustomMetadata metadata, boolean active) {
 		super();
 		this.id = id;
 		this.type = type;
@@ -60,8 +62,9 @@ public class GameDocument {
 		this.players = players;
 		this.spectators = spectators;
 		this.history = history;
-		this.setLedger(ledger);
-		this.setMetadata(metadata);
+		this.ledger = ledger;
+		this.metadata = metadata;
+		this.active = active;
 	}
 
 	// getters and setters
@@ -152,5 +155,13 @@ public class GameDocument {
 
 	public void setMetadata(GameCustomMetadata metadata) {
 		this.metadata = metadata;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
 	}
 }
