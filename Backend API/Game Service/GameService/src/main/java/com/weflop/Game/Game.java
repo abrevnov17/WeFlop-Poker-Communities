@@ -10,4 +10,8 @@ public interface Game {
 	public GameMetadata getGameMetadata(); // gets game metadata that is exposed through REST controller
 	
 	public boolean archive(String userId);
+	
+	public boolean canBeRemovedFromReplica(); // true if we can delete game from replica
+	
+	public void removeFromReplica(); // removes game from replica
 }

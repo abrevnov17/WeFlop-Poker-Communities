@@ -16,6 +16,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.weflop.Game.Game;
 import com.weflop.Game.GameFactory;
+import com.weflop.Game.GameManager;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
 
@@ -39,7 +40,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 		// getting game from game id in message
 		String gameId = received.get("game_id").getAsString();
 
-		Game game = GameFactory.ID_TO_GAME.get(gameId);
+		Game game = GameManager.ID_TO_GAME.get(gameId);
 
 		if (game == null) {
 			// otherwise, we need to load from database

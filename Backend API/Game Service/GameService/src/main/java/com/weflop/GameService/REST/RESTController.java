@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.weflop.Game.Game;
 import com.weflop.Game.GameFactory;
+import com.weflop.Game.GameManager;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
 import com.weflop.GameService.REST.Errors.ForbiddenOperationException;
@@ -45,7 +46,7 @@ public class RESTController {
 	@GetMapping("/game-metadata")
 	@ResponseBody
 	public GameMetadata getGameMetadata(@RequestParam(name = "game_id", required = true) String gameId) {
-		Game game = GameFactory.ID_TO_GAME.get(gameId);
+		Game game = GameManager.ID_TO_GAME.get(gameId);
 		
 		// first, we check to see if game is on this replica
 		if (game != null) {
@@ -67,7 +68,7 @@ public class RESTController {
 	@GetMapping("/ledger")
 	@ResponseBody
 	public Map<String, Float> getGameLedger(@RequestParam(name = "game_id", required = true) String gameId) {
-		Game game = GameFactory.ID_TO_GAME.get(gameId);
+		Game game = GameManager.ID_TO_GAME.get(gameId);
 		
 		// first, we check to see if game is on this replica
 		if (game != null) {
@@ -108,7 +109,7 @@ public class RESTController {
 			) {
 		
 		// first, we check to see if game is being hosted on this replica
-		Game game = GameFactory.ID_TO_GAME.get(gameId);
+		Game game = GameManager.ID_TO_GAME.get(gameId);
 		
 		if (game != null) {
 			if (!game.archive(userId)) {

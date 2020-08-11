@@ -1,11 +1,9 @@
 package com.weflop.Game;
 
 import com.weflop.Evaluation.TwoPlusTwo.TwoPlusTwoHandEvaluator;
+
 import com.weflop.Game.BasicPokerGame.BasicPokerGame;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Factory generates instances of Games.
@@ -15,8 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class GameFactory {
 
-	public static Map<String, Game> ID_TO_GAME = new ConcurrentHashMap<String, Game>();
-
 	/**
 	 * Creates a standard poker game and adds game to map of id's to games.
 	 * 
@@ -25,7 +21,7 @@ public class GameFactory {
 	public static String generateStandardPokerGame(String name, float smallBlind, int minBuyInBB, int maxBuyInBB, String createdBy) {
 		GameCustomMetadata metadata = new GameCustomMetadata(name, smallBlind, minBuyInBB, maxBuyInBB, createdBy);
 		Game game = new BasicPokerGame(metadata, new TwoPlusTwoHandEvaluator());
-		ID_TO_GAME.put(game.getGameId(), game);
+		GameManager.ID_TO_GAME.put(game.getGameId(), game);
 		return game.getGameId();
 	}
 	
@@ -38,7 +34,7 @@ public class GameFactory {
 		switch(GameType.fromValue(document.getType())) {
 			case STANDARD_REPRESENTATION: {
 				Game game = new BasicPokerGame(document, new TwoPlusTwoHandEvaluator());
-				ID_TO_GAME.put(game.getGameId(), game);
+				GameManager.ID_TO_GAME.put(game.getGameId(), game);
 				return game;
 			}
 		}

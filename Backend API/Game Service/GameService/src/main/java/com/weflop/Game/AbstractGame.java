@@ -67,11 +67,6 @@ public abstract class AbstractGame implements Game {
 	private GameCustomMetadata metadata;
 	
 	private boolean active;
-	
-	// initially false. if we flush to database and there are no players/spectators, it becomes true.
-	// if we flush to database and there are no players/spectators and this is true, we delete the current
-	// game from this replica
-	private boolean inactiveForPeriod; 
 
 	@Autowired
 	private GameRepository gameRepository;
@@ -92,7 +87,6 @@ public abstract class AbstractGame implements Game {
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.epoch = 0;
 		this.active = true;
-		this.inactiveForPeriod = false;
 	}
 	
 	/**
@@ -117,7 +111,6 @@ public abstract class AbstractGame implements Game {
 		this.epoch = 0;
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.active = true;
-		this.inactiveForPeriod = false;
 	}
 
 	@Override
@@ -173,14 +166,6 @@ public abstract class AbstractGame implements Game {
 	 * Flushes game state and history to database.
 	 */
 	synchronized public void flushToDatabase() {
-		if (group.getPlayers().size() == 0 && group.getSpectators().size() == 0) {
-			if (this.inactiveForPeriod) {
-				// deleting game from replica and canceling current operations		
-				removeGameFromReplica();
-			} else {
-				this.inactiveForPeriod = true;
-			}
-		}
 		GameDocument document = this.toDocument();
 		this.getGameRepository().save(document);
 	}
@@ -188,11 +173,17 @@ public abstract class AbstractGame implements Game {
 	/**
 	 * Removes game from replica and cancels any related threads (best effort).
 	 */
-	synchronized public void removeGameFromReplica() {
+	@Override
+	public void removeFromReplica() {
 		threadExecutor.shutdownNow();
-		GameFactory.ID_TO_GAME.remove(id.toString());
+		GameManager.ID_TO_GAME.remove(id.toString());
 	}
 
+	@Override
+	public boolean canBeRemovedFromReplica() {
+		return group.getPlayers().size() == 0 && group.getSpectators().size() == 0;
+	}
+	
 	/**
 	 * Spawns a timer-thread that will send game packets when a turn has expired
 	 */
@@ -538,7 +529,7 @@ public abstract class AbstractGame implements Game {
 		this.flushToDatabase();
 		
 		// deleting game from replica and shutting down thread executor
-		removeGameFromReplica();
+		removeFromReplica();
 		
 		return true;
 	}
@@ -815,14 +806,6 @@ public abstract class AbstractGame implements Game {
 
 	protected void setActive(boolean active) {
 		this.active = active;
-	}
-
-	protected boolean isInactiveForPeriod() {
-		return inactiveForPeriod;
-	}
-
-	protected void setInactiveForPeriod(boolean inactiveForPeriod) {
-		this.inactiveForPeriod = inactiveForPeriod;
 	}
 
 	protected void setEpoch(int epoch) {

@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.weflop.Evaluation.TwoPlusTwo.TwoPlusTwoHandEvaluator;
+import com.weflop.Game.GameManager;
 
 @SpringBootApplication
 public class GameServiceApplication {
@@ -11,6 +12,8 @@ public class GameServiceApplication {
 	public static void main(String[] args) {
 		TwoPlusTwoHandEvaluator.getInstance(); // preloading hand ranks
 		SpringApplication.run(GameServiceApplication.class, args);
+		
+		GameManager.spawnGarbageCollectorThread();
 	}
 
 }
