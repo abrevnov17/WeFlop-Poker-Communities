@@ -1,5 +1,9 @@
 package com.weflop.GameService.Database.DomainObjects;
 
+import com.weflop.Cards.Card;
+import com.weflop.Cards.CardValue;
+import com.weflop.Cards.Suit;
+
 /**
  * CRUD object wraps information about cards
  * 
@@ -7,29 +11,29 @@ package com.weflop.GameService.Database.DomainObjects;
  *
  */
 public class CardPOJO {
-	private int suit;
+	private String suit;
 
-	private int value;
+	private String value;
 
-	public CardPOJO(int suit, int value) {
+	public CardPOJO(String suit, String value) {
 		super();
 		this.suit = suit;
 		this.value = value;
 	}
 
-	public int getSuit() {
+	public String getSuit() {
 		return suit;
 	}
 
-	public void setSuit(int suit) {
+	public void setSuit(String suit) {
 		this.suit = suit;
 	}
 
-	public int getValue() {
+	public String getValue() {
 		return value;
 	}
 
-	public void setValue(int value) {
+	public void setValue(String value) {
 		this.value = value;
 	}
 }

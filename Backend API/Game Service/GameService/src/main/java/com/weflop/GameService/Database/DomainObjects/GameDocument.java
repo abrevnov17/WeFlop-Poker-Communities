@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.weflop.Game.GameCustomMetadata;
+import com.weflop.Game.GameType;
 
 /**
  * CRUD object containing game information as stored on database.
@@ -22,7 +23,7 @@ public class GameDocument {
 	@Id
 	private String id;
 
-	private int type;
+	private String type;
 
 	// -1 if game has not started yet
 	private long startTime;
@@ -49,7 +50,7 @@ public class GameDocument {
 
 	// Constructors:
 
-	public GameDocument(String id, int type, long startTime,
+	public GameDocument(String id, String type, long startTime,
 			List<CardPOJO> centerCards, float pot, int dealerIndex, List<PlayerPOJO> players,
 			List<SpectatorPOJO> spectators, HistoryPOJO history, Map<String, Float> ledger, GameCustomMetadata metadata, boolean active) {
 		super();
@@ -77,11 +78,11 @@ public class GameDocument {
 		this.id = id;
 	}
 
-	public int getType() {
+	public String getType() {
 		return type;
 	}
 
-	public void setType(int type) {
+	public void setType(String type) {
 		this.type = type;
 	}
 

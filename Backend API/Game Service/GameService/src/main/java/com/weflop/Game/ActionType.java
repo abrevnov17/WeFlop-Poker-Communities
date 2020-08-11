@@ -9,29 +9,51 @@ package com.weflop.Game;
  */
 public enum ActionType {
 	// Gameplay-related actions:
-	START(0), FOLD(1), RAISE(2), CALL(3), CHECK(4), ALL_IN(5), TURN_TIMEOUT(6),
+	START("START"), 
+	FOLD("FOLD"), 
+	RAISE("RAISE"), 
+	CALL("CALL"), 
+	CHECK("CHECK"), 
+	ALL_IN("ALL_IN"), 
+	TURN_TIMEOUT("TURN_TIMEOUT"),
 	// Logistics-related actions:
-	JOIN(7), SIT(8), STAND(9), DISCONNECT(10), SIT_OUT_HAND(11), SIT_OUT_BB(12), POST_BIG_BLIND(13), TOP_OFF(14), CHANGE_SEAT(15),
+	JOIN("JOIN"), 
+	SIT("SIT"), 
+	STAND("STAND"), 
+	DISCONNECT("DISCONNECT"), 
+	SIT_OUT_HAND("SIT_OUT_HAND"), 
+	SIT_OUT_BB("SIT_OUT_BB"), 
+	POST_BIG_BLIND(""), 
+	TOP_OFF("TOP_OFF"), 
+	CHANGE_SEAT("CHANGE_SEAT"),
 	// Outgoing actions:
-	PLAYER_DEAL(16), // cards dealt to individual player
-	CENTER_DEAL(17), // cards dealt to center
-	POT_WON(18), // some player has won a round (and the current pot)
-	SMALL_BLIND(19), // player has paid small blind
-	BIG_BLIND(20), // player has paid big blind
-	BETTING_ROUND_OVER(21); // round of betting has concluded
+	PLAYER_DEAL("PLAYER_DEAL"), // cards dealt to individual player
+	CENTER_DEAL("CENTER_DEAL"), // cards dealt to center
+	POT_WON("POT_WON"), // some player has won a round (and the current pot)
+	SMALL_BLIND("SMALL_BLIND"), // player has paid small blind
+	BIG_BLIND("BIG_BLIND"), // player has paid big blind
+	BETTING_ROUND_OVER("BETTING_ROUND_OVER"); // round of betting has concluded
 	
 
-	private final int value;
+	private final String value;
 
-	ActionType(int value) {
+	ActionType(String value) {
 		this.value = value;
 	}
 
-	public int getValue() {
+	public String toValue() {
 		return value;
 	}
+	
+	public static ActionType fromValue(String value) {  
+		if (value != null) {  
+			for (ActionType type : values()) {  
+				if (type.value.equals(value)) {  
+					return type;  
+				}  
+			}  
+		}  
 
-	public static ActionType getTypeFromInt(int type) {
-		return ActionType.values()[type];
+		throw new IllegalArgumentException("Invalid action type: " + value);  
 	}
 }

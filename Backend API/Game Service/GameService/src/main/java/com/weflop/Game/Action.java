@@ -112,9 +112,9 @@ public class Action {
 	 */
 	public ActionPOJO toPojo() {
 		List<CardPOJO> cards = this.cards == null ? null : this.cards.stream()
-				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
+				.map(card -> new CardPOJO(card.getSuit().toValue(), card.getCardValue().toValue()))
 				.collect(Collectors.toList());
-		return new ActionPOJO(type.getValue(), playerId, timestamp != null ? timestamp.toEpochMilli() : null, 
+		return new ActionPOJO(type.toValue(), playerId, timestamp != null ? timestamp.toEpochMilli() : null, 
 				value, cards, playerIds, slot, pots);
 	}
 

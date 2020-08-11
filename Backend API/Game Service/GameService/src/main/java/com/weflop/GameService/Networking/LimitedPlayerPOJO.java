@@ -17,9 +17,9 @@ public class LimitedPlayerPOJO {
 
 	private float currentBet;
 
-	private int state;
+	private String state;
 
-	public LimitedPlayerPOJO(String id, float currentBet, int state) {
+	public LimitedPlayerPOJO(String id, float currentBet, String state) {
 		this.id = id;
 		this.currentBet = currentBet;
 		this.state = state;
@@ -51,11 +51,11 @@ public class LimitedPlayerPOJO {
 		this.currentBet = currentBet;
 	}
 
-	public int getState() {
+	public String getState() {
 		return state;
 	}
 
-	public void setState(int state) {
+	public void setState(String state) {
 		this.state = state;
 	}
 }

@@ -1,5 +1,7 @@
 package com.weflop.Cards;
 
+import com.weflop.GameService.Database.DomainObjects.CardPOJO;
+
 /**
  * Card.java
  * 
@@ -25,5 +27,9 @@ public class Card {
 
 	public CardValue getCardValue() {
 		return this.value;
+	}
+	
+	public static Card fromPojo(CardPOJO cardPojo) {
+		return new Card(Suit.fromValue(cardPojo.getSuit()), CardValue.fromValue(cardPojo.getValue()));
 	}
 }

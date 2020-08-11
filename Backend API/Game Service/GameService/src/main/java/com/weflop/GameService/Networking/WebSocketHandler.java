@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -14,6 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.weflop.Game.Game;
 import com.weflop.Game.GameFactory;
+import com.weflop.GameService.Database.GameRepository;
 
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
@@ -21,6 +23,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
 	public static final Gson GSON = new Gson();
 
 	private static List<WebSocketSession> sessions = new CopyOnWriteArrayList<WebSocketSession>();
+	
+	@Autowired
+	private GameRepository repository;
 
 	@Override
 	public void handleTextMessage(WebSocketSession session, TextMessage message)
@@ -35,6 +40,8 @@ public class WebSocketHandler extends TextWebSocketHandler {
 		Game game = GameFactory.ID_TO_GAME.get(gameId);
 
 		if (game == null) {
+			
+			
 			session.sendMessage(new TextMessage("Invalid game id."));
 		}
 

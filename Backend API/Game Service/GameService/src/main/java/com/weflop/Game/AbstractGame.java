@@ -70,10 +70,15 @@ public abstract class AbstractGame implements Game {
 	private GameCustomMetadata metadata;
 	
 	private boolean active;
+	
+	// initially false. if we flush to database and there are no players/spectators, it becomes true.
+	// if we flush to database and there are no players/spectators and this is true, we delete the current
+	// game from this replica
+	private boolean inactiveForPeriod; 
 
 	@Autowired
 	private GameRepository gameRepository;
-
+	
 	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
 		this.metadata = metadata;
 		this.id = UUID.randomUUID();
@@ -91,6 +96,19 @@ public abstract class AbstractGame implements Game {
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.epoch = 0;
 		this.active = true;
+		this.inactiveForPeriod = false;
+	}
+	
+	/**
+	 * Constructor used to load an existing game from a database.
+	 * @param document
+	 */
+	protected AbstractGame(GameDocument document) {
+		this.id = UUID.fromString(document.getId());
+		this.metadata = document.getMetadata();
+		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind(), 
+				metadata.getMinBuyIn(), metadata.getMaxBuyIn());
+		this.board = new Board(document.getCenterCards());
 	}
 
 	@Override
@@ -146,11 +164,25 @@ public abstract class AbstractGame implements Game {
 	 * Flushes game state and history to database.
 	 */
 	synchronized public void flushToDatabase() {
+		if (group.getPlayers().size() == 0 && group.getSpectators().size() == 0) {
+			if (this.inactiveForPeriod) {
+				// deleting game from replica and canceling current operations		
+				removeGameFromReplica();
+			} else {
+				this.inactiveForPeriod = true;
+			}
+		}
 		GameDocument document = this.toDocument();
 		this.getGameRepository().save(document);
 	}
-
-	/* Universally shared methods */
+	
+	/**
+	 * Removes game from replica and cancels any related threads (best effort).
+	 */
+	synchronized public void removeGameFromReplica() {
+		threadExecutor.shutdownNow();
+		GameFactory.ID_TO_GAME.remove(id.toString());
+	}
 
 	/**
 	 * Spawns a timer-thread that will send game packets when a turn has expired
@@ -315,7 +347,6 @@ public abstract class AbstractGame implements Game {
 			// TODO: this needs to be fleshed out
 			System.out.println("Ending game due to insufficient players...");
 			this.setStarted(false);
-			this.threadExecutor.shutdown();
 			return;
 		}
 
@@ -476,7 +507,7 @@ public abstract class AbstractGame implements Game {
 		List<SpectatorPOJO> spectators = this.group.getSpectators().stream()
 				.map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
 
-		return new GameDocument(id.toString(), metadata.getType().getValue(), started ? startTime.toEpochMilli() : -1, 
+		return new GameDocument(id.toString(), metadata.getType(), started ? startTime.toEpochMilli() : -1, 
 				board.toPOJO(), betController.getTotalPot(), dealerIndex, players, spectators, history.toPOJO(), 
 				betController.getLedger().toPOJO(), this.metadata, this.active);
 	}
@@ -486,8 +517,9 @@ public abstract class AbstractGame implements Game {
 	 * @return
 	 */
 	@Override
-	public boolean archive() {
-		if (group.getPlayers().size() != 0) {
+	public boolean archive(String userId) {
+		// assert that we have no active players and that given user owns the current game
+		if (group.getPlayers().size() != 0 || !metadata.getCreatedBy().equals(userId)) {
 			return false;
 		}
 		
@@ -496,8 +528,7 @@ public abstract class AbstractGame implements Game {
 		this.flushToDatabase();
 		
 		// deleting game from replica and shutting down thread executor
-		threadExecutor.shutdown();
-		GameFactory.ID_TO_GAME.remove(id.toString());
+		removeGameFromReplica();
 		
 		return true;
 	}
@@ -769,5 +800,33 @@ public abstract class AbstractGame implements Game {
 
 	protected void setMetadata(GameCustomMetadata metadata) {
 		this.metadata = metadata;
+	}
+
+	protected ScheduledExecutorService getThreadExecutor() {
+		return threadExecutor;
+	}
+
+	protected void setThreadExecutor(ScheduledExecutorService threadExecutor) {
+		this.threadExecutor = threadExecutor;
+	}
+
+	protected boolean isActive() {
+		return active;
+	}
+
+	protected void setActive(boolean active) {
+		this.active = active;
+	}
+
+	protected boolean isInactiveForPeriod() {
+		return inactiveForPeriod;
+	}
+
+	protected void setInactiveForPeriod(boolean inactiveForPeriod) {
+		this.inactiveForPeriod = inactiveForPeriod;
+	}
+
+	protected void setEpoch(int epoch) {
+		this.epoch = epoch;
 	}
 }

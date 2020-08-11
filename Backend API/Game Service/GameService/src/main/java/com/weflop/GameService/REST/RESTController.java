@@ -111,7 +111,7 @@ public class RESTController {
 		Game game = GameFactory.ID_TO_GAME.get(gameId);
 		
 		if (game != null) {
-			if (!game.archive()) {
+			if (!game.archive(userId)) {
 				throw new ForbiddenOperationException("Cannot archive a game with active players.");
 			}
 			
@@ -126,6 +126,10 @@ public class RESTController {
 		}
 		
 	    GameDocument doc = gameDocument.get();
+	    
+	    if (!doc.getMetadata().getCreatedBy().equals(userId)) {
+	    	throw new ForbiddenOperationException("Can only archive games that you have created.");
+	    }
 	    
 	    if (!doc.isActive()) {
 	    	throw new IllegalArgumentException("Game is already archived");

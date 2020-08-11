@@ -9,16 +9,39 @@ package com.weflop.Cards;
  *
  */
 public enum CardValue {
-	TWO(1), THREE(2), FOUR(3), FIVE(4), SIX(5), SEVEN(6), EIGHT(7), NINE(8), TEN(9), JACK(10), QUEEN(11), KING(12), ACE(
-			13);
+	TWO("TWO"), 
+	THREE("THREE"), 
+	FOUR("FOUR"), 
+	FIVE("FIVE"), 
+	SIX("SIX"), 
+	SEVEN("SEVEN"), 
+	EIGHT("EIGHT"), 
+	NINE("NINE"), 
+	TEN("TEN"), 
+	JACK("JACK"), 
+	QUEEN("QUEEN"), 
+	KING("KING"), 
+	ACE("ACE");
 
-	private final int value;
+	private final String value;
 
-	CardValue(int value) {
+	CardValue(String value) {
 		this.value = value;
 	}
 
-	public int getValue() {
+	public String toValue() {
 		return value;
+	}
+	
+	public static CardValue fromValue(String value) {  
+		if (value != null) {  
+			for (CardValue card : values()) {  
+				if (card.value.equals(value)) {  
+					return card;  
+				}  
+			}  
+		}  
+
+		throw new IllegalArgumentException("Invalid card: " + value);  
 	}
 }

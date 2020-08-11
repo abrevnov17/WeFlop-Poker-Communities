@@ -8,7 +8,7 @@ import java.util.List;
  * @author abrevnov
  */
 public class ActionPOJO {
-	private int type;
+	private String type;
 
 	private String userId;
 
@@ -20,29 +20,29 @@ public class ActionPOJO {
 
 	private long timestamp; // milliseconds since start of current epoch
 
-	public ActionPOJO(int type, String userId, long timestamp) {
+	public ActionPOJO(String type, String userId, long timestamp) {
 		this.type = type;
 		this.userId = userId;
 		this.setTimestamp(timestamp);
 	}
 
-	public ActionPOJO(int type, String userId, long timestamp, Float value) {
+	public ActionPOJO(String type, String userId, long timestamp, Float value) {
 		this(type, userId, timestamp);
 		this.value = value;
 	}
 
-	public ActionPOJO(int type, String userId, long timestamp, Float value, List<CardPOJO> cards,
+	public ActionPOJO(String type, String userId, long timestamp, Float value, List<CardPOJO> cards,
 			List<String> playerIds, Integer slot, List<Float> pots) {
 		this(type, userId, timestamp, value);
 		this.setCards(cards);
 		this.setPots(pots);
 	}
 
-	public int getType() {
+	public String getType() {
 		return type;
 	}
 
-	public void setType(int type) {
+	public void setType(String type) {
 		this.type = type;
 	}
 

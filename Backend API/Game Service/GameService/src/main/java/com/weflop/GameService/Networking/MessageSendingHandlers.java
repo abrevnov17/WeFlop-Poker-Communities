@@ -28,11 +28,11 @@ public class MessageSendingHandlers {
 		// creating message
 		JsonObject message = new JsonObject();
 		message.addProperty("game_id", gameId);
-		message.addProperty("type", MessageType.ACTION.getValue());
+		message.addProperty("type", MessageType.ACTION.toValue());
 
 		JsonObject payload = new JsonObject();
 
-		payload.addProperty("type", action.getType().getValue());
+		payload.addProperty("type", action.getType().toValue());
 		payload.addProperty("participant_id", action.getPlayerId());
 		payload.addProperty("epoch", epoch);
 
@@ -68,7 +68,7 @@ public class MessageSendingHandlers {
 		// creating message
 		JsonObject message = new JsonObject();
 		message.addProperty("game_id", gameId);
-		message.addProperty("type", MessageType.ACTION.getValue());
+		message.addProperty("type", MessageType.ACTION.toValue());
 
 		JsonObject payload = new JsonObject();
 
@@ -108,7 +108,7 @@ public class MessageSendingHandlers {
 	public static void sendGameState(Player target, GameStatePOJO gameState) throws InterruptedException, IOException {
 		// creating message
 		JsonObject message = new JsonObject();
-		message.addProperty("type", MessageType.GAME_STATE.getValue());
+		message.addProperty("type", MessageType.GAME_STATE.toValue());
 		message.addProperty("payload", WebSocketHandler.GSON.toJson(gameState));
 		
 		String messageString = message.toString();
@@ -122,7 +122,7 @@ public class MessageSendingHandlers {
 		// creating message
 		JsonObject message = new JsonObject();
 		message.addProperty("game_id", gameId);
-		message.addProperty("type", MessageType.SYNCHRONIZATION.getValue());
+		message.addProperty("type", MessageType.SYNCHRONIZATION.toValue());
 
 		JsonObject payload = new JsonObject();
 

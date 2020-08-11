@@ -15,7 +15,7 @@ public class MessageReceivingHandlers {
 	public static void handleAction(WebSocketSession session, Game game, JsonObject payload)
 			throws InterruptedException, IOException {
 		// parsing out properties
-		ActionType type = ActionType.getTypeFromInt(payload.get("type").getAsInt());
+		ActionType type = ActionType.fromValue(payload.get("type").getAsString());
 		String playerId = payload.get("user_id").getAsString();
 
 		// handling various action types

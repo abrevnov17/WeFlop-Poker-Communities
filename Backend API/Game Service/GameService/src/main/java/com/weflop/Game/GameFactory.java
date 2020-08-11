@@ -2,6 +2,7 @@ package com.weflop.Game;
 
 import com.weflop.Evaluation.TwoPlusTwo.TwoPlusTwoHandEvaluator;
 import com.weflop.Game.BasicPokerGame.BasicPokerGame;
+import com.weflop.GameService.Database.DomainObjects.GameDocument;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,5 +27,23 @@ public class GameFactory {
 		Game game = new BasicPokerGame(metadata, new TwoPlusTwoHandEvaluator());
 		ID_TO_GAME.put(game.getGameId(), game);
 		return game.getGameId();
+	}
+	
+	/**
+	 * Loads a poker game from a game document.
+	 * @param document
+	 * @return Corresponding poker game instance
+	 */
+	public static Game fromDocument(GameDocument document) {
+		switch(document.getType()) {
+			case STANDARD_REPRESENTATION: {
+				Game game = new BasicPokerGame(document);
+				ID_TO_GAME.put(game.getGameId(), game);
+				return game;
+			}
+			break;
+		}
+		
+		throw new RuntimeException("Invalid game document");
 	}
 }

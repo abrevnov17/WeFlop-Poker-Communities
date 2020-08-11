@@ -127,7 +127,7 @@ public class Player {
 	 */
 	synchronized public PlayerPOJO toPlayerPOJO() {
 		return new PlayerPOJO(this.id, this.balance, this.currentBet, this.currentRoundBet,
-				hand.toPOJO(), this.state.getValue(), this.nextHandState.getValue(), this.slot);
+				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(), this.slot);
 	}
 	
 	/**

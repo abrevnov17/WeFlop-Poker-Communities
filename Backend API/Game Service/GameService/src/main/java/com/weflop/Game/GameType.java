@@ -7,15 +7,27 @@ package com.weflop.Game;
  *
  */
 public enum GameType {
-	STANDARD_REPRESENTATION(0);
+	STANDARD_REPRESENTATION("STANDARD_REPRESENTATION");
 
-	private final int value;
+	private final String value;
 
-	GameType(int value) {
+	GameType(String value) {
 		this.value = value;
 	}
 
-	public int getValue() {
+	public String toValue() {
 		return value;
+	}
+	
+	public static GameType fromValue(String value) {  
+		if (value != null) {  
+			for (GameType type : values()) {  
+				if (type.value.equals(value)) {  
+					return type;  
+				}  
+			}  
+		}  
+
+		throw new IllegalArgumentException("Invalid game type: " + value);  
 	}
 }

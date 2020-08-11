@@ -3,9 +3,14 @@ package com.weflop.Game.BasicPokerGame;
 import java.time.Instant;
 
 import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.locks.Lock;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
+import com.weflop.Cards.Board;
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
 import com.weflop.Evaluation.HandRank;
@@ -13,11 +18,15 @@ import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.AbstractGame;
 import com.weflop.Game.Action;
 import com.weflop.Game.ActionType;
+import com.weflop.Game.BetController;
 import com.weflop.Game.GameCustomMetadata;
+import com.weflop.Game.Group;
 import com.weflop.Game.History;
 import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
 import com.weflop.Game.PlayerState;
+import com.weflop.Game.Turn;
+import com.weflop.GameService.Database.GameRepository;
 
 /**
  * This class represents an actual Poker game following the
@@ -43,6 +52,51 @@ public class BasicPokerGame extends AbstractGame {
 		super(metadata, evaluator);
 		this.variant = variant;
 		this.deck = deck;
+	}
+	
+	/**
+	 * Loads an existing game state as described by the game document.
+	 * @param document
+	 */
+	public BasicPokerGame(GameDocument document) {
+		
+		private final UUID id;
+
+		private Lock lock; // manages concurrent read/write access to game properties
+
+		private boolean started;
+		private Instant startTime;
+
+		private BetController betController;
+
+		private Board board;
+		private int dealerIndex;
+
+		private Group group; // our group of players
+
+		private Turn turn;
+
+		private HandRankEvaluator evaluator;
+
+		private int round;
+
+		private History history;
+
+		private ScheduledExecutorService threadExecutor; // useful when creating timed events
+
+		private int epoch; // value we increment on changes in state; keeps track of state versions
+
+		private GameCustomMetadata metadata;
+		
+		private boolean active;
+		
+		// initially false. if we flush to database and there are no players/spectators, it becomes true.
+		// if we flush to database and there are no players/spectators and this is true, we delete the current
+		// game from this replica
+		private boolean inactiveForPeriod; 
+
+		@Autowired
+		private GameRepository gameRepository;
 	}
 
 	/* Overrided methods from abstract superclass */

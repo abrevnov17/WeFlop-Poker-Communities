@@ -35,7 +35,7 @@ public class Hand implements Comparable<Hand> {
 
 	public List<CardPOJO> toPOJO() {
 		return this.cards.stream()
-				.map(card -> new CardPOJO(card.getSuit().getValue(), card.getCardValue().getValue()))
+				.map(card -> new CardPOJO(card.getSuit().toValue(), card.getCardValue().toValue()))
 				.collect(Collectors.toList());
 	}
 

@@ -9,15 +9,27 @@ package com.weflop.Cards;
  *
  */
 public enum Suit {
-	HEARTS(0), CLUBS(1), SPADES(2), DIAMONDS(3);
+	HEARTS("HEARTS"), CLUBS("CLUBS"), SPADES("SPADES"), DIAMONDS("DIAMONDS");
 
-	private final int value;
+	private final String value;
 
-	Suit(int value) {
+	Suit(String value) {
 		this.value = value;
 	}
 
-	public int getValue() {
+	public String toValue() {
 		return value;
+	}
+
+	public static Suit fromValue(String value) {  
+		if (value != null) {  
+			for (Suit suit : values()) {  
+				if (suit.value.equals(value)) {  
+					return suit;  
+				}  
+			}  
+		}
+		
+		throw new IllegalArgumentException("Invalid suit: " + value);  
 	}
 }

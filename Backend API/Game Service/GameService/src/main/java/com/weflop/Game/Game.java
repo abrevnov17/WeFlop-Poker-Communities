@@ -9,5 +9,5 @@ public interface Game {
 
 	public GameMetadata getGameMetadata(); // gets game metadata that is exposed through REST controller
 	
-	public boolean archive();
+	public boolean archive(String userId);
 }
