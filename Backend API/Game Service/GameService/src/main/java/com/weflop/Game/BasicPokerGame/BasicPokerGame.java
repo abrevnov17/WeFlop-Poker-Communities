@@ -3,14 +3,9 @@ package com.weflop.Game.BasicPokerGame;
 import java.time.Instant;
 
 import java.util.ArrayList;
-import java.util.UUID;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.locks.Lock;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
-import com.weflop.Cards.Board;
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
 import com.weflop.Evaluation.HandRank;
@@ -18,15 +13,13 @@ import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.AbstractGame;
 import com.weflop.Game.Action;
 import com.weflop.Game.ActionType;
-import com.weflop.Game.BetController;
+import com.weflop.Game.BootReason;
 import com.weflop.Game.GameCustomMetadata;
-import com.weflop.Game.Group;
 import com.weflop.Game.History;
 import com.weflop.Game.InitialState;
 import com.weflop.Game.Player;
 import com.weflop.Game.PlayerState;
-import com.weflop.Game.Turn;
-import com.weflop.GameService.Database.GameRepository;
+import com.weflop.GameService.Database.DomainObjects.GameDocument;
 
 /**
  * This class represents an actual Poker game following the
@@ -58,45 +51,8 @@ public class BasicPokerGame extends AbstractGame {
 	 * Loads an existing game state as described by the game document.
 	 * @param document
 	 */
-	public BasicPokerGame(GameDocument document) {
-		
-		private final UUID id;
-
-		private Lock lock; // manages concurrent read/write access to game properties
-
-		private boolean started;
-		private Instant startTime;
-
-		private BetController betController;
-
-		private Board board;
-		private int dealerIndex;
-
-		private Group group; // our group of players
-
-		private Turn turn;
-
-		private HandRankEvaluator evaluator;
-
-		private int round;
-
-		private History history;
-
-		private ScheduledExecutorService threadExecutor; // useful when creating timed events
-
-		private int epoch; // value we increment on changes in state; keeps track of state versions
-
-		private GameCustomMetadata metadata;
-		
-		private boolean active;
-		
-		// initially false. if we flush to database and there are no players/spectators, it becomes true.
-		// if we flush to database and there are no players/spectators and this is true, we delete the current
-		// game from this replica
-		private boolean inactiveForPeriod; 
-
-		@Autowired
-		private GameRepository gameRepository;
+	public BasicPokerGame(GameDocument document, HandRankEvaluator evaluator) {
+		super(document, evaluator);
 	}
 
 	/* Overrided methods from abstract superclass */
@@ -117,25 +73,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				System.out.printf("Player %s starting game\n", action.getPlayerId());
 
-				// initializing game history
-				InitialState state = new InitialState(this.getGroup().getPlayers());
-				this.setHistory(new History(state, new ArrayList<Action>()));
-
-				// start game clock
-				this.setStarted(true);
-				this.setStartTime(Instant.now());
-
-				// propagate action that game has started to all members of group
-				this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).withPlayerId(action.getPlayerId()).build());
-
-				// start betting rounds
-				this.beginBettingRounds();
-
-				// spawning a thread that periodically saves the game
-				spawnSaveGameThread();
-
-				// spawning a thread that updates player states
-				spawnSynchronizationPacketSendingThread();
+				startGame();
 			}
 			break;
 			case FOLD: {
@@ -155,6 +93,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.propagateActionToGroup(action);
 
 				System.out.printf("Player %s folded\n", action.getPlayerId());
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case RAISE: {
@@ -180,6 +119,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.propagateActionToGroup(action);
 
 				System.out.printf("Player %s raised by: %d\n", action.getPlayerId(), bet);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case CALL: {
@@ -205,6 +145,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				System.out.printf("Player %s called\n", action.getPlayerId());
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case CHECK: {
@@ -225,6 +166,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				System.out.printf("Player %s checked\n", action.getPlayerId());
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case ALL_IN: {
@@ -244,6 +186,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				System.out.printf("Player %s went all-in\n", action.getPlayerId());
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case TURN_TIMEOUT: {
@@ -255,6 +198,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				// update player state to folded
 				participant.setState(PlayerState.FOLDED);
+				participant.setNextHandState(PlayerState.WAITING_FOR_BIG_BLIND);
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
@@ -263,20 +207,36 @@ public class BasicPokerGame extends AbstractGame {
 				this.cycleTurn(this.getGroup().getIndexOfPlayerInList(participant));
 
 				System.out.printf("Player %s timed out\n", action.getPlayerId());
+				
+				if (participant.isDisplayingInactivity()) {
+					// they have already missed a turn prior to this, so they get booted from the table
+					this.bootPlayer(participant, BootReason.INACTIVITY);
+				}
+				participant.setDisplayingInactivity(true);
+
 			}
 			break;
 			case JOIN: {
 				printGameState();
-				// add player as spectator
-				this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
-
-				System.out.printf("Player %s joining game\n", action.getPlayerId());
-
-				// need to send the player the current game state
-				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Player participant = getGroup().getParticipantById(action.getPlayerId());
+				if (participant != null) {
+					participant.setSession(action.getSession());
+					System.out.printf("Player %s re-joining game\n", action.getPlayerId());
+				} else {
+					// add player as spectator
+					this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
+	
+					System.out.printf("Player %s joining game\n", action.getPlayerId());
+	
+					participant = this.getParticipantById(action.getPlayerId());
+				}
 				
 				System.out.println(participant);
+				
+				// need to send the player the current game state
 				this.sendUserGameState(participant);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case SIT: {
@@ -292,31 +252,12 @@ public class BasicPokerGame extends AbstractGame {
 				this.propagateActionToGroup(action);
 				
 				if (!this.isStarted() && this.getGroup().getPlayers().size() >= 2) {
-					// starting game:
-					
 					// all players who joined before start should be active in first hand
 					getGroup().setAllPlayersCurrentAndFutureStates(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
 					
-					// initializing game history
-					InitialState state = new InitialState(this.getGroup().getPlayers());
-					this.setHistory(new History(state, new ArrayList<Action>()));
-
-					// start game clock
-					this.setStarted(true);
-					this.setStartTime(Instant.now());
-
-					// propagate action that game has started to all members of group
-					this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).build());
-
-					// start betting rounds
-					this.beginBettingRounds();
-
-					// spawning a thread that periodically saves the game
-					spawnSaveGameThread();
-					
-					// spawning a thread that updates player states
-					spawnSynchronizationPacketSendingThread();
+					this.startGame();
 				}
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case STAND: {
@@ -329,6 +270,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.propagateActionToGroup(action);
 
 				System.out.printf("Player %s stood\n", action.getPlayerId());
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case DISCONNECT: {
@@ -341,6 +283,7 @@ public class BasicPokerGame extends AbstractGame {
 					this.propagateActionToGroup(action);
 				}
 				System.out.printf("Player %s disconnected\n", action.getPlayerId());
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case SIT_OUT_HAND: {
@@ -352,6 +295,7 @@ public class BasicPokerGame extends AbstractGame {
 				participant.setNextHandState(PlayerState.WAITING_FOR_HAND);
 				
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case SIT_OUT_BB: {
@@ -363,6 +307,7 @@ public class BasicPokerGame extends AbstractGame {
 				participant.setNextHandState(PlayerState.SITTING_OUT_BB);
 				
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case POST_BIG_BLIND: {
@@ -373,6 +318,7 @@ public class BasicPokerGame extends AbstractGame {
 				participant.updateCurrentAndFutureState(PlayerState.POSTING_BIG_BLIND, PlayerState.WAITING_FOR_HAND);
 				
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case TOP_OFF: {
@@ -384,6 +330,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			case CHANGE_SEAT: {
@@ -395,6 +342,7 @@ public class BasicPokerGame extends AbstractGame {
 				
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			}
 			break;
 			default:
@@ -405,6 +353,28 @@ public class BasicPokerGame extends AbstractGame {
 			this.getLock().unlock();
 		}
 
+	}
+	
+	private void startGame() {
+		// initializing game history
+		InitialState state = new InitialState(this.getGroup().getPlayers());
+		this.setHistory(new History(state, new ArrayList<Action>()));
+
+		// start game clock
+		this.setStarted(true);
+		this.setStartTime(Instant.now());
+
+		// propagate action that game has started to all members of group
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).build());
+
+		// start betting rounds
+		this.beginBettingRounds();
+
+		// spawning a thread that periodically saves the game
+		spawnSaveGameThread();
+		
+		// spawning a thread that updates player states
+		spawnSynchronizationPacketSendingThread();
 	}
 
 	/**

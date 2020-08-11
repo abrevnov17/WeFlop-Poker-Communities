@@ -1,13 +1,13 @@
 package com.weflop.GameService.Database.DomainObjects;
 
 import java.util.List;
+
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.weflop.Game.GameCustomMetadata;
-import com.weflop.Game.GameType;
 
 /**
  * CRUD object containing game information as stored on database.
@@ -34,11 +34,9 @@ public class GameDocument {
 
 	private float pot;
 
-	private int dealerIndex;
-
-	private List<PlayerPOJO> players;
-
-	private List<SpectatorPOJO> spectators;
+	private GroupPOJO group;
+	
+	private TurnPOJO turn;
 
 	private HistoryPOJO history;
 	
@@ -47,25 +45,30 @@ public class GameDocument {
 	private GameCustomMetadata metadata;
 	
 	private boolean active;
+	
+	private int round;
+	
+	private int epoch;
 
 	// Constructors:
 
 	public GameDocument(String id, String type, long startTime,
-			List<CardPOJO> centerCards, float pot, int dealerIndex, List<PlayerPOJO> players,
-			List<SpectatorPOJO> spectators, HistoryPOJO history, Map<String, Float> ledger, GameCustomMetadata metadata, boolean active) {
+			List<CardPOJO> centerCards, float pot, GroupPOJO group, TurnPOJO turn, HistoryPOJO history, 
+			Map<String, Float> ledger, GameCustomMetadata metadata, boolean active, int round, int epoch) {
 		super();
 		this.id = id;
 		this.type = type;
 		this.startTime = startTime;
 		this.centerCards = centerCards;
 		this.pot = pot;
-		this.dealerIndex = dealerIndex;
-		this.players = players;
-		this.spectators = spectators;
+		this.group = group;
+		this.turn = turn;
 		this.history = history;
 		this.ledger = ledger;
 		this.metadata = metadata;
 		this.active = active;
+		this.round = round;
+		this.epoch = epoch;
 	}
 
 	// getters and setters
@@ -110,30 +113,6 @@ public class GameDocument {
 		this.pot = pot;
 	}
 
-	public int getDealerIndex() {
-		return dealerIndex;
-	}
-
-	public void setDealerIndex(int dealerIndex) {
-		this.dealerIndex = dealerIndex;
-	}
-
-	public List<PlayerPOJO> getPlayers() {
-		return players;
-	}
-
-	public void setPlayers(List<PlayerPOJO> players) {
-		this.players = players;
-	}
-
-	public List<SpectatorPOJO> getSpectators() {
-		return spectators;
-	}
-
-	public void setSpectators(List<SpectatorPOJO> spectators) {
-		this.spectators = spectators;
-	}
-
 	public HistoryPOJO getHistory() {
 		return history;
 	}
@@ -164,5 +143,37 @@ public class GameDocument {
 
 	public void setActive(boolean active) {
 		this.active = active;
+	}
+
+	public GroupPOJO getGroup() {
+		return group;
+	}
+
+	public void setGroup(GroupPOJO group) {
+		this.group = group;
+	}
+
+	public TurnPOJO getTurn() {
+		return turn;
+	}
+
+	public void setTurn(TurnPOJO turn) {
+		this.turn = turn;
+	}
+
+	public int getRound() {
+		return round;
+	}
+
+	public void setRound(int round) {
+		this.round = round;
+	}
+
+	public int getEpoch() {
+		return epoch;
+	}
+
+	public void setEpoch(int epoch) {
+		this.epoch = epoch;
 	}
 }

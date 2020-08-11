@@ -7,6 +7,10 @@ import java.util.stream.Collectors;
 import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.weflop.GameService.Database.DomainObjects.GroupPOJO;
+import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
+
 /**
  * A Group is everyone that is either spectating or participating in an
  * individual game.
@@ -77,8 +81,61 @@ public class Group {
 
 		return -1;
 	}
+	
+	/* POJO conversions */
+	
+	public static List<Player> playersFromPOJO(List<PlayerPOJO> players) {
+		return players.stream().map(pojo -> Player.fromPOJO(pojo)).collect(Collectors.toList());
+	}
+	
+	public static List<Player> spectatorsFromPOJO(List<SpectatorPOJO> spectators) {
+		return spectators.stream().map(pojo -> Player.fromSpectatorPOJO(pojo)).collect(Collectors.toList());
+	}
+	
+	public static Group fromPOJO(int numPlayers, GroupPOJO pojo) {
+		Group group = new Group(numPlayers);
+		
+		group.dealerIndex = pojo.getDealerIndex();
+		group.smallBlindIndex = pojo.getSmallBlindIndex();
+		group.bigBlindIndex = pojo.getBigBlindIndex();
+		
+		group.spectators = Group.spectatorsFromPOJO(pojo.getSpectators());
+		
+		for (Player player : Group.playersFromPOJO(pojo.getPlayers())) {
+			group.players[player.getSlot()] = player;
+		}
+		
+		return group;
+	}
+	
+	public List<PlayerPOJO> playersToPOJO() {
+		return getPlayers().stream().map(player -> player.toPOJO()).collect(Collectors.toList());
+	}
+	
+	public List<SpectatorPOJO> spectatorsToPOJO() {
+		return getSpectators().stream().map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
+	}
+	
+	public GroupPOJO toPOJO() {
+		return new GroupPOJO(this.playersToPOJO(), this.spectatorsToPOJO(), this.smallBlindIndex, this.bigBlindIndex, this.dealerIndex);
+	}
 
 	/* Getters and Setters */
+	
+	/**
+	 * Attempts to get participant by id. Returns null if no participant exists with provided id.
+	 * @param id
+	 * @return Participant with id
+	 */
+	public Player getParticipantById(String id) {
+		for (Player participant : this.getAllParticipants()) {
+			if (participant.getId().equals(id)) {
+				return participant;
+			}
+		}
+		
+		return null;
+	}
 
 	synchronized public List<Player> getPlayers() {
 		List<Player> nonNullPlayers = new ArrayList<Player>();
@@ -357,5 +414,13 @@ public class Group {
 
 	public void setBigBlindIndex(int bigBlindIndex) {
 		this.bigBlindIndex = bigBlindIndex;
+	}
+
+	public int getDealerIndex() {
+		return dealerIndex;
+	}
+
+	public void setDealerIndex(int dealerIndex) {
+		this.dealerIndex = dealerIndex;
 	}
 }

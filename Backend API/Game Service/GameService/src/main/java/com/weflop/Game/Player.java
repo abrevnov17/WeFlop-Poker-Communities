@@ -27,7 +27,9 @@ public class Player {
 	private PlayerState nextHandState; // state player will transition to at start of next hand
 	private PlayerState prevState; // prior state that player transitioned from
 	
-	int slot; // position of player in table (clockwise increasing, -1 if spectator)
+	private int slot; // position of player in table (clockwise increasing, -1 if spectator)
+	
+	private boolean displayingInactivity; // true if last action was turn expiration
 
 	private WebSocketSession session;
 
@@ -45,8 +47,24 @@ public class Player {
 		this.setState(PlayerState.WATCHING);
 		this.setNextHandState(PlayerState.WATCHING);
 		this.setPrevState(PlayerState.WATCHING);
+		this.setDisplayingInactivity(false);
 		
 		this.setSlot(-1);
+	}
+	
+	Player(String id, WebSocketSession session, Hand hand, float balance, 
+			float currentBet, float currentRoundBet, PlayerState state, 
+			PlayerState nextHandState, PlayerState prevState, int slot) {
+		this.id = id;
+		this.setSession(session);
+		this.setHand(hand);
+		this.setBalance(balance);
+		this.setCurrentBet(currentBet);
+		this.setCurrentRoundBet(currentRoundBet);
+		this.setState(state);
+		this.setNextHandState(nextHandState);
+		this.setPrevState(prevState);
+		this.setSlot(slot);
 	}
 
 	/**
@@ -125,9 +143,20 @@ public class Player {
 	 * 
 	 * @return Corresponding instance of PlayerPOJO
 	 */
-	synchronized public PlayerPOJO toPlayerPOJO() {
+	synchronized public PlayerPOJO toPOJO() {
 		return new PlayerPOJO(this.id, this.balance, this.currentBet, this.currentRoundBet,
-				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(), this.slot);
+				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(), this.prevState.toValue(), this.slot);
+	}
+	
+	public static Player fromPOJO(PlayerPOJO pojo) {
+		return new Player(pojo.getId(), null, Hand.fromPOJO(pojo.getCards()), pojo.getBalance(), 
+				pojo.getCurrentBet(), pojo.getCurrentRoundBet(), PlayerState.fromValue(pojo.getState()), 
+				PlayerState.fromValue(pojo.getNextHandState()), 
+				PlayerState.fromValue(pojo.getPrevState()), pojo.getSlot());
+	}
+	
+	public static Player fromSpectatorPOJO(SpectatorPOJO pojo) {
+		return null;
 	}
 	
 	/**
@@ -330,5 +359,13 @@ public class Player {
 
 	public void setPrevState(PlayerState prevState) {
 		this.prevState = prevState;
+	}
+
+	public boolean isDisplayingInactivity() {
+		return displayingInactivity;
+	}
+
+	public void setDisplayingInactivity(boolean displayingInactivity) {
+		this.displayingInactivity = displayingInactivity;
 	}
 }

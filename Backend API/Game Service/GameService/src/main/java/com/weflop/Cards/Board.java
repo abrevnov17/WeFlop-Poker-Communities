@@ -35,6 +35,12 @@ public class Board {
 				.map(card -> new CardPOJO(card.getSuit().toValue(), card.getCardValue().toValue()))
 				.collect(Collectors.toList());
 	}
+	
+	public static Board fromPOJO(List<CardPOJO> cardsPojo) {
+		return new Board(cardsPojo.stream()
+				.map(cardPojo -> new Card(Suit.fromValue(cardPojo.getSuit()), CardValue.fromValue(cardPojo.getValue())))
+				.collect(Collectors.toList()));
+	}
 
 	/* Getters and Setters */
 	

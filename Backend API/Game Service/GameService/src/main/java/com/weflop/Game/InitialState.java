@@ -25,7 +25,7 @@ public class InitialState {
 	 * @return Corresponding instance of InitialStatePOJO
 	 */
 	public InitialStatePOJO toPOJO() {
-		List<PlayerPOJO> players = initPlayers.stream().map(player -> player.toPlayerPOJO())
+		List<PlayerPOJO> players = initPlayers.stream().map(player -> player.toPOJO())
 				.collect(Collectors.toList());
 
 		return new InitialStatePOJO(players);

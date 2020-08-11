@@ -16,6 +16,12 @@ public class Ledger {
 		ledger = new ConcurrentHashMap<String, Float>();
 	}
 	
+	public static Ledger fromPOJO(Map<String, Float> pojo) {
+		Ledger ledger = new Ledger();
+		ledger.ledger.putAll(pojo);
+		return ledger;
+	}
+	
 	/**
 	 * Updates ledger entry for given player by a given amount
 	 * (can be positive or negative). If entry does not exist,

@@ -23,11 +23,13 @@ public class PlayerPOJO {
 	private String state;
 	
 	private String nextHandState;
+	
+	private String prevState;
 
 	private int slot;
 
 	public PlayerPOJO(String id, float balance, float currentBet, float currentRoundBet, List<CardPOJO> cards, 
-			String state, String nextHandState, int slot) {
+			String state, String nextHandState, String prevState, int slot) {
 		this.id = id;
 		this.balance = balance;
 		this.currentBet = currentBet;
@@ -36,6 +38,7 @@ public class PlayerPOJO {
 		this.state = state;
 		this.nextHandState = nextHandState;
 		this.slot = slot;
+		this.setPrevState(prevState);
 	}
 
 	public String getId() {
@@ -100,5 +103,13 @@ public class PlayerPOJO {
 
 	public void setNextHandState(String nextHandState) {
 		this.nextHandState = nextHandState;
+	}
+
+	public String getPrevState() {
+		return prevState;
+	}
+
+	public void setPrevState(String prevState) {
+		this.prevState = prevState;
 	}
 }

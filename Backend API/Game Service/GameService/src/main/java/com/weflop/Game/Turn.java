@@ -2,6 +2,8 @@ package com.weflop.Game;
 
 import java.time.Duration;
 
+import com.weflop.GameService.Database.DomainObjects.TurnPOJO;
+
 /**
  * A Turn is a wrapper-object that contains information regarding the current
  * term inside of a game.
@@ -37,6 +39,14 @@ public class Turn {
 		this.setStartTime(System.nanoTime());
 		this.setCount(this.getCount() + 1);
 		this.getPlayer().setState(PlayerState.CURRENT_TURN);
+	}
+	
+	public static Turn fromPOJO(TurnPOJO pojo) {
+		return new Turn(Player.fromPOJO(pojo.getPlayer()), pojo.getStartTime());
+	}
+	
+	public TurnPOJO toPOJO() {
+		return new TurnPOJO(player.toPOJO(), this.getStartTime());
 	}
 
 	synchronized public Player getPlayer() {

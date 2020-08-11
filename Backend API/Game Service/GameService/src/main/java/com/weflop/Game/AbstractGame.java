@@ -18,8 +18,6 @@ import com.weflop.Cards.Card;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
-import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
-import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
 import com.weflop.GameService.Networking.GameStatePOJO;
 import com.weflop.GameService.Networking.LimitedPlayerPOJO;
 import com.weflop.GameService.Networking.MessageSendingHandlers;
@@ -51,7 +49,6 @@ public abstract class AbstractGame implements Game {
 	private BetController betController;
 
 	private Board board;
-	private int dealerIndex;
 
 	private Group group; // our group of players
 
@@ -85,7 +82,6 @@ public abstract class AbstractGame implements Game {
 		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind(), 
 				metadata.getMinBuyIn(), metadata.getMaxBuyIn());
 		this.setBoard(new Board());
-		this.dealerIndex = 0;
 		this.setStartTime(null); // do not start clock till start() called
 		this.setGroup(new Group(metadata.getTableSize()));
 		this.turn = null; // not updated until game begins
@@ -101,14 +97,27 @@ public abstract class AbstractGame implements Game {
 	
 	/**
 	 * Constructor used to load an existing game from a database.
+	 * 
+	 * Note: 
 	 * @param document
 	 */
-	protected AbstractGame(GameDocument document) {
+	protected AbstractGame(GameDocument document, HandRankEvaluator evaluator) {
 		this.id = UUID.fromString(document.getId());
 		this.metadata = document.getMetadata();
 		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind(), 
-				metadata.getMinBuyIn(), metadata.getMaxBuyIn());
-		this.board = new Board(document.getCenterCards());
+				metadata.getMinBuyIn(), metadata.getMaxBuyIn(), Ledger.fromPOJO(document.getLedger()));
+		this.board = new Board();
+		this.startTime = Instant.ofEpochMilli(document.getStartTime());
+		this.group = new Group(metadata.getTableSize());
+		this.turn = null;
+		this.started = false;
+		this.setLock(new ReentrantLock());
+		this.evaluator = evaluator;
+		this.round = 0;
+		this.epoch = 0;
+		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
+		this.active = true;
+		this.inactiveForPeriod = false;
 	}
 
 	@Override
@@ -255,7 +264,7 @@ public abstract class AbstractGame implements Game {
 		System.out.println("beggining new betting round");
 
 		System.out.printf("Dealer index: %d, small blind index: %d, big blind index: %d\n", 
-				this.dealerIndex, group.getSmallBlindIndex(), group.getBigBlindIndex());
+				group.getDealerIndex(), group.getSmallBlindIndex(), group.getBigBlindIndex());
 
 		System.out.println("Paying blinds...");
 		List<Action> blindPaymentActions = betController.payBlinds(group.getSmallBlindPlayer(), group.getBigBlindPlayer());
@@ -286,7 +295,7 @@ public abstract class AbstractGame implements Game {
 		dealCenterCards();
 
 		// cycling to next turn
-		cycleTurn(this.dealerIndex); // during normal round without player cards dealt, start with player to right of dealer
+		cycleTurn(group.getDealerIndex()); // during normal round without player cards dealt, start with player to right of dealer
 	}
 
 	/**
@@ -351,9 +360,9 @@ public abstract class AbstractGame implements Game {
 		}
 
 		// update dealer index
-		this.dealerIndex = this.getNextActivePlayerIndex(this.dealerIndex);
+		group.setDealerIndex(this.getNextActivePlayerIndex(group.getDealerIndex()));
 
-		System.out.println("New dealer index: " + dealerIndex);
+		System.out.println("New dealer index: " + group.getDealerIndex());
 
 		// updating round
 		this.setRound(0);
@@ -382,6 +391,13 @@ public abstract class AbstractGame implements Game {
 		case FORBIDDEN_ACTIVITY:
 			try {
 				player.getSession().sendMessage(new TextMessage("Forbidden activity"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			break;
+		case INACTIVITY:
+			try {
+				player.getSession().sendMessage(new TextMessage("Inactivity."));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -501,15 +517,9 @@ public abstract class AbstractGame implements Game {
 	 * @return Game state as GameDocument
 	 */
 	synchronized protected GameDocument toDocument() {
-		List<PlayerPOJO> players = this.group.getPlayers().stream().map(player -> player.toPlayerPOJO())
-				.collect(Collectors.toList());
-
-		List<SpectatorPOJO> spectators = this.group.getSpectators().stream()
-				.map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
-
-		return new GameDocument(id.toString(), metadata.getType(), started ? startTime.toEpochMilli() : -1, 
-				board.toPOJO(), betController.getTotalPot(), dealerIndex, players, spectators, history.toPOJO(), 
-				betController.getLedger().toPOJO(), this.metadata, this.active);
+		return new GameDocument(id.toString(), metadata.getType().toValue(), started ? startTime.toEpochMilli() : -1, 
+				board.toPOJO(), betController.getTotalPot(), group.toPOJO(), turn.toPOJO(), history.toPOJO(), 
+				betController.getLedger().toPOJO(), this.metadata, this.active, this.round, this.epoch);
 	}
 	
 	/**
@@ -599,13 +609,10 @@ public abstract class AbstractGame implements Game {
 	 * @return Instance of GameStatePOJO
 	 */
 	synchronized protected GameStatePOJO getGameStatePOJO(Player player) {
-		List<LimitedPlayerPOJO> otherPlayers = this.group.getPlayers().stream().filter(p -> !p.equals(player)) // filtering
-				// out
-				// current
-				// player
-				.map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPlayerPOJO())).collect(Collectors.toList());
+		List<LimitedPlayerPOJO> otherPlayers = this.group.getPlayers().stream().filter(p -> !p.equals(player))
+				.map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPOJO())).collect(Collectors.toList());
 
-		return new GameStatePOJO(this.getGameId(), board.toPOJO(), betController.getTotalPot(), otherPlayers, player.toPlayerPOJO(),
+		return new GameStatePOJO(this.getGameId(), board.toPOJO(), betController.getTotalPot(), otherPlayers, player.toPOJO(),
 				turn != null ? turn.getPlayer().getId() : null, this.getEpoch());
 	}
 
@@ -625,7 +632,7 @@ public abstract class AbstractGame implements Game {
 		}
 
 		System.out.printf("Turn player id: %s\n", turn != null ? turn.getPlayer().getId() : "no turn exists yet");
-		System.out.printf("Dealer index: %d\n", this.dealerIndex);
+		System.out.printf("Dealer index: %d\n", group.getDealerIndex());
 		System.out.println("------------------------END GAME STATE------------------------");
 	}
 
@@ -700,14 +707,6 @@ public abstract class AbstractGame implements Game {
 
 	synchronized protected void addToCenterCards(Card card) {
 		this.board.addCard(card);
-	}
-
-	synchronized protected int getDealerIndex() {
-		return dealerIndex;
-	}
-
-	synchronized protected void setDealerIndex(int dealerIndex) {
-		this.dealerIndex = dealerIndex;
 	}
 
 	synchronized protected Turn getTurn() {

@@ -35,13 +35,12 @@ public class GameFactory {
 	 * @return Corresponding poker game instance
 	 */
 	public static Game fromDocument(GameDocument document) {
-		switch(document.getType()) {
+		switch(GameType.fromValue(document.getType())) {
 			case STANDARD_REPRESENTATION: {
-				Game game = new BasicPokerGame(document);
+				Game game = new BasicPokerGame(document, new TwoPlusTwoHandEvaluator());
 				ID_TO_GAME.put(game.getGameId(), game);
 				return game;
 			}
-			break;
 		}
 		
 		throw new RuntimeException("Invalid game document");

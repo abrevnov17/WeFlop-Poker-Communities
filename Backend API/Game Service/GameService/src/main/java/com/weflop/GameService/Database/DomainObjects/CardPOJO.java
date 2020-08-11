@@ -1,9 +1,5 @@
 package com.weflop.GameService.Database.DomainObjects;
 
-import com.weflop.Cards.Card;
-import com.weflop.Cards.CardValue;
-import com.weflop.Cards.Suit;
-
 /**
  * CRUD object wraps information about cards
  * 

@@ -3,6 +3,7 @@ package com.weflop.GameService.Networking;
 import java.io.IOException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import com.google.gson.JsonObject;
 import com.weflop.Game.Game;
 import com.weflop.Game.GameFactory;
 import com.weflop.GameService.Database.GameRepository;
+import com.weflop.GameService.Database.DomainObjects.GameDocument;
 
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
@@ -40,9 +42,16 @@ public class WebSocketHandler extends TextWebSocketHandler {
 		Game game = GameFactory.ID_TO_GAME.get(gameId);
 
 		if (game == null) {
+			// otherwise, we need to load from database
+			Optional<GameDocument> gameDocument = repository.findById(gameId);
 			
+			if (!gameDocument.isPresent()) {
+				session.sendMessage(new TextMessage("Invalid game id."));
+				return;
+			}
 			
-			session.sendMessage(new TextMessage("Invalid game id."));
+		    GameDocument doc = gameDocument.get();
+			game = GameFactory.fromDocument(doc);
 		}
 
 		JsonObject payload = received.get("payload").getAsJsonObject();

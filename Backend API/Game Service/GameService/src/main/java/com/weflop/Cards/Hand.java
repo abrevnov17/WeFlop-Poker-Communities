@@ -38,6 +38,14 @@ public class Hand implements Comparable<Hand> {
 				.map(card -> new CardPOJO(card.getSuit().toValue(), card.getCardValue().toValue()))
 				.collect(Collectors.toList());
 	}
+	
+	public static Hand fromPOJO(List<CardPOJO> handPojo) {
+		List<Card> cards = handPojo.stream()
+				.map(card -> new Card(Suit.fromValue(card.getSuit()), CardValue.fromValue(card.getValue())))
+				.collect(Collectors.toList());
+		
+		return new Hand(cards);
+	}
 
 	/**
 	 * Compares the strength of the hand.

@@ -43,6 +43,12 @@ public class BetController {
 		this.minBuyIn = minBuyIn;
 		this.maxBuyIn = maxBuyIn;
 	}
+	
+	public BetController(float smallBlind, float bigBlind, float minBuyIn, float maxBuyIn, Ledger ledger) {
+		this(smallBlind, bigBlind, minBuyIn, maxBuyIn);
+		this.ledger = ledger;
+	}
+
 
 	/* Betting Methods */
 
