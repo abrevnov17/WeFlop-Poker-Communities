@@ -138,7 +138,7 @@ public class BetController {
 		Assert.isTrue(amount >= minBuyIn && amount <= maxBuyIn, 
 				"Buy in must be between 10 and 200 BBs");
 
-		player.setBalance(amount);
+		player.increaseBalance(amount);
 		addPlayerToLedger(player.getId()); // adding player to ledger (if not already present)
 	}
 
@@ -149,7 +149,7 @@ public class BetController {
 	 * @param playerId
 	 */
 	synchronized public void addPlayerToLedger(String playerId) {
-		ledger.updateEntry(playerId, 0.00f);
+		ledger.updateEntry(playerId, 0.00f); // Note: this doesn't overwrite existing value
 	}
 
 	/* Pot / Distribution Methods */

@@ -19,7 +19,10 @@ import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
 public class Player {
 	private final String id;
 	private Hand hand;
-	private float balance;
+	
+	private float balance; // player total balance
+	private float handBalance; // balance available during hand
+	
 	private float currentBet;
 	private float currentRoundBet;
 	
@@ -42,6 +45,7 @@ public class Player {
 		this.setSession(session);
 		this.setHand(hand);
 		this.setBalance(0.00f);
+		this.setHandBalance(0.00f);
 		this.setCurrentBet(0.00f);
 		this.setCurrentRoundBet(0.00f);
 		this.setState(PlayerState.WATCHING);
@@ -77,7 +81,7 @@ public class Player {
 	 * @return Whether or not the player has a sufficient balance
 	 */
 	synchronized private boolean canBet(float amount) {
-		if (this.balance - amount >= 0.01) {
+		if (this.handBalance - amount >= 0.01) {
 			return true;
 		}
 
@@ -93,6 +97,7 @@ public class Player {
 	synchronized public void bet(float amount) throws IllegalStateException {
 		Assert.isTrue(this.canBet(amount), "Insufficient funds to place bet");
 		this.balance -= amount;
+		this.handBalance -= amount;
 		this.currentBet += amount;
 		this.currentRoundBet += amount;
 	}
@@ -103,15 +108,17 @@ public class Player {
 	 * @return The balance they forfeited to the pot to go all in
 	 */
 	synchronized public float goAllIn() {
-		float currBalance = this.balance;
+		float currHandBalance = this.handBalance;
 
-		this.balance = 0.0f;
+		this.balance = this.balance - currHandBalance;
+		this.handBalance = 0.00f;
+		
 		updateCurrentAndFutureState(PlayerState.ALL_IN, PlayerState.WAITING_FOR_TURN);
 
-		this.currentBet += currBalance;
-		this.currentRoundBet += currBalance;
+		this.currentBet += currHandBalance;
+		this.currentRoundBet += currHandBalance;
 
-		return currBalance;
+		return currHandBalance;
 	}
 
 	synchronized void convertToSpectator() {
@@ -372,5 +379,13 @@ public class Player {
 		int result = 1;
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		return result;
+	}
+
+	public float getHandBalance() {
+		return handBalance;
+	}
+
+	public void setHandBalance(float handBalance) {
+		this.handBalance = handBalance;
 	}
 }

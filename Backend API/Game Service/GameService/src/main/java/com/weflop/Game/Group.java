@@ -343,6 +343,11 @@ public class Group {
 	public void resetForNewHand() {
 		this.cycleDealer();
 		this.playersWhoCanMuck.clear();
+		
+		// setting hand balances to be player total balance
+		for (Player player : this.getPlayers()) {
+			player.setHandBalance(player.getBalance());
+		}
 	}
 	
 	/**
