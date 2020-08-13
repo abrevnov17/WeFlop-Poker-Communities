@@ -515,6 +515,39 @@ public abstract class AbstractGame implements Game {
 		}
 
 		System.out.printf("new turn player id: %s\n", nextPlayer.getId());
+		
+		if (nextPlayer.getState() == PlayerState.AUTO_CHECK_OR_FOLD) {
+			// in perform action, we lock the game lock
+			// this case is only true if we are calling from thread executing performAction
+			this.lock.unlock(); // preventing deadlock when calling performAction again
+			
+			Action action;
+			if (nextPlayer.getCurrentRoundBet() < betController.getRoundBet()) {
+				action = new Action.ActionBuilder(ActionType.FOLD).withPlayerId(this.turn.getPlayer().getId()).build();
+			} else {
+				action = new Action.ActionBuilder(ActionType.CHECK).withPlayerId(this.turn.getPlayer().getId()).build();
+			}
+			
+			try {
+				this.performAction(action);
+			} catch (Exception e) {
+				System.out.println("Unable to throw.");
+			}
+			return;
+			// automatically check/fold
+		} else if (nextPlayer.getState() == PlayerState.AUTO_CALL) {
+			// automatically call
+			this.lock.unlock(); // preventing deadlock when calling performAction again
+			
+			Action action = new Action.ActionBuilder(ActionType.CALL).withPlayerId(this.turn.getPlayer().getId()).build();
+			
+			try {
+				this.performAction(action);
+			} catch (Exception e) {
+				System.out.println("Unable to throw.");
+			}
+			return;
+		}
 
 		// starting the turn timer
 		this.beginTurnTimer();

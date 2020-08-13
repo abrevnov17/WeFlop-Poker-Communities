@@ -162,6 +162,42 @@ public class MessageReceivingHandlers {
 			}
 		}
 			break;
+		case MUCK_CARDS: {
+			try {
+				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to muck hand."));
+			}
+		}
+			break;
+		case SHOW_CARDS: {
+			try {
+				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to show hand."));
+			}
+		}
+			break;
+		case AUTO_CALL: {
+			try {
+				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to set automatic call preference."));
+			}
+		}
+			break;
+		case AUTO_CHECK_OR_FOLD: {
+			try {
+				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to set automatic check/fold preference."));
+			}
+		}
+			break;
 		default:
 			session.sendMessage(new TextMessage("Unsupported action type"));
 			break;

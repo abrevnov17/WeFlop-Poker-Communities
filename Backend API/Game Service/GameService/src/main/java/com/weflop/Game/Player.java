@@ -268,7 +268,10 @@ public class Player {
 	 * if they have checked or bet already in round but are still eligible to play).
 	 */
 	synchronized public boolean canMoveInRound() {
-		return this.state == PlayerState.WAITING_FOR_TURN || this.state == PlayerState.CHECKED;
+		return this.state == PlayerState.WAITING_FOR_TURN 
+				|| this.state == PlayerState.CHECKED
+				|| this.state == PlayerState.AUTO_CALL
+				|| this.state == PlayerState.AUTO_CHECK_OR_FOLD;
 	}
 	
 	synchronized public void transitionState() {

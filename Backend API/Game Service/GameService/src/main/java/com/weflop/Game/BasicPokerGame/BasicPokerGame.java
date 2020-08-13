@@ -376,6 +376,20 @@ public class BasicPokerGame extends AbstractGame {
 				this.propagateActionToGroup(action);
 				participant.setDisplayingInactivity(false);
 			} break;
+			case AUTO_CALL: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				Assert.isTrue(participant.getState() == PlayerState.WAITING_FOR_TURN, "Player must be waiting for turn to pre-move.");
+				
+				participant.setState(PlayerState.AUTO_CALL);
+				participant.setDisplayingInactivity(false);
+			} break;
+			case AUTO_CHECK_OR_FOLD: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				Assert.isTrue(participant.getState() == PlayerState.WAITING_FOR_TURN, "Player must be waiting for turn to pre-move.");
+
+				participant.setState(PlayerState.AUTO_CHECK_OR_FOLD);
+				participant.setDisplayingInactivity(false);
+			} break;
 			default:
 				throw new Exception("Unsopported action for this game mode");
 			}

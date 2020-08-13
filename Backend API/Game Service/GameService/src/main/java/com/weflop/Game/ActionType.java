@@ -16,6 +16,8 @@ public enum ActionType {
 	CHECK("CHECK"), 
 	ALL_IN("ALL_IN"), 
 	TURN_TIMEOUT("TURN_TIMEOUT"),
+	AUTO_CALL("AUTO_CALL"),
+	AUTO_CHECK_OR_FOLD("AUTO_CHECK_OR_FOLD"),
 	// Logistics-related actions:
 	JOIN("JOIN"), 
 	SIT("SIT"), 
@@ -27,7 +29,7 @@ public enum ActionType {
 	TOP_OFF("TOP_OFF"), 
 	CHANGE_SEAT("CHANGE_SEAT"),
 	SHOW_CARDS("SHOW_CARDS"),
-	MUCK_CARDS("SHOW_CARDS"),
+	MUCK_CARDS("MUCK_CARDS"),
 	BUSTED("BUSTED"),
 	// Outgoing actions:
 	PLAYER_DEAL("PLAYER_DEAL"), // cards dealt to individual player
