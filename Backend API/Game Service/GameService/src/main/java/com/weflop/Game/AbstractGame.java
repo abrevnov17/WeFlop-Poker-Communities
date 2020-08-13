@@ -671,8 +671,9 @@ public abstract class AbstractGame implements Game {
 	 * @param action
 	 */
 	synchronized protected void propagateAction(Action action, List<Player> targets) {
-		// add action to game history
-		if (started) {
+		// add action to game history if a) game has started and b) it is a user-action or an action
+		// that is propagated to the entire group
+		if (started && (action.isUserAction() || targets.size() > 1)) {
 			this.history.appendActionToSequence(action);
 			this.incrementEpoch();
 		}
