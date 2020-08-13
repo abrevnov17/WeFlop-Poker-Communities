@@ -198,6 +198,19 @@ public class MessageReceivingHandlers {
 			}
 		}
 			break;
+		case AUTO_MUCK: {
+			try {
+				boolean enabled = payload.get("enabled").getAsBoolean();
+				game.performAction(new Action.ActionBuilder(type)
+						.withPlayerId(playerId)
+						.withEnabled(enabled)
+						.build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to set automatic check/fold preference."));
+			}
+		}
+			break;
 		default:
 			session.sendMessage(new TextMessage("Unsupported action type"));
 			break;

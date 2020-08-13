@@ -262,6 +262,10 @@ public class BetController {
 		}
 		
 		for (Player player : playersWithOptionToMuck) {
+			if (player.getSettings().isAutoMuckEnabled()) {
+				propagatables.add(new Propagatable(new Action.ActionBuilder(ActionType.MUCK_CARDS).withPlayerId(player.getId()).build()));
+				continue;
+			}
 			group.getPlayersWhoCanMuck().add(player);
 			propagatables.add(new Propagatable(
 					new Action.ActionBuilder(ActionType.OPTION_TO_SHOW_CARDS)

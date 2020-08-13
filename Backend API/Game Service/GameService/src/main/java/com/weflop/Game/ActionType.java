@@ -31,6 +31,7 @@ public enum ActionType {
 	SHOW_CARDS("SHOW_CARDS"),
 	MUCK_CARDS("MUCK_CARDS"),
 	BUSTED("BUSTED"),
+	AUTO_MUCK("AUTO_MUCK"), // toggle auto-mucking
 	// Outgoing actions:
 	PLAYER_DEAL("PLAYER_DEAL"), // cards dealt to individual player
 	CENTER_DEAL("CENTER_DEAL"), // cards dealt to center

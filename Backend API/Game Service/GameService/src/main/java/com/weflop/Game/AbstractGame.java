@@ -350,6 +350,10 @@ public abstract class AbstractGame implements Game {
 		// we give players who folded during last round of betting the change to muck
 		for (Player player : this.beginningOfRoundActivePlayers) {
 			if (player.getState() == PlayerState.FOLDED) {
+				if (player.getSettings().isAutoMuckEnabled()) {
+					this.propagateActionToGroup(new Action.ActionBuilder(ActionType.MUCK_CARDS).withPlayerId(player.getId()).build());
+					continue;
+				}
 				group.getPlayersWhoCanMuck().add(player);
 				this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.OPTION_TO_SHOW_CARDS).build(), player);
 			}
@@ -623,7 +627,8 @@ public abstract class AbstractGame implements Game {
 	}
 	
 	/**
-	 * Propagates a propagatable instance.
+	 * Propagates a propagatable instance. Note that if targets is null, this means that the payload should be
+	 * propagated to the entire group.
 	 * @param toBePropagated
 	 */
 	synchronized protected void propagate(Propagatable toBePropagated) {

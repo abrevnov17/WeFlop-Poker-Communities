@@ -134,9 +134,12 @@ public class MessageSendingHandlers {
 			payload.addProperty("pots", WebSocketHandler.GSON.toJson(action.getPots()));
 		}
 		
-		
 		if (action.getLimitedPlayers() != null) {
 			payload.addProperty("limited_players", WebSocketHandler.GSON.toJson(action.getLimitedPlayers()));
+		}
+		
+		if (action.getEnabled() != null) {
+			payload.addProperty("enabled", WebSocketHandler.GSON.toJson(action.getEnabled()));
 		}
 		return payload;
 	}

@@ -33,12 +33,10 @@ public class Player {
 	private int slot; // position of player in table (clockwise increasing, -1 if spectator)
 	
 	private boolean displayingInactivity; // true if last action was turn expiration
+	
+	private PlayerSettings settings; // customizable player settings (e.x. auto-mucking)
 
 	private WebSocketSession session;
-
-	Player(String id, WebSocketSession session) {
-		this(id, session, new Hand());
-	}
 
 	Player(String id, WebSocketSession session, Hand hand) {
 		this.id = id;
@@ -51,17 +49,15 @@ public class Player {
 		this.setState(PlayerState.WATCHING);
 		this.setNextHandState(PlayerState.WATCHING);
 		this.setPrevState(PlayerState.WATCHING);
-		this.setDisplayingInactivity(false);
-		
+		this.setDisplayingInactivity(false);		
 		this.setSlot(-1);
+		this.setSettings(new PlayerSettings()); // loading default player settings
 	}
 	
 	Player(String id, WebSocketSession session, Hand hand, float balance, 
 			float currentBet, float currentRoundBet, PlayerState state, 
 			PlayerState nextHandState, PlayerState prevState, int slot) {
-		this.id = id;
-		this.setSession(session);
-		this.setHand(hand);
+		this(id, session, hand);
 		this.setBalance(balance);
 		this.setCurrentBet(currentBet);
 		this.setCurrentRoundBet(currentRoundBet);
@@ -69,6 +65,10 @@ public class Player {
 		this.setNextHandState(nextHandState);
 		this.setPrevState(prevState);
 		this.setSlot(slot);
+	}
+	
+	Player(String id, WebSocketSession session) {
+		this(id, session, new Hand());
 	}
 
 	/**
@@ -390,5 +390,13 @@ public class Player {
 
 	public void setHandBalance(float handBalance) {
 		this.handBalance = handBalance;
+	}
+
+	public PlayerSettings getSettings() {
+		return settings;
+	}
+
+	public void setSettings(PlayerSettings settings) {
+		this.settings = settings;
 	}
 }

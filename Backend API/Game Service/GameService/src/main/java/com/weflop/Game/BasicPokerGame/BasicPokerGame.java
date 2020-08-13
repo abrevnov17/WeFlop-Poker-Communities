@@ -390,6 +390,11 @@ public class BasicPokerGame extends AbstractGame {
 				participant.setState(PlayerState.AUTO_CHECK_OR_FOLD);
 				participant.setDisplayingInactivity(false);
 			} break;
+			case AUTO_MUCK: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				participant.getSettings().setAutoMuckEnabled(action.getEnabled());
+			}
+			break;
 			default:
 				throw new Exception("Unsopported action for this game mode");
 			}

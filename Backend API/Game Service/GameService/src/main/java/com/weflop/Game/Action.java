@@ -31,6 +31,7 @@ public class Action {
 	private List<String> playerIds; // some actions have associated lists of player ids as payload
 	private List<Float> pots; // some actions have associated lists of float values
 	private List<LimitedPlayerPOJO> limitedPlayers; // limited information about players
+	private Boolean enabled; // some actions have an assocaited boolean value
 	
 	// automatically set values
 	private Instant timestamp;
@@ -46,6 +47,7 @@ public class Action {
 		private Instant timestamp;
 		private List<Float> pots;
 		private List<LimitedPlayerPOJO> limitedPlayers;
+		private Boolean enabled;
 
 		/* Constructors */
 
@@ -94,6 +96,11 @@ public class Action {
 			return this;
 		}
 		
+		public ActionBuilder withEnabled(Boolean enabled) {
+			this.enabled = enabled;
+			return this;
+		}
+		
 		public Action build(){
             Action action = new Action();
             action.type = this.type;
@@ -106,6 +113,7 @@ public class Action {
             action.playerIds = this.playerIds;
             action.pots = this.pots;
             action.limitedPlayers = this.limitedPlayers;
+            action.enabled = this.enabled;
             return action;
         }
 	}
@@ -223,5 +231,13 @@ public class Action {
 
 	public void setLimitedPlayers(List<LimitedPlayerPOJO> limitedPlayers) {
 		this.limitedPlayers = limitedPlayers;
+	}
+
+	public Boolean getEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		this.enabled = enabled;
 	}
 }
