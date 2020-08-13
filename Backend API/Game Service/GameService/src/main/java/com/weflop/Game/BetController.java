@@ -3,6 +3,7 @@ package com.weflop.Game;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,21 +19,22 @@ import com.weflop.Evaluation.HandRank;
  * @author abrevnov
  */
 public class BetController {
-	
+
 	private float roundBet;
 
 	private float lastRaise;
+	private Player lastRaisePlayer;
 
 	private Ledger ledger;
 
 	private float totalPot;
-	
+
 	private float smallBlind;
 	private float bigBlind;
-	
+
 	private float minBuyIn;
 	private float maxBuyIn;
-	
+
 	public BetController(float smallBlind, float bigBlind, float minBuyIn, float maxBuyIn) {
 		this.roundBet = 0.0f;
 		this.lastRaise = 0.0f;
@@ -42,8 +44,9 @@ public class BetController {
 		this.bigBlind = bigBlind;
 		this.minBuyIn = minBuyIn;
 		this.maxBuyIn = maxBuyIn;
+		this.lastRaisePlayer = null;
 	}
-	
+
 	public BetController(float smallBlind, float bigBlind, float minBuyIn, float maxBuyIn, Ledger ledger) {
 		this(smallBlind, bigBlind, minBuyIn, maxBuyIn);
 		this.ledger = ledger;
@@ -74,6 +77,7 @@ public class BetController {
 
 		player.bet(bet); // verification performed in 'bet' method
 		lastRaise = amountRaised;
+		lastRaisePlayer = player;
 	}
 
 	/**
@@ -84,15 +88,15 @@ public class BetController {
 	synchronized public float goAllIn(Player player) {
 		return player.goAllIn();
 	}
-	
+
 	synchronized public void paySmallBlind(Player player) {
 		bet(player, smallBlind);
 	}
-	
+
 	synchronized public void payBigBlind(Player player) {
 		bet(player, bigBlind);
 	}
-	
+
 	/**
 	 * Posts big blinds for each player in given list of players.
 	 * @param playersPostingBigBlind
@@ -104,40 +108,40 @@ public class BetController {
 			}
 		}
 	}
-	
+
 	/**
 	 * Pays blinds. Returns a list of actions that should be propagated as messages to users.
 	 * @param smallBlindPlayer (Null if there is no small blind)
 	 * @param bigBlindPlayer
 	 * @return List of actions to be propagated to participants of group.
 	 */
-	synchronized public List<Action> payBlinds(Player smallBlindPlayer, Player bigBlindPlayer) {
-		List<Action> actionsToPropogate = new ArrayList<Action>();
-		
+	synchronized public List<Propagatable> payBlinds(Player smallBlindPlayer, Player bigBlindPlayer) {
+		List<Propagatable> propagatables = new ArrayList<Propagatable>();
+
 		if (smallBlindPlayer != null) {
 			// otherwise, we are in a normal situation where small blind pays blind
 			paySmallBlind(smallBlindPlayer);
 			Action smallBlindAction = new Action.ActionBuilder(ActionType.SMALL_BLIND).withPlayerId(smallBlindPlayer.getId()).build();
-			actionsToPropogate.add(smallBlindAction);
+			propagatables.add(new Propagatable(smallBlindAction));
 		}
-		
+
 		// big blind pays
 		payBigBlind(bigBlindPlayer);
 		bigBlindPlayer.updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
 		Action bigBlindAction = new Action.ActionBuilder(ActionType.BIG_BLIND).withPlayerId(bigBlindPlayer.getId()).build();
-		actionsToPropogate.add(bigBlindAction);
-		
-		return actionsToPropogate;
+		propagatables.add(new Propagatable(bigBlindAction));
+
+		return propagatables;
 	}
-	
+
 	synchronized public void buyIn(Player player, float amount) {
 		Assert.isTrue(amount >= minBuyIn && amount <= maxBuyIn, 
 				"Buy in must be between 10 and 200 BBs");
-		
+
 		player.setBalance(amount);
 		addPlayerToLedger(player.getId()); // adding player to ledger (if not already present)
 	}
-	
+
 	/* Ledger Update Methods */
 
 	/**
@@ -151,17 +155,17 @@ public class BetController {
 	/* Pot / Distribution Methods */
 
 	/**
-	 * Given a list of active players (have not folded and are playing in the current round),
-	 * returns a list of Pot's. This should only be called at the end of rounds of betting.
+	 * Given a group, returns a list of pots. This should only be called at the end of rounds of betting.
 	 */
-	synchronized public List<Pot> endOfBettingRoundGeneratePots(List<Player> activePlayers) {
+	synchronized public List<Pot> endOfBettingRoundGeneratePots(Group group) {
 		List<Pot> pots = new ArrayList<Pot>(); // list of all pots
 
-		List<Player> players = new ArrayList<Player>(activePlayers);
 		// we subtract everyone's bets for this hand from the ledger
-		for (Player player : players) {
+		for (Player player : group.getActivePlayersInHand()) {
 			this.ledger.updateEntry(player.getId(), -player.getCurrentBet());
 		}
+
+		List<Player> players = new ArrayList<Player>(group.getActivePlayersInBettingRound());
 
 		// sorts players by their current bet in increasing order
 		Collections.sort(players, Comparator.comparingDouble(Player :: getCurrentBet));
@@ -193,57 +197,78 @@ public class BetController {
 	}
 
 	/**
-	 * Distributes pots to winners. Returns a list of actions to be propagated to group.
+	 * Distributes pots to winners. Returns a list of propagatables to be propagated to group.
 	 */
-	synchronized public List<Action> distributePots(List<Pot> pots) {
-		List<Action> actions = new ArrayList<Action>();
+	public List<Propagatable> distributePots(Group group, List<Pot> pots) {
+		List<Propagatable> propagatables = new ArrayList<Propagatable>();
+		
+		Set<Player> playersForcedToShowCards = new HashSet<Player>();
+		Set<Player> playersWithOptionToMuck = new HashSet<Player>();
 
 		for (Pot pot : pots) {
-			float potSize = pot.getSize();
-			List<Player> playersWithMaxRank = getPlayersWithMaxRank(pot.getPlayers());
-
+			List<Player> playersWithMaxRank = new ArrayList<Player>();
+	
+			HandRank maxRank = null;
+			int startingSlot = lastRaisePlayer != null ? lastRaisePlayer.getSlot() : group.getSmallBlindIndex();
+	
+			for (Player player : group.getPlayersClockwiseFromSlot(startingSlot)) {
+				if (pot.getPlayers().contains(player)) {
+					HandRank rank = player.getHand().getRank();
+					if (maxRank == null || rank.compareTo(maxRank) == 0) {
+						// either first hand rank we have found or tied with best hand rank we have found
+						maxRank = rank;
+						playersWithMaxRank.add(player);
+	
+						// forced to show cards
+						playersForcedToShowCards.add(player);
+					} else if (rank.compareTo(maxRank) > 0) {
+						// hand rank is best we have found so far
+						playersWithMaxRank.clear();
+						maxRank = rank;
+						playersWithMaxRank.add(player);
+	
+						// forced to show cards
+						playersForcedToShowCards.add(player);
+					} else {
+						// given option to muck cards
+						playersWithOptionToMuck.add(player);
+					}
+				}
+			}
+	
 			// distribute funds to winner(s)
-			float perPlayerWinnings = potSize / playersWithMaxRank.size(); // split pot between winners
+			float perPlayerWinnings = pot.getSize() / playersWithMaxRank.size(); // split pot between winners
 			for (Player player : playersWithMaxRank) {
 				player.increaseBalance(perPlayerWinnings);
 				ledger.updateEntry(player.getId(), perPlayerWinnings);
 			}
-
-			// propogating update
-			actions.add(new Action.ActionBuilder(ActionType.POT_WON)
+	
+			// propagating updates
+			propagatables.add(new Propagatable(
+					new Action.ActionBuilder(ActionType.POT_WON)
 					.withPlayerIds(playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList()))
-					.withValue(potSize)
-					.build());
+					.withValue(pot.getSize())
+					.build()));
 		}
+		
+		playersWithOptionToMuck.removeAll(playersForcedToShowCards); // these sets should be mutually exclusive
 
-		return actions;
-	}
-
-	/**
-	 * From a set of active players, gets all the players with the maximum
-	 * hand-rank in the group (it is a list due to possiblity of ties).
-	 * @param players
-	 * @return List of players with max hand-rank
-	 */
-	private List<Player> getPlayersWithMaxRank(Set<Player> players) {
-		List<Player> playersWithMaxRank = new ArrayList<Player>();
-
-		HandRank maxRank = null;
-		for (Player player : players) {
-			HandRank rank = player.getHand().getRank();
-			if (maxRank == null || rank.compareTo(maxRank) == 0) {
-				// either first hand rank we have found or tied with best hand rank we have found
-				maxRank = rank;
-				playersWithMaxRank.add(player);
-			} else if (rank.compareTo(maxRank) > 0) {
-				// hand rank is best we have found so far
-				playersWithMaxRank.clear();
-				maxRank = rank;
-				playersWithMaxRank.add(player);
-			}
+		for (Player player : playersForcedToShowCards) {
+			propagatables.add(new Propagatable(
+					new Action.ActionBuilder(ActionType.SHOW_CARDS)
+					.withPlayerId(player.getId())
+					.withCards(player.getHand().getCards())
+					.build()));
 		}
-
-		return playersWithMaxRank;
+		
+		for (Player player : playersWithOptionToMuck) {
+			group.getPlayersWhoCanMuck().add(player);
+			propagatables.add(new Propagatable(
+					new Action.ActionBuilder(ActionType.OPTION_TO_SHOW_CARDS)
+					.build(), player));
+		}
+		
+		return propagatables;
 	}
 
 	/* Reset Methods */
@@ -261,6 +286,7 @@ public class BetController {
 	 */
 	public void resetForNewBettingRound() {
 		this.roundBet = 0.00f;
+		this.lastRaise = 0.00f;
 	}
 
 	/* Getters and Setters */

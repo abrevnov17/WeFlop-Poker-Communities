@@ -2,11 +2,13 @@ package com.weflop.Game;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.google.common.collect.Sets;
 import com.weflop.GameService.Database.DomainObjects.GroupPOJO;
 import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
@@ -25,6 +27,8 @@ public class Group {
 	private int smallBlindIndex; // -1 if no small blind
 	private int bigBlindIndex;
 	private int dealerIndex;
+	
+	private Set<Player> playersWhoCanMuck; // list of players with option to muck
 
 	Group(int numPlayers) {
 		this.setPlayerSlots(new Player[numPlayers]);
@@ -33,6 +37,8 @@ public class Group {
 		this.smallBlindIndex = -1;
 		this.bigBlindIndex = -1;
 		this.dealerIndex = -1;
+		
+		this.setPlayersWhoCanMuck(Sets.newConcurrentHashSet());
 	}
 
 	/**
@@ -242,20 +248,19 @@ public class Group {
 	
 	
 	/**
-	 * Returns our list of (non-null) players starting at the player after the inputted slot.
+	 * Returns our list of (non-null) players starting at the player at the inputted slot.
 	 * @param slot
 	 * @return List of players.
 	 */
-	synchronized public List<Player> getPlayersClockwiseAfterSlot(int slot) {
+	synchronized public List<Player> getPlayersClockwiseFromSlot(int slot) {
 		List<Player> playersBeginningWithSlot = new ArrayList<Player>();
 		
-		for (int index = (slot+1) % players.length; index != slot; index = (index + 1) % players.length) {
+		for (int index = slot % players.length; 
+				index != ((slot - 1 % players.length) + players.length) % players.length; 
+				index = (index + 1) % players.length) {
 			if (players[index] != null)
 				playersBeginningWithSlot.add(players[index]);
 		}
-		
-		if (players[slot] != null)
-			playersBeginningWithSlot.add(players[slot]);
 		
 		return playersBeginningWithSlot;
 	}
@@ -330,6 +335,14 @@ public class Group {
 	 */
 	synchronized public List<Player> getActivePlayersInHand() {
 		return getPlayers().stream().filter(player -> player.isActive()).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Prepares state for next hand. Called at end of hand.
+	 */
+	public void resetForNewHand() {
+		this.cycleDealer();
+		this.playersWhoCanMuck.clear();
 	}
 	
 	/**
@@ -422,5 +435,13 @@ public class Group {
 
 	public void setDealerIndex(int dealerIndex) {
 		this.dealerIndex = dealerIndex;
+	}
+
+	public Set<Player> getPlayersWhoCanMuck() {
+		return playersWhoCanMuck;
+	}
+
+	public void setPlayersWhoCanMuck(Set<Player> playersWhoCanMuck) {
+		this.playersWhoCanMuck = playersWhoCanMuck;
 	}
 }

@@ -15,6 +15,7 @@ import org.springframework.web.socket.TextMessage;
 
 import com.weflop.Cards.Board;
 import com.weflop.Cards.Card;
+import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
@@ -67,9 +68,13 @@ public abstract class AbstractGame implements Game {
 	private GameCustomMetadata metadata;
 	
 	private boolean active;
+	
+	private List<Player> beginningOfRoundActivePlayers; // keeps track of the active players at beginning of betting round
 
 	@Autowired
 	private GameRepository gameRepository;
+	
+	private int muckDecisionTime; // time in seconds that user has to make a decision about whether or not to muck cards
 	
 	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
 		this.metadata = metadata;
@@ -87,6 +92,8 @@ public abstract class AbstractGame implements Game {
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.epoch = 0;
 		this.active = true;
+		this.beginningOfRoundActivePlayers = new ArrayList<Player>();
+		this.setMuckDecisionTime(5);
 	}
 	
 	/**
@@ -258,12 +265,12 @@ public abstract class AbstractGame implements Game {
 				group.getDealerIndex(), group.getSmallBlindIndex(), group.getBigBlindIndex());
 
 		System.out.println("Paying blinds...");
-		List<Action> blindPaymentActions = betController.payBlinds(group.getSmallBlindPlayer(), group.getBigBlindPlayer());
+		List<Propagatable> blindPaymentActions = betController.payBlinds(group.getSmallBlindPlayer(), group.getBigBlindPlayer());
 
 		System.out.println("Propogating blind payments...");
 
-		for (Action action : blindPaymentActions) {
-			this.propagateActionToGroup(action);
+		for (Propagatable propagatable : blindPaymentActions) {
+			this.propagate(propagatable);
 		}
 
 		// resetting the current round bet amount (this is the most any player has bet
@@ -287,6 +294,9 @@ public abstract class AbstractGame implements Game {
 
 		// cycling to next turn
 		cycleTurn(group.getDealerIndex()); // during normal round without player cards dealt, start with player to right of dealer
+		
+		// updating the active players to start the round
+		this.beginningOfRoundActivePlayers = group.getActivePlayersInBettingRound();
 	}
 
 	/**
@@ -309,28 +319,69 @@ public abstract class AbstractGame implements Game {
 	 * Helper function called at the end of the last betting round. Updates dealer
 	 * index and checks to see that all players have sufficient funds to player the
 	 * current round.
-	 * 
 	 */
 	synchronized protected void endOfBettingRounds() {
 		System.out.println("End of betting rounds...");
-		// need to deal the remaining center cards (if any)
-		this.dealRemainingCenterCards();
 
 		// calculate side pots
 		List<Player> activePlayers = group.getActivePlayersInBettingRound();
-		List<Pot> pots = betController.endOfBettingRoundGeneratePots(activePlayers);
+		
+		// we only need to deal remaining cards and update hand ranks if > 1
+		// player has not folded
+		if (activePlayers.size() > 0) {
+			// need to deal the remaining center cards (if any)
+			this.dealRemainingCenterCards();
+			
+			// update hand ranks
+			this.updatePlayerHandRanks(activePlayers);
+		}
+		
+		List<Pot> pots = betController.endOfBettingRoundGeneratePots(this.group);
 
 		// calculate winners and distribute side pots
-		List<Action> actionsToPropagate = betController.distributePots(pots);
+		List<Propagatable> propagatables = betController.distributePots(group, pots);
 
 		// propagate information about pot winners
-		for (Action action : actionsToPropagate) {
-			this.propagateActionToGroup(action);
+		for (Propagatable propagatable : propagatables) {
+			this.propagate(propagatable);
 		}
+		
+		// we give players who folded during last round of betting the change to muck
+		for (Player player : this.beginningOfRoundActivePlayers) {
+			if (player.getState() == PlayerState.FOLDED) {
+				group.getPlayersWhoCanMuck().add(player);
+				this.propagateActionToPlayer(new Action.ActionBuilder(ActionType.OPTION_TO_SHOW_CARDS).build(), player);
+			}
+		}
+		
+		this.initiateMucking();
+	}
+	
+	protected void initiateMucking() {
+		// we start a 5 second timer at which point we finish ending the last round and continue to the next round
+		Runnable finishEndingHandAfterMucking = new Runnable() {
+			@Override
+			public void run() {
+				continueEndingHandAfterMuck();
+			}
+		};
 
+		threadExecutor.schedule(finishEndingHandAfterMucking, this.muckDecisionTime, TimeUnit.SECONDS);
+		this.muckDecisionTime = 0;
+	}
+	
+	/**
+	 * After all players have decided to muck their cards or not, we wait for players to decide whether or not to muck.
+	 */
+	protected void continueEndingHandAfterMuck() {
+		if (this.muckDecisionTime != 0) {
+			initiateMucking();
+			return;
+		}
+		
 		this.printGameState();
 
-		this.betController.resetForNewHand();; // resetting betting information
+		this.betController.resetForNewHand(); // resetting betting information
 
 		// removing any players with insufficient funds
 		for (Player player : this.group.getPlayers()) {
@@ -350,13 +401,15 @@ public abstract class AbstractGame implements Game {
 			return;
 		}
 
-		// update dealer index
-		group.setDealerIndex(this.getNextActivePlayerIndex(group.getDealerIndex()));
+		// update dealer index and prepare for new hand
+		group.resetForNewHand();
 
 		System.out.println("New dealer index: " + group.getDealerIndex());
 
 		// updating round
 		this.setRound(0);
+		
+		this.muckDecisionTime = 5; // resetting mucking decision time
 
 		// resetting and starting next set of betting rounds
 		this.beginBettingRounds();
@@ -422,7 +475,7 @@ public abstract class AbstractGame implements Game {
 	 * that new betting round has begun.
 	 */
 	synchronized protected void calculatePotsAndPropagateEndOfBettingRound() {
-		List<Float> pots = betController.endOfBettingRoundGeneratePots(group.getActivePlayersInBettingRound())
+		List<Float> pots = betController.endOfBettingRoundGeneratePots(group)
 				.stream().map(pot -> pot.getSize()).collect(Collectors.toList());
 
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BETTING_ROUND_OVER).withPots(pots).build());
@@ -532,6 +585,15 @@ public abstract class AbstractGame implements Game {
 		removeFromReplica();
 		
 		return true;
+	}
+	
+	/**
+	 * Propagates a propagatable instance.
+	 * @param toBePropagated
+	 */
+	synchronized protected void propagate(Propagatable toBePropagated) {
+		propagateAction(toBePropagated.getAction(), 
+				toBePropagated.getTargets() != null ? toBePropagated.getTargets() : group.getAllParticipants());
 	}
 
 	/**
@@ -647,6 +709,14 @@ public abstract class AbstractGame implements Game {
 		}
 
 		return nextPlayer;
+	}
+	
+	protected void updatePlayerHandRanks(List<Player> players) {
+		for (Player player : players) {
+			// calculating hand ranks
+			HandRank rank = this.getEvaluator().evaluate(getBoard(), player.getHand());
+			player.getHand().setRank(rank);
+		}
 	}
 
 
@@ -810,5 +880,17 @@ public abstract class AbstractGame implements Game {
 
 	protected void setEpoch(int epoch) {
 		this.epoch = epoch;
+	}
+
+	synchronized protected int getMuckDecisionTime() {
+		return muckDecisionTime;
+	}
+
+	synchronized public void setMuckDecisionTime(int muckDecisionTime) {
+		this.muckDecisionTime = muckDecisionTime;
+	}
+	
+	synchronized public void incrementMuckDecisionTime() {
+		this.muckDecisionTime += 5;
 	}
 }

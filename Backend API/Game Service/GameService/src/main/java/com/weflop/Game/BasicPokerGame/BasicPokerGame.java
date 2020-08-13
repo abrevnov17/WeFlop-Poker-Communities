@@ -8,7 +8,6 @@ import org.springframework.util.Assert;
 
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
-import com.weflop.Evaluation.HandRank;
 import com.weflop.Evaluation.HandRankEvaluator;
 import com.weflop.Game.AbstractGame;
 import com.weflop.Game.Action;
@@ -345,6 +344,33 @@ public class BasicPokerGame extends AbstractGame {
 				participant.setDisplayingInactivity(false);
 			}
 			break;
+			case SHOW_CARDS: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				boolean permission = getGroup().getPlayersWhoCanMuck().remove(participant);
+				
+				if (!permission) {
+					break;
+				}
+				
+				this.incrementMuckDecisionTime();
+				
+				action.setCards(participant.getHand().getCards());
+				this.propagateActionToGroup(action);
+			} break;
+			case MUCK_CARDS: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				boolean permission = getGroup().getPlayersWhoCanMuck().remove(participant);
+				
+				if (!permission) {
+					break;
+				}
+				
+				this.incrementMuckDecisionTime();
+				
+				this.propagateActionToGroup(action);
+			} break;
 			default:
 				throw new Exception("Unsopported action for this game mode");
 			}
@@ -392,10 +418,6 @@ public class BasicPokerGame extends AbstractGame {
 			for (int i = 0; i < numDealt; i++) {
 				player.addCard(deck.dealCard());
 			}
-			
-			// calculating hand ranks
-			HandRank rank = this.getEvaluator().evaluate(getBoard(), player.getHand());
-			player.getHand().setRank(rank);
 
 			if (numDealt > 0) {
 				// sending message to player with new cards

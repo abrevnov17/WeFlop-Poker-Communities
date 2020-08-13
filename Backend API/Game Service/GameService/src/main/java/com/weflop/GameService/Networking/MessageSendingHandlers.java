@@ -30,15 +30,7 @@ public class MessageSendingHandlers {
 		message.addProperty("game_id", gameId);
 		message.addProperty("type", MessageType.ACTION.toValue());
 
-		JsonObject payload = new JsonObject();
-
-		payload.addProperty("type", action.getType().toValue());
-		payload.addProperty("participant_id", action.getPlayerId());
-		payload.addProperty("epoch", epoch);
-
-		if (action.getValue() != null) {
-			payload.addProperty("value", action.getValue());
-		}
+		JsonObject payload = generatePayloadFromAction(action, epoch);
 
 		message.add("payload", payload);
 
@@ -63,37 +55,12 @@ public class MessageSendingHandlers {
 	 */
 	public static void propagateOutgoingAction(String gameId, Action action, int epoch, List<Player> targets)
 			throws InterruptedException, IOException {
-		ActionPOJO actionPOJO = action.toPojo();
-
 		// creating message
 		JsonObject message = new JsonObject();
 		message.addProperty("game_id", gameId);
 		message.addProperty("type", MessageType.ACTION.toValue());
 
-		JsonObject payload = new JsonObject();
-
-		payload.addProperty("type", actionPOJO.getType());
-		payload.addProperty("epoch", epoch);
-
-		if (action.getCards() != null) {
-			payload.addProperty("cards", WebSocketHandler.GSON.toJson(actionPOJO.getCards()));
-		}
-		
-		if (action.getPlayerIds() != null) {
-			payload.addProperty("players", WebSocketHandler.GSON.toJson(action.getPlayerIds()));
-		}
-		
-		if (action.getPlayerId() != null) {
-			payload.addProperty("partipant_id", action.getPlayerId());
-		}
-		
-		if (action.getValue() != null) {
-			payload.addProperty("value", action.getValue());
-		}
-		
-		if (action.getPots() != null) {
-			payload.addProperty("pots", WebSocketHandler.GSON.toJson(action.getPots()));
-		}
+		JsonObject payload = generatePayloadFromAction(action, epoch);
 		
 		message.add("payload", payload);
 
@@ -137,5 +104,36 @@ public class MessageSendingHandlers {
 		for (Player participant : group.getAllParticipants()) {
 			participant.getSession().sendMessage(new TextMessage(messageString));
 		}
+	}
+	
+	private static JsonObject generatePayloadFromAction(Action action, int epoch) {
+		ActionPOJO actionPOJO = action.toPojo();
+		
+		JsonObject payload = new JsonObject();
+
+		payload.addProperty("type", actionPOJO.getType());
+		payload.addProperty("epoch", epoch);
+
+		if (action.getCards() != null) {
+			payload.addProperty("cards", WebSocketHandler.GSON.toJson(actionPOJO.getCards()));
+		}
+		
+		if (action.getPlayerIds() != null) {
+			payload.addProperty("players", WebSocketHandler.GSON.toJson(action.getPlayerIds()));
+		}
+		
+		if (action.getPlayerId() != null) {
+			payload.addProperty("partipant_id", action.getPlayerId());
+		}
+		
+		if (action.getValue() != null) {
+			payload.addProperty("value", action.getValue());
+		}
+		
+		if (action.getPots() != null) {
+			payload.addProperty("pots", WebSocketHandler.GSON.toJson(action.getPots()));
+		}
+		
+		return payload;
 	}
 }

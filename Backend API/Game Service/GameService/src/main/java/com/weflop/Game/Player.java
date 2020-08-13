@@ -215,23 +215,20 @@ public class Player {
 	/* Overriding default object methods */
 
 	@Override
-	public boolean equals(Object o) {
-
-		// If the object is compared with itself then return true
-		if (o == this) {
+	public boolean equals(Object obj) {
+		if (this == obj)
 			return true;
-		}
-
-		/* Check if o is an instance of Player */
-		if (!(o instanceof Player)) {
+		if (obj == null)
 			return false;
-		}
-
-		// cast o to Player so that we can compare data members
-		Player p = (Player) o;
-
-		// Compare the data members and return accordingly
-		return id.equals(p.id);
+		if (getClass() != obj.getClass())
+			return false;
+		Player other = (Player) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		return true;
 	}
 	
 	synchronized public void addCard(Card card) {
@@ -367,5 +364,13 @@ public class Player {
 
 	public void setDisplayingInactivity(boolean displayingInactivity) {
 		this.displayingInactivity = displayingInactivity;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
 	}
 }
