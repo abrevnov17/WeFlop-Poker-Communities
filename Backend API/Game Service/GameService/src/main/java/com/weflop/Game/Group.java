@@ -340,8 +340,8 @@ public class Group {
 	/**
 	 * Prepares state for next hand. Called at end of hand.
 	 */
-	public void resetForNewHand() {
-		this.cycleDealer();
+	public void resetForNewHand() {		
+		this.cycleDealer(); // cycling dealer, small blind, big blind
 		this.playersWhoCanMuck.clear();
 		
 		// setting hand balances to be player total balance
@@ -353,7 +353,7 @@ public class Group {
 	/**
 	 * Called at end of hand. Updates dealerIndex, smallBlindIndex, and bigBlindIndex.
 	 */
-	synchronized public void cycleDealer() {
+	synchronized public void cycleDealer() {		
 		// resetting bigBlind and smallBlind to -1 (not set)
 		this.smallBlindIndex = -1;
 		this.bigBlindIndex = -1;
@@ -395,7 +395,13 @@ public class Group {
 		for (int i=0; i < players.length; i++) {
 			this.bigBlindIndex = (this.smallBlindIndex + i) % players.length;
 			
-			if (players[bigBlindIndex] != null && players[bigBlindIndex].canBeBlind()) {
+			if (players[smallBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.BUSTED) {
+				if (players[smallBlindIndex].isDisplayingInactivity()) {
+					players[smallBlindIndex].convertToSpectator();
+				} else {
+					players[smallBlindIndex].setDisplayingInactivity(true);
+				}
+			} else if (players[bigBlindIndex] != null && players[bigBlindIndex].canBeBlind()) {
 				players[bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
 				break;
 			} else if (players[bigBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.WAITING_FOR_HAND) {

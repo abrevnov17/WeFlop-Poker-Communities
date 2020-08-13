@@ -260,6 +260,11 @@ public abstract class AbstractGame implements Game {
 		// that should be done before calling this function
 
 		System.out.println("beggining new betting round");
+		
+		// propagating that a new hand has begun and providing updated information about player states/balances
+		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.NEW_HAND)
+				.withLimitedPlayers(LimitedPlayerPOJO.fromPlayers(group.getPlayers()))
+				.build());
 
 		System.out.printf("Dealer index: %d, small blind index: %d, big blind index: %d\n", 
 				group.getDealerIndex(), group.getSmallBlindIndex(), group.getBigBlindIndex());
@@ -269,9 +274,7 @@ public abstract class AbstractGame implements Game {
 
 		System.out.println("Propogating blind payments...");
 
-		for (Propagatable propagatable : blindPaymentActions) {
-			this.propagate(propagatable);
-		}
+		this.propagate(blindPaymentActions);
 
 		// resetting the current round bet amount (this is the most any player has bet
 		// during the current round)
@@ -342,9 +345,7 @@ public abstract class AbstractGame implements Game {
 		List<Propagatable> propagatables = betController.distributePots(group, pots);
 
 		// propagate information about pot winners
-		for (Propagatable propagatable : propagatables) {
-			this.propagate(propagatable);
-		}
+		this.propagate(propagatables);
 		
 		// we give players who folded during last round of betting the change to muck
 		for (Player player : this.beginningOfRoundActivePlayers) {
@@ -383,10 +384,11 @@ public abstract class AbstractGame implements Game {
 
 		this.betController.resetForNewHand(); // resetting betting information
 
-		// removing any players with insufficient funds
+		// players with insufficient funds bust
 		for (Player player : this.group.getPlayers()) {
 			if (player.getBalance() < metadata.getBigBlind()) {
-				this.bootPlayer(player, BootReason.INSUFFICIENT_FUNDS);
+				player.updateCurrentAndFutureState(PlayerState.BUSTED, PlayerState.BUSTED);
+				this.propagateActionToGroup(new Action.ActionBuilder(ActionType.BUSTED).withPlayerId(player.getId()).build());
 			}
 		}
 
@@ -594,6 +596,16 @@ public abstract class AbstractGame implements Game {
 	synchronized protected void propagate(Propagatable toBePropagated) {
 		propagateAction(toBePropagated.getAction(), 
 				toBePropagated.getTargets() != null ? toBePropagated.getTargets() : group.getAllParticipants());
+	}
+	
+	/**
+	 * Propagates list of propagatables.
+	 * @param propagatables
+	 */
+	synchronized protected void propagate(List<Propagatable> propagatables) {
+		for (Propagatable propagatable : propagatables) {
+			this.propagate(propagatable);
+		}
 	}
 
 	/**

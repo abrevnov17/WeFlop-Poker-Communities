@@ -1,5 +1,9 @@
 package com.weflop.GameService.Networking;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.weflop.Game.Player;
 import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
 
 /**
@@ -35,6 +39,10 @@ public class LimitedPlayerPOJO {
 	 */
 	public static LimitedPlayerPOJO fromPlayerPOJO(PlayerPOJO player) {
 		return new LimitedPlayerPOJO(player.getId(), player.getHandBalance(), player.getCurrentBet(), player.getState());
+	}
+	
+	public static List<LimitedPlayerPOJO> fromPlayers(List<Player> players) {
+		return players.stream().map(p -> LimitedPlayerPOJO.fromPlayerPOJO(p.toPOJO())).collect(Collectors.toList());
 	}
 
 	public String getId() {

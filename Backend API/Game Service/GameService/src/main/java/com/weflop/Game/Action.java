@@ -9,6 +9,7 @@ import org.springframework.web.socket.WebSocketSession;
 import com.weflop.Cards.Card;
 import com.weflop.GameService.Database.DomainObjects.ActionPOJO;
 import com.weflop.GameService.Database.DomainObjects.CardPOJO;
+import com.weflop.GameService.Networking.LimitedPlayerPOJO;
 
 /**
  * Actions have an associated type and an optional parameter value (as some
@@ -29,6 +30,7 @@ public class Action {
 	private List<Card> cards; // some actions have associated cards as payload
 	private List<String> playerIds; // some actions have associated lists of player ids as payload
 	private List<Float> pots; // some actions have associated lists of float values
+	private List<LimitedPlayerPOJO> limitedPlayers; // limited information about players
 	
 	// automatically set values
 	private Instant timestamp;
@@ -43,6 +45,7 @@ public class Action {
 		private List<String> playerIds;
 		private Instant timestamp;
 		private List<Float> pots;
+		private List<LimitedPlayerPOJO> limitedPlayers;
 
 		/* Constructors */
 
@@ -86,6 +89,11 @@ public class Action {
 			return this;
 		}
 		
+		public ActionBuilder withLimitedPlayers(List<LimitedPlayerPOJO> limitedPlayers) {
+			this.limitedPlayers = limitedPlayers;
+			return this;
+		}
+		
 		public Action build(){
             Action action = new Action();
             action.type = this.type;
@@ -97,6 +105,7 @@ public class Action {
             action.cards = this.cards;
             action.playerIds = this.playerIds;
             action.pots = this.pots;
+            action.limitedPlayers = this.limitedPlayers;
             return action;
         }
 	}
@@ -130,7 +139,8 @@ public class Action {
 				|| this.type == ActionType.POT_WON 
 				|| this.type != ActionType.SMALL_BLIND 
 				|| this.type != ActionType.BIG_BLIND
-				|| this.type != ActionType.BETTING_ROUND_OVER);
+				|| this.type != ActionType.BETTING_ROUND_OVER
+				|| this.type != ActionType.OPTION_TO_SHOW_CARDS);
 	}
 
 	/* Getters and Setters */
@@ -205,5 +215,13 @@ public class Action {
 
 	public void setPots(List<Float> pots) {
 		this.pots = pots;
+	}
+
+	public List<LimitedPlayerPOJO> getLimitedPlayers() {
+		return limitedPlayers;
+	}
+
+	public void setLimitedPlayers(List<LimitedPlayerPOJO> limitedPlayers) {
+		this.limitedPlayers = limitedPlayers;
 	}
 }

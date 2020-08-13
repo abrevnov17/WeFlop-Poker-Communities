@@ -28,6 +28,7 @@ public enum ActionType {
 	CHANGE_SEAT("CHANGE_SEAT"),
 	SHOW_CARDS("SHOW_CARDS"),
 	MUCK_CARDS("SHOW_CARDS"),
+	BUSTED("BUSTED"),
 	// Outgoing actions:
 	PLAYER_DEAL("PLAYER_DEAL"), // cards dealt to individual player
 	CENTER_DEAL("CENTER_DEAL"), // cards dealt to center
@@ -35,10 +36,9 @@ public enum ActionType {
 	SMALL_BLIND("SMALL_BLIND"), // player has paid small blind
 	BIG_BLIND("BIG_BLIND"), // player has paid big blind
 	BETTING_ROUND_OVER("BETTING_ROUND_OVER"), // round of betting has concluded
-	OPTION_TO_SHOW_CARDS("OPTION_TO_SHOW_CARDS"); // present user option to show cards or muck
+	OPTION_TO_SHOW_CARDS("OPTION_TO_SHOW_CARDS"), // present user option to show cards or muck
+	NEW_HAND("NEW_HAND"); // new hand has begun
 	
-	
-
 	private final String value;
 
 	ActionType(String value) {

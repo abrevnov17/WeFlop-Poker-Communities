@@ -325,10 +325,13 @@ public class BasicPokerGame extends AbstractGame {
 				
 				getBetController().buyIn(participant, action.getValue());
 				
+				if (participant.getState() == PlayerState.BUSTED) {
+					participant.updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
+				}
+				
 				System.out.printf("Player %s topping off...\n", action.getPlayerId());
 
-				// propagate action to members of group
-				this.propagateActionToGroup(action);
+				// do not propagate...propagate when we actually update balance
 				participant.setDisplayingInactivity(false);
 			}
 			break;
@@ -357,6 +360,7 @@ public class BasicPokerGame extends AbstractGame {
 				
 				action.setCards(participant.getHand().getCards());
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			} break;
 			case MUCK_CARDS: {
 				Player participant = this.getParticipantById(action.getPlayerId());
@@ -370,6 +374,7 @@ public class BasicPokerGame extends AbstractGame {
 				this.incrementMuckDecisionTime();
 				
 				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
 			} break;
 			default:
 				throw new Exception("Unsopported action for this game mode");

@@ -124,10 +124,9 @@ public class Player {
 	synchronized void convertToSpectator() {
 		this.discardHand();
 		this.currentBet = 0.00f;
-		this.state = PlayerState.WATCHING;
+		this.setState(PlayerState.WATCHING);
 		this.currentRoundBet = 0.00f;
-		this.nextHandState = PlayerState.WATCHING;
-		this.prevState = PlayerState.WATCHING;
+		this.setNextHandState(PlayerState.WATCHING);
 		this.slot = -1;
 	}
 	
@@ -260,7 +259,8 @@ public class Player {
 				&& state != PlayerState.WAITING_FOR_HAND
 				&& state != PlayerState.SITTING_OUT_BB
 				&& state != PlayerState.WAITING_FOR_BIG_BLIND
-				&& state != PlayerState.POSTING_BIG_BLIND;
+				&& state != PlayerState.POSTING_BIG_BLIND
+				&& state != PlayerState.BUSTED;
 	}
 	
 	/**
