@@ -151,7 +151,7 @@ public class Player {
 	 * @return Corresponding instance of PlayerPOJO
 	 */
 	synchronized public PlayerPOJO toPOJO() {
-		return new PlayerPOJO(this.id, this.balance, this.currentBet, this.currentRoundBet,
+		return new PlayerPOJO(this.id, this.balance, this.handBalance, this.currentBet, this.currentRoundBet,
 				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(), this.prevState.toValue(), this.slot);
 	}
 	
