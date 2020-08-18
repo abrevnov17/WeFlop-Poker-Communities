@@ -11,8 +11,10 @@ const environment = process.env.NODE_ENV || 'development';
 const environmentConfig = config[environment];
 
 const apiConfig = config.api
+const securityConfig = config.security
+const databaseConfig = config.database
 
-const finalConfig = _.merge(defaultConfig, environmentConfig, apiConfig);
+const finalConfig = _.merge(defaultConfig, environmentConfig, apiConfig, databaseConfig);
 
 // defining a global config variable
 global.gConfig = finalConfig;
