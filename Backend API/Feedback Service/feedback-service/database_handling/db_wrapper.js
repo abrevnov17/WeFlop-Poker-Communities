@@ -27,10 +27,41 @@ function insertPoll(description) {
 	})
 }
 
+// assigns a list of options to the poll with given id
+// returns ids of options in a list
+function appendOptionsToPoll(poll_id, options) {
+	return new Promise(function (resolve, reject) {
+		option_ids = []
+		for (const option in options) {
+			pool.query('INSERT INTO PollOptions (poll_id, description) VALUES ($1, $2)', [poll_id, options[option]], (err, result) => {
+			    if (err) {
+			      reject(error)
+			    }
+
+			    option_ids.push(result.insertId)
+  			})
+		}
+
+		resolve(option_ids)
+	});
+}
+
+// creates a new feedback element and returns id of created row in Feedback table
+function insertFeedback(user_id, body) {
+	return new Promise(function (resolve, reject) {
+		pool.query('INSERT INTO Feedback (body, user_id) VALUES ($1, $2)', [body, user_id], (err, result) => {
+		    if (err) {
+		      reject(error)
+		    }
+		    resolve(result.insertId)
+  		})
+	})
+}
+
 // creates a new vote and returns id of created vote
 function createVote(user_id, option_id) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Votes (option_id, cast_by) VALUES ($1)', [option_id, user_id], (err, result) => {
+		pool.query('INSERT INTO Votes (option_id, cast_by) VALUES ($1, $2)', [option_id, user_id], (err, result) => {
 		    if (err) {
 		      reject(error)
 		    }
@@ -59,7 +90,7 @@ function getVoteTotal(option_id) {
 // gets poll options for a given poll
 function getPollOptions(poll_id) {
 	return new Promise(function (resolve, reject) {
-		pool.query('SELECT vote_total FROM PollOptions WHERE poll_id = $1', [poll_id], (err, results) => {
+		pool.query('SELECT * FROM PollOptions WHERE poll_id = $1', [poll_id], (err, results) => {
 		    if (err) {
 		      reject(err)
 		    }
@@ -93,18 +124,6 @@ function deletePoll(poll_id) {
 	})
 }
 
-function getPollOptions(poll_id) {
-	return new Promise(function (resolve, reject) {
-		pool.query('SELECT vote_total FROM PollOptions WHERE poll_id = $1', [poll_id], (err, results) => {
-		    if (err) {
-		      reject(err)
-		    }
-
-		    resolve(results.rows)
-	  	})
-	})
-}
-
 // fetches all announcements
 function getAnnouncements() {
 	return new Promise(function (resolve, reject) {
@@ -131,6 +150,19 @@ function getPolls() {
 	})
 }
 
+// gets all votes a user has cast (returned as option id's)
+function getUserVotes(user_id) {
+	return new Promise(function (resolve, reject) {
+		pool.query('SELECT option_id FROM Votes WHERE cast_by = $1', [user_id], (err, results) => {
+		    if (err) {
+		      reject(err)
+		    }
+
+		    resolve(results.rows)
+	  	})
+	})
+}
+
 module.exports = {
 	insertAnnouncement: insertAnnouncement,
 	insertPoll: insertPoll,
@@ -139,7 +171,8 @@ module.exports = {
 	getPollOptions: getPollOptions,
 	deleteAnnouncement: deleteAnnouncement,
 	deletePoll: deletePoll,
-	getPollOptions: getPollOptions,
 	getAnnouncements: getAnnouncements,
-	getPolls: getPolls
+	getPolls: getPolls,
+	insertFeedback: insertFeedback,
+	getUserVotes: getUserVotes
 }

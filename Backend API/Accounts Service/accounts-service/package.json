@@ -1,5 +1,5 @@
 {
-  "name": "accounts_server",
+  "name": "accounts-service",
   "version": "1.0.0",
   "description": "Service handling all requests for managing user accounts (including authentication).",
   "main": "app.js",

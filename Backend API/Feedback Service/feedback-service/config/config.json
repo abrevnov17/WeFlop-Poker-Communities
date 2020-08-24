@@ -6,8 +6,17 @@
         "db_port": 5002
     },
     "api": {
-        "base_url": "/api",
-        "create_account_route": "/create-account"
+        "admin_base_url": "/admin",
+        "public_base_url": "/api",
+        "updates_route": "/updates",
+        "vote_route": "/votes",
+        "send_feedback_route": "/send-feedback",
+        "create_announcement_route": "/create-announcement",
+        "create_poll_route": "/create-poll",
+        "delete_announcement_route": "/delete-announcement",
+        "get_votes_route": "/user-votes",
+        "delete_poll_route": "/delete-poll",
+        "admin_password": "SCGk38FydUgPDrWD"
     },
     "default": {
         "app_name": "Feedback Service",

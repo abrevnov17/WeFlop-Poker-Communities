@@ -26,7 +26,7 @@ public class RESTController {
 	@Autowired
 	private GameRepository repository;
 
-	@PostMapping("/create-game")
+	@PostMapping("/api/create-game")
 	@ResponseBody
 	public String createGame(
 			@RequestParam(name = "user_id", required = true) String userId,
@@ -43,7 +43,7 @@ public class RESTController {
 		return GameFactory.generateStandardPokerGame(name, smallBlind, minBuyInBB, maxBuyInBB, userId); // returning id of newly created game
 	}
 
-	@GetMapping("/game-metadata")
+	@GetMapping("/api/game-metadata")
 	@ResponseBody
 	public GameMetadata getGameMetadata(@RequestParam(name = "game_id", required = true) String gameId) {
 		Game game = GameManager.ID_TO_GAME.get(gameId);
@@ -65,7 +65,7 @@ public class RESTController {
 		return new GameMetadata(doc.getStartTime(), doc.getPot(), doc.getMetadata(), doc.getLedger());
 	}
 	
-	@GetMapping("/ledger")
+	@GetMapping("/api/ledger")
 	@ResponseBody
 	public Map<String, Float> getGameLedger(@RequestParam(name = "game_id", required = true) String gameId) {
 		Game game = GameManager.ID_TO_GAME.get(gameId);
@@ -87,21 +87,21 @@ public class RESTController {
 		return doc.getLedger();
 	}
 	
-	@GetMapping("/active-games")
+	@GetMapping("/api/active-games")
 	@ResponseBody
 	public List<GameDocument> getActiveGames(@RequestParam(name = "user_id", required = true) String userId) {
 		// fetching all active games by timestamp in descending order
 		return repository.findByIdAndActiveAndSort(userId, true, Sort.by(Sort.Direction.DESC, "startTime"));
 	}
 	
-	@GetMapping("/archived-games")
+	@GetMapping("/api/archived-games")
 	@ResponseBody
 	public List<GameDocument> getArchivedGames(@RequestParam(name = "user_id", required = true) String userId) {
 		// fetching all archived games by timestamp in descending order
 		return repository.findByIdAndActiveAndSort(userId, false, Sort.by(Sort.Direction.DESC, "startTime"));
 	}
 	
-	@PostMapping("/archive-game")
+	@PostMapping("/api/archive-game")
 	@ResponseBody
 	public void archiveGame(
 			@RequestParam(name = "user_id", required = true) String userId,

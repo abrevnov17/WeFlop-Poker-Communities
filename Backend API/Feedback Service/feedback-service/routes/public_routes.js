@@ -1,0 +1,139 @@
+// public_routes.js - Handlers for publicly-exposed endpoints
+
+const express = require('express');
+const router = express.Router();
+
+// importing our config module
+const config = require('./../config/config');
+
+// import module that acts as a wrapper to interactions with our database
+const db = require('./../database_handling/db_wrapper')
+
+// route that retrieves all updates (announcements and polls)
+// in order of time (recent first)
+router.get(global.gConfig.updates_route, async function(req, res) {
+  let polls = []
+  let announcements = []
+  // getting polls and announcements
+  const [poll_rows_promise, announcement_rows_promise] = await Promise.all([ db.getPolls(), db.getAnnouncements()])
+  
+  if (poll_rows_promise.state === "rejected") {
+    res.status(400).send({ error: poll_rows_promise.reason })
+    return;
+  }
+
+  if (announcement_rows_promise.state === "rejected") {
+    res.status(400).send({ error: announcement_rows_promise.reason })
+    return;
+  }
+
+  const poll_rows = poll_rows_promise.value;
+  const announcement_rows = announcement_rows_promise.value;
+
+  // for each poll, we need to get the rest of the associated options
+  // we construct a list of promises to be executed simulatenously
+  const option_promises = []
+
+  for (const row in poll_rows) {
+      option_promises.push(getPollOptions(poll_rows[row][id]))
+
+      const poll_row = poll_rows[row];
+      
+      let poll = new Object();
+      poll.id = poll_row[id]
+      poll.description = poll_row[description]
+      poll.timestamp = poll_row[date_created]
+      poll.options = []
+
+      polls.push(poll)
+  }
+
+  const options_promises = await Promise.all(option_promises)
+
+  for (const option_promise in options_promises) {
+    if (options_promises[option_promise].state === "rejected") {
+      res.status(400).send({ error: options_promises[option_promise].reason })
+      return;
+    }
+
+    const option_r = options_promises[option_promise].value;
+
+    let option = new Object();
+    option.description = option_r.description;
+    option.vote_count = option_r.vote_count;
+    polls[option_row].options.push(option);
+  }
+
+  for (const row in announcement_rows) {
+    const announcement_row = announcement_rows[row];
+
+    let announcement = new Object();
+    announcement.id = announcement_row[id];
+    announcement.body = announcement_row[body];
+    announcement.timestamp = announcement_row[date_created];
+
+    announcements.push(announcement)
+  }
+
+  res.status(200).send({announcements: announcements, polls: polls})
+});
+
+// casts a vote
+router.post(global.gConfig.vote_route, function(req, res) {
+    const { user_id, option_id } = req.body;
+
+    if (user_id == undefined) {
+      res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+      return
+    }
+
+    if (option_id == undefined) {
+      res.status(400).send({ error: "Missing required parameter: 'option_id'" });
+      return
+    }
+
+   db.createVote(user_id, option_id).then(() => {
+    res.sendStatus(200);
+   }).catch(err =>
+    res.status(400).send({ error: err })
+  )
+});
+
+// sends new feedback
+router.post(global.gConfig.send_feedback_route, function(req, res) {
+    const { user_id, body } = req.body;
+
+    if (user_id == undefined) {
+      res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+      return
+    }
+
+    if (body == undefined) {
+      res.status(400).send({ error: "Missing required parameter: 'body'" });
+      return
+    }
+
+   db.insertFeedback(user_id, body).then(() => {
+    res.sendStatus(200);
+   }).catch(err =>
+    res.status(400).send({ error: err })
+  )
+});
+
+// gets all posts the user has voted for
+router.get(global.gConfig.get_votes_route, function(req, res) {
+    const { user_id } = req.body;
+
+    if (user_id == undefined) {
+      res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+      return
+    }
+
+   db.getUserVotes(user_id).then(votes => {
+    res.status(200).send({votes: votes});
+   }).catch(err =>
+    res.status(400).send({ error: err })
+  )
+});
+
+module.exports = router;
