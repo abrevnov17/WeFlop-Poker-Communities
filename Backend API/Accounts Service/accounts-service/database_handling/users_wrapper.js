@@ -62,8 +62,53 @@ function isUsernameTaken(username) {
 	})
 }
 
+// sets hash for user with given email
+function resetPassword(email, new_hash) {
+	return new Promise(function (resolve, reject) {
+		pool.query('UPDATE Users SET (hash,password_reset_token,reset_token_expiration_date) = ($1,NULL,NULL) WHERE Users.email = $2', [new_hash, email], (err, result) => {
+		    if (err) {
+		      reject(error);
+		    }
+		    resolve(true);
+  		})
+	})
+}
+
+// updates password reset token and expiration values for user with given email
+function updatePasswordResetTokenInformation(email, token, expiration_date) {
+	return new Promise(function (resolve, reject) {
+		pool.query('UPDATE Users SET (password_reset_token,reset_token_expiration_date) = ($1,$2) WHERE Users.email = $3', [token, expiration_date, email], (err, result) => {
+		    if (err) {
+		      reject(error);
+		    }
+		    resolve(true);
+  		})
+	})
+}
+
+// gets password reset token and corresponding expiration date (as timestamp)
+function getResetTokenInfo(email) {
+	return new Promise(function (resolve, reject) {
+		pool.query('SELECT (password_reset_token,reset_token_expiration_date) FROM Users WHERE email = $1', [email], (err, results) => {
+		    if (err) {
+		      reject(err)
+		    }
+
+		    if (results.rows.length != 1) {
+		    	resolve(-1)
+		    }
+
+		    resolve(results.rows[0])
+	  	})
+	})
+}
+
 module.exports = {
 	insertUser: insertUser,
 	getUserId: getUserId,
 	deleteEntry: deleteEntry,
+	isUsernameTaken: isUsernameTaken,
+	resetPassword: resetPassword,
+	updatePasswordResetTokenInformation: updatePasswordResetTokenInformation,
+	getResetTokenInfo: getResetTokenInfo
 }

@@ -12,11 +12,22 @@ const inputValidator = require('./../utils/input_validation')
 // importing module that handles hashing / password comparisons
 const bcrypt = require('bcrypt');
 
-// import module that acts as a wrapper to interactions with our Users table in our database
+// importing module that acts as a wrapper to interactions with our Users table in our database
 const db = require('./../database_handling/users_wrapper')
 
-// module we use to generate session id's
+// importing module we use to generate session id's
 const crypto = require('crypto');
+
+// importing module used to send emails for password reset/verification
+const nodemailer = require('nodemailer');
+
+const mail_transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'youremail@gmail.com',
+    pass: 'yourpassword'
+  }
+});
 
 // Define the create_account route
 router.post(global.gConfig.create_account_route, function(req, res) {
@@ -79,7 +90,7 @@ router.post(global.gConfig.create_account_route, function(req, res) {
 			}
 		});
     }).catch(err =>
-    res.status(500).send({ error: "Error generating hash of password. Please retry." })
+    res.status(500).send({ error: "Error creating account. Please retry." })
     )
   });
 });
@@ -155,6 +166,113 @@ router.GET(global.gConfig.username_taken_route, function(req, res) {
     res.status(200).send({ isTaken: isTaken });
   }).catch(err =>
   res.status(400).send({ error: err })
+  )
+});
+
+// Define route that sends a password-reset email
+router.GET(global.gConfig.forgot_password_route, function(req, res) {
+  // parsing out request parameters
+  const { email } = req.body
+
+  if (email == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'email'" });
+    return
+  }
+
+  // generating new expiration date
+  let expirationDate = new Date() // current time
+  expirationDate.setHours(myDate.getHours() + global.gConfig.password_reset_expiration)
+
+  // generating expiration token
+  crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
+        if (err) { 
+          res.status(500).send({ error: "Error generating expiration token. Try logging in.." })
+        } else { 
+          token = buff.toString('hex')
+
+          // now that we have our token, we update the token/expiration date in DB and send our email:
+          db.updatePasswordResetTokenInformation(email, token, expirationDate).then(() => {
+            // sending email
+
+            const mailOptions = {
+              from: 'youremail@gmail.com',
+              to: 'myfriend@yahoo.com',
+              subject: 'WeFlop Password Reset',
+              text: 'Please click on the following link to reset your password: RESET LINK.'
+            };
+
+            transporter.sendMail(mailOptions, function(error, info){
+              if (error) {
+                console.log(error);
+              } else {
+                res.sendStatus(200);
+              }
+            });
+          }).catch(err =>
+            res.status(400).send({ error: err })
+          )
+      }
+  });
+});
+
+// Define route that changes a password given reset token credentials are present and valid
+router.GET(global.gConfig.change_password_route, function(req, res) {
+  // parsing out request parameters
+  const { email, resetToken, newPassword } = req.body
+
+  if (email == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'email'" });
+    return
+  }
+
+  if (resetToken == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'resetToken'" });
+    return
+  }
+
+  if (newPassword == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'newPassword'" });
+    return
+  }
+
+  if (!inputValidator.validatePassword(newPassword)) {
+    // invalid password format
+    res.status(400).send({ error: "Invalid password formatting." });
+    return
+  }
+
+  // we first fetch the reset token and expiration date to ensure that the provided token
+  // matches the token in our DB and that the expiration term has not been violated
+  db.getResetTokenInfo(email).then(result => {
+    const password_reset_token = result[0];
+    const reset_token_expiration_date = result[1];
+
+    if (password_reset_token === null || password_reset_token !== resetToken) {
+      res.status(400).send({ error: "Invalid password token." })
+      return;
+    }
+
+    if (reset_token_expiration_date === null || reset_token_expiration_date < new Date()) {
+      res.status(400).send({ error: "Token is expired." })
+      return;
+    }
+
+    // token is valid, so we reset user password by generating new hash
+    bcrypt.hash(password, global.gConfig.salt_rounds, function(err, hash) {
+      if (err != undefined) {
+        res.status(500).send({ error: "Error generating hash of password. Please retry." });
+      }
+
+      // we now store a user with email, username, and hashed-password (with salt) in our DB
+      db.resetPassword(email, hash).then(() => {
+          res.sendStatus(200); // success
+      }).catch(err =>
+        res.status(500).send({ error: "Error resetting password. Please retry." })
+      )
+    });
+
+  }).catch(err =>
+      res.status(400).send({ error: err })
   )
 });
 

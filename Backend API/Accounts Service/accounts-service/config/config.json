@@ -7,14 +7,17 @@
     },
     "security": {
         "salt_rounds": 12,
-        "session_token_bytes": 16
+        "session_token_bytes": 16,
+        "password_reset_expiration": 24
     },
     "api": {
         "base_url": "/api",
         "create_account_route": "/create-account",
         "login_route": "/login",
         "delete_account_route": "/delete-account",
-        "username_taken_route": "/username-taken"
+        "username_taken_route": "/username-taken",
+        "forgot_password_route": "/forgot-password",
+        "change_password_route": "/change-password"
     },
     "default": {
         "app_name": "Accounts Service",
