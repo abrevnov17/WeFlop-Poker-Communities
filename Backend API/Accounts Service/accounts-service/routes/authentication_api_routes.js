@@ -152,7 +152,7 @@ router.delete(global.gConfig.delete_account_route, function(req, res) {
 });
 
 // Define route that returns whether a username is taken or not
-router.GET(global.gConfig.username_taken_route, function(req, res) {
+router.get(global.gConfig.username_taken_route, function(req, res) {
   // parsing out request parameters
   const { username } = req.body
 
@@ -170,7 +170,7 @@ router.GET(global.gConfig.username_taken_route, function(req, res) {
 });
 
 // Define route that sends a password-reset email
-router.GET(global.gConfig.forgot_password_route, function(req, res) {
+router.post(global.gConfig.forgot_password_route, function(req, res) {
   // parsing out request parameters
   const { email } = req.body
 
@@ -216,7 +216,7 @@ router.GET(global.gConfig.forgot_password_route, function(req, res) {
 });
 
 // Define route that changes a password given reset token credentials are present and valid
-router.GET(global.gConfig.change_password_route, function(req, res) {
+router.post(global.gConfig.change_password_route, function(req, res) {
   // parsing out request parameters
   const { email, resetToken, newPassword } = req.body
 

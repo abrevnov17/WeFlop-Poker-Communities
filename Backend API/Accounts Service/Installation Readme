@@ -1,4 +1,4 @@
-Setup:
+Installation:
 
 1. Setup node environment:
 https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/development_environment
@@ -6,5 +6,39 @@ https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/develo
 2. Install node dependencies: npm install
 
 3. Install postgresql: brew install postgresql (need to install brew first)
+
+
+Setup DB:
+
+1. Start postgresql service:
+	a) If database is not initialized: 
+		initdb data/db/
+	b) change port in postgresql.conf to match config file for service
+	c) To start:
+	pg_ctl -D data/db/ -l logfile start
+
+2. Create weflop user and create db:
+	a) psql -p <port>
+	b) CREATE ROLE weflop SUPERUSER CREATEROLE CREATEDB WITH PASSWORD '<password>' WITH LOGIN;
+	c) CREATE DATABASE Accounts OWNER weflop;
+
+3. Set up DB:
+
+Run Query:
+
+	CREATE TABLE IF NOT EXISTS Users (
+  	ID SERIAL PRIMARY KEY,
+  	username VARCHAR(24) UNIQUE NOT NULL,
+  	email VARCHAR(254) UNIQUE NOT NULL,
+  	password VARCHAR(24) NOT NULL,
+  	password_reset_token text,
+  	reset_token_expiration_date timestamp,
+  	date_created timestamp NOT NULL DEFAULT NOW()
+	);
+
+Start Service:
+
+1. node app.js
+
 
  

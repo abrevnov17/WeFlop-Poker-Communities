@@ -29,6 +29,6 @@ function validatePassword(password) {
 
 module.exports = {
 	validateEmail: validateEmail,
-	validateUsername, validateUsername
-	validatePassword: validatePassword,
+	validateUsername, validateUsername,
+	validatePassword: validatePassword
 }

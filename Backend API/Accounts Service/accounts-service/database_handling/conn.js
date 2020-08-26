@@ -13,21 +13,21 @@ const pool = new Pool({
 })
 
 // create table statements
-const CREATE_USERS_TABLE = `CREATE TABLE IF NOT EXISTS Users (
-  ID SERIAL PRIMARY KEY,
-  username VARCHAR(24) UNIQUE NOT NULL,
-  email VARCHAR(254) UNIQUE NOT NULL,
-  password VARCHAR(24) NOT NULL,
-  password_reset_token text,
-  reset_token_expiration_date timestamp,
-  date_created timestamp NOT NULL DEFAULT NOW()
-);`
+// const CREATE_USERS_TABLE = `CREATE TABLE IF NOT EXISTS Users (
+//   ID SERIAL PRIMARY KEY,
+//   username VARCHAR(24) UNIQUE NOT NULL,
+//   email VARCHAR(254) UNIQUE NOT NULL,
+//   password VARCHAR(24) NOT NULL,
+//   password_reset_token text,
+//   reset_token_expiration_date timestamp,
+//   date_created timestamp NOT NULL DEFAULT NOW()
+// );`
 
-// creating users table
-pool
-  .query(CREATE_USERS_TABLE)
-  .then()
-  .catch(err => console.error(err.stack))
+// // creating users table
+// pool
+//   .query(CREATE_USERS_TABLE)
+//   .then()
+//   .catch(err => console.error(err.stack))
 
 module.exports = {
 	pool: pool
