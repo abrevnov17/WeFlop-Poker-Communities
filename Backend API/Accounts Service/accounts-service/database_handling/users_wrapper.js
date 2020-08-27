@@ -6,7 +6,7 @@ const pool = require('./conn').pool;
 // inserts new user into Users table
 function insertUser(username, email, hash) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Users (username, email, hash) VALUES ($1, $2, $3)', [username, email, hash], (err, result) => {
+		pool.query('INSERT INTO Users (username, email, hash) VALUES ($1, $2, $3) RETURNING id', [username, email, hash], (err, results) => {
 		    if (err) {
 		      reject(err)
 		    } else {
@@ -29,7 +29,7 @@ function getUserHash(username) {
 		    	resolve((-1,-1))
 		    	return;
 		    }
-		    
+
 		    resolve([results.rows[0].id, results.rows[0].hash])
 	  	})
 	})
@@ -43,7 +43,7 @@ function deleteEntry(user_id) {
 		      reject(err)
 		      return;
 		    }
-		    resolve()
+		    resolve(true)
 		})
 	})
 }
