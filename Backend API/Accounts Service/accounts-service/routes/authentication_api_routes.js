@@ -95,8 +95,8 @@ router.post(global.gConfig.create_account_route, function(req, res) {
   });
 });
 
-// Define the create_account route
-router.get(global.gConfig.login_route, function(req, res) {
+// Define the login route
+router.post(global.gConfig.login_route, function(req, res) {
   // parsing out request parameters
   const { username, password} = req.body
 
@@ -113,23 +113,39 @@ router.get(global.gConfig.login_route, function(req, res) {
  }
 
   // validating the provided user credentials
-  db.getUserId(username, hash).then(user_id => {
+  db.getUserHash(username).then(([user_id, hash]) => {
+
   	if (user_id === -1) {
       res.status(400).send({ error: "Invalid username/password combination." })
-    } else {
-		// successfully found user in database...generating a session token and responding with success
-   crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
-    if (err) { 
-      res.status(500).send({ error: "Error generating session token. Try logging in.." })
-    } else { 
-      token = buff.toString('hex')
-				res.status(200).send({ userID: user_id, sessionID: token }); // success
-			}
-		});
- }
-}).catch(err =>
-res.status(500).send({ error: "Error querying database for user. Please retry." })
-);
+      return;
+    }
+
+    bcrypt.compare(password, hash, function(err, match) {
+        if (err != undefined) {
+          res.status(500).send({ error: "Error comparing hash of password. Please retry." });
+          return;
+        }
+      if(match) {
+        // Passwords match...generating a session token and responding with success
+        crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
+          if (err) { 
+            res.status(500).send({ error: "Error generating session token. Try logging in.." })
+            return;
+          } else { 
+            token = buff.toString('hex')
+
+            res.status(200).send({ userID: user_id, sessionID: token }); // success
+            return;
+            }
+        });
+      } else {
+        res.status(400).send({ error: "Invalid username/password combination." })
+        return;
+      } 
+    });
+  }).catch(err =>
+    res.status(500).send({ error: "Invalid username/password combination." })
+  );
 });
 
 

@@ -10,27 +10,27 @@ function insertUser(username, email, hash) {
 		    if (err) {
 		      reject(err)
 		    } else {
-		    	resolve(results.rows[0][id])
+		    	resolve(results.rows[0].id)
 		    }
   		})
 	})
 }
 
-// validates that user does or does not exist in database with given credentials
-// (resolves to user id or -1 if no such user exists) 
-function getUserId(username, hash) {
+// gets (id,hash) of user with given username
+function getUserHash(username) {
 	return new Promise(function (resolve, reject) {
-		pool.query('SELECT * FROM Users WHERE username = $1 AND hash = $2', [username, hash], (err, results) => {
+		pool.query('SELECT * FROM Users WHERE username = $1', [username], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
 		    }
 
 		    if (results.rows.length != 1) {
-		    	resolve(-1)
+		    	resolve((-1,-1))
+		    	return;
 		    }
-
-		    resolve(results.rows[0][id])
+		    
+		    resolve([results.rows[0].id, results.rows[0].hash])
 	  	})
 	})
 }
@@ -112,7 +112,7 @@ function getResetTokenInfo(email) {
 
 module.exports = {
 	insertUser: insertUser,
-	getUserId: getUserId,
+	getUserHash: getUserHash,
 	deleteEntry: deleteEntry,
 	isUsernameTaken: isUsernameTaken,
 	resetPassword: resetPassword,
