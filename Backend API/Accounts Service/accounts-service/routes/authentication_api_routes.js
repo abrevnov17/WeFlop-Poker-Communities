@@ -23,9 +23,10 @@ const nodemailer = require('nodemailer');
 
 const mail_transporter = nodemailer.createTransport({
   service: 'gmail',
+  port: 587,
   auth: {
-    user: 'youremail@gmail.com',
-    pass: 'yourpassword'
+    user: 'weflop3@gmail.com',
+    pass: 'BigBoysBopping1!'
   }
 });
 
@@ -195,39 +196,53 @@ router.post(global.gConfig.forgot_password_route, function(req, res) {
     return
   }
 
+  if (!inputValidator.validateEmail(email)) {
+    // invalid email format
+    res.status(400).send({ error: "Invalid email formatting." });
+    return
+  }
+
   // generating new expiration date
   let expirationDate = new Date() // current time
-  expirationDate.setHours(myDate.getHours() + global.gConfig.password_reset_expiration)
+  expirationDate.setHours(expirationDate.getHours() + global.gConfig.password_reset_expiration)
 
   // generating expiration token
   crypto.randomBytes(global.gConfig.session_token_bytes, (err, buff) => { 
         if (err) { 
           res.status(500).send({ error: "Error generating expiration token. Try logging in.." })
-        } else { 
-          token = buff.toString('hex')
+          return;
+        }
+        token = buff.toString('hex')
 
-          // now that we have our token, we update the token/expiration date in DB and send our email:
-          db.updatePasswordResetTokenInformation(email, token, expirationDate).then(() => {
-            // sending email
+        // now that we have our token, we update the token/expiration date in DB and send our email:
+        db.updatePasswordResetTokenInformation(email, token, expirationDate).then(exists => {
+          if (!exists) {
+            res.status(400).send({ error: "Invalid email." })
+            return;
+          }
 
-            const mailOptions = {
-              from: 'youremail@gmail.com',
-              to: 'myfriend@yahoo.com',
-              subject: 'WeFlop Password Reset',
-              text: 'Please click on the following link to reset your password: RESET LINK.'
-            };
+          // sending email
+          const text = "Please click on the following link to reset your password: http://localhost:8000/change-password?token=" + token;
+          const html = "Please click on the following link to reset your password: <a href='http://localhost:8000/change-password?token=" + token + "'>Reset Password</a>"
+          const mailOptions = {
+            from: 'weflop3@gmail.com',
+            to: email,
+            subject: 'WeFlop Password Reset',
+            text: text,
+            html: html
+          };
 
-            transporter.sendMail(mailOptions, function(error, info){
-              if (error) {
-                console.log(error);
-              } else {
-                res.sendStatus(200);
-              }
-            });
-          }).catch(err =>
-            res.status(400).send({ error: err })
-          )
-      }
+         mail_transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+              res.status(500).send({ error: "Unable to send password reset email. Please try again later." })
+              return;
+            }
+            res.sendStatus(200);
+            return;
+          });
+        }).catch(err =>
+          res.status(500).send({ error: "Unable to send password reset email. Please try again later." })
+        )
   });
 });
 
@@ -280,8 +295,13 @@ router.post(global.gConfig.change_password_route, function(req, res) {
       }
 
       // we now store a user with email, username, and hashed-password (with salt) in our DB
-      db.resetPassword(email, hash).then(() => {
+      db.resetPassword(email, hash).then(exists => {
+        if (!exists) {
+          res.status(400).send({ error: "No user exists with provided email address." })
+          return;
+        }
           res.sendStatus(200); // success
+          return;
       }).catch(err =>
         res.status(500).send({ error: "Error resetting password. Please retry." })
       )

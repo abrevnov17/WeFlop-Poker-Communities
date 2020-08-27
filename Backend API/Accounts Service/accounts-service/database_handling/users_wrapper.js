@@ -43,7 +43,7 @@ function deleteEntry(user_id) {
 		      reject(err)
 		      return;
 		    }
-		    resolve(true)
+		    resolve()
 		})
 	})
 }
@@ -67,12 +67,17 @@ function isUsernameTaken(username) {
 }
 
 // sets hash for user with given email
+// returns false if no user exists with given email
 function resetPassword(email, new_hash) {
 	return new Promise(function (resolve, reject) {
 		pool.query('UPDATE Users SET (hash,password_reset_token,reset_token_expiration_date) = ($1,NULL,NULL) WHERE Users.email = $2', [new_hash, email], (err, result) => {
 		    if (err) {
-		      reject(error);
+		      reject(err);
 		      return;
+		    }
+		    if (result.rowCount != 1) {
+		    	resolve(false)
+		    	return;
 		    }
 		    resolve(true);
   		})
@@ -80,13 +85,20 @@ function resetPassword(email, new_hash) {
 }
 
 // updates password reset token and expiration values for user with given email
+// returns false if no such email exists, true otherwise (on success)
 function updatePasswordResetTokenInformation(email, token, expiration_date) {
 	return new Promise(function (resolve, reject) {
 		pool.query('UPDATE Users SET (password_reset_token,reset_token_expiration_date) = ($1,$2) WHERE Users.email = $3', [token, expiration_date, email], (err, result) => {
+
 		    if (err) {
-		      reject(error);
+		      reject(err);
 		      return;
 		    }
+		    if (result.rowCount != 1) {
+		    	resolve(false)
+		    	return;
+		    }
+
 		    resolve(true);
   		})
 	})
