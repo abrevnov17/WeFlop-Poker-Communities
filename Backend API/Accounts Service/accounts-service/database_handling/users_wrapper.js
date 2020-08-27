@@ -8,9 +8,10 @@ function insertUser(username, email, hash) {
 	return new Promise(function (resolve, reject) {
 		pool.query('INSERT INTO Users (username, email, hash) VALUES ($1, $2, $3)', [username, email, hash], (err, result) => {
 		    if (err) {
-		      reject(error)
+		      reject(err)
+		    } else {
+		    	resolve(results.rows[0][id])
 		    }
-		    resolve(result.insertId)
   		})
 	})
 }
@@ -22,6 +23,7 @@ function getUserId(username, hash) {
 		pool.query('SELECT * FROM Users WHERE username = $1 AND hash = $2', [username, hash], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    if (results.rows.length != 1) {
@@ -39,6 +41,7 @@ function deleteEntry(user_id) {
 		pool.query('DELETE FROM Users WHERE id = $1', [user_id], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 		    resolve()
 		})
@@ -51,6 +54,7 @@ function isUsernameTaken(username) {
 		pool.query('SELECT * FROM Users WHERE username = $1', [username], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    if (results.rows.length != 1) {
@@ -68,6 +72,7 @@ function resetPassword(email, new_hash) {
 		pool.query('UPDATE Users SET (hash,password_reset_token,reset_token_expiration_date) = ($1,NULL,NULL) WHERE Users.email = $2', [new_hash, email], (err, result) => {
 		    if (err) {
 		      reject(error);
+		      return;
 		    }
 		    resolve(true);
   		})
@@ -80,6 +85,7 @@ function updatePasswordResetTokenInformation(email, token, expiration_date) {
 		pool.query('UPDATE Users SET (password_reset_token,reset_token_expiration_date) = ($1,$2) WHERE Users.email = $3', [token, expiration_date, email], (err, result) => {
 		    if (err) {
 		      reject(error);
+		      return;
 		    }
 		    resolve(true);
   		})
@@ -92,6 +98,7 @@ function getResetTokenInfo(email) {
 		pool.query('SELECT (password_reset_token,reset_token_expiration_date) FROM Users WHERE email = $1', [email], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    if (results.rows.length != 1) {

@@ -1,7 +1,7 @@
 {
     "database": {
         "db_host": "localhost",
-        "db_identifier": "Accounts",
+        "db_identifier": "accounts",
         "db_password": "iKWKy2VmfPBUk5xn",
         "db_port": 5000
     },
