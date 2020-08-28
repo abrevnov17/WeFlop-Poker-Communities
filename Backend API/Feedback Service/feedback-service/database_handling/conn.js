@@ -25,9 +25,17 @@ const CREATE_POLLS_TABLE = `CREATE TABLE IF NOT EXISTS Polls (
   date_created timestamp NOT NULL DEFAULT NOW()
 );`
 
+const CREATE_POLL_OPTIONS_TABLE = `CREATE TABLE IF NOT EXISTS PollOptions (
+  id SERIAL PRIMARY KEY,
+  poll_id integer NOT NULL references Polls(id) ON DELETE CASCADE,
+  description text,
+  vote_total integer,
+  UNIQUE (poll_id, description)
+);`
+
 const CREATE_VOTES_TABLE = `CREATE TABLE IF NOT EXISTS Votes (
   id SERIAL PRIMARY KEY,
-  option_id integer NOT NULL, REFERENCES PollOptions(id) ON DELETE CASCADE,
+  option_id integer NOT NULL REFERENCES PollOptions(id) ON DELETE CASCADE,
   cast_by integer NOT NULL,
   date_created timestamp NOT NULL DEFAULT NOW()
 );`
@@ -38,26 +46,16 @@ const UPDATE_VOTE_TOTAL_FUNCTION = `CREATE OR REPLACE FUNCTION update_vote_total
               BEGIN
                   UPDATE PollOptions
                       SET vote_total = vote_total + 1
-                      WHERE id = new.id
-                      VALUES(new.id,new.name);
+                      WHERE id = new.id;
 
-                         RETURN new;
+                  RETURN new;
               END;
               $BODY$
-              language plpgsql`;
+              language plpgsql;`;
 
 const UPDATE_VOTE_TOTAL_TRIGGER = `CREATE TRIGGER update_poll_option_vote_total BEFORE UPDATE
     ON Votes FOR EACH ROW EXECUTE PROCEDURE 
     update_vote_total();`
-
-const CREATE_POLL_OPTIONS_TABLE = `CREATE TABLE IF NOT EXISTS PollOptions (
-  id SERIAL PRIMARY KEY,
-  poll_id int references Polls(id) ON DELETE CASCADE,
-  option_number integer SERIAL,
-  description text,
-  vote_total integer,
-  UNIQUE (poll_id, description)
-);`
 
 const CREATE_FEEDBACK_TABLE = `CREATE TABLE IF NOT EXISTS Feedback (
   id SERIAL PRIMARY KEY,

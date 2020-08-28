@@ -1,0 +1,87 @@
+Installation:
+
+1. Setup node environment:
+https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/development_environment
+
+2. Install node dependencies: npm install
+
+3. Install postgresql: brew install postgresql (need to install brew first)
+
+Setup DB:
+
+1. Start postgresql service:
+	a) If database is not initialized: 
+		initdb data/db/
+	b) change port in postgresql.conf to match config file for service
+	c) To start:
+	pg_ctl -D data/db/ -l logfile start
+
+2. Create weflop user and create db:
+	a) psql -p <port>
+	b) CREATE ROLE weflop SUPERUSER CREATEROLE CREATEDB;
+ 	c) ALTER ROLE weflop WITH PASSWORD '<password>';
+	d) ALTER ROLE weflop WITH LOGIN;
+	c) CREATE DATABASE Feedback OWNER weflop;
+
+3. Set up DB:
+
+Run Queries:
+
+CREATE TABLE IF NOT EXISTS Announcements (
+  id SERIAL PRIMARY KEY,
+  body text[],
+  date_created timestamp NOT NULL DEFAULT NOW()
+);
+
+
+CREATE TABLE IF NOT EXISTS Polls (
+  id SERIAL PRIMARY KEY,
+  description text[],
+  date_created timestamp NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS PollOptions (
+  id SERIAL PRIMARY KEY,
+  poll_id integer NOT NULL references Polls(id) ON DELETE CASCADE,
+  description text,
+  vote_total integer,
+  UNIQUE (poll_id, description)
+);
+
+CREATE TABLE IF NOT EXISTS Votes (
+  id SERIAL PRIMARY KEY,
+  option_id integer NOT NULL REFERENCES PollOptions(id) ON DELETE CASCADE,
+  cast_by integer NOT NULL,
+  date_created timestamp NOT NULL DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION update_vote_total()
+              RETURNS TRIGGER AS 
+              $BODY$
+              BEGIN
+                  UPDATE PollOptions
+                      SET vote_total = vote_total + 1
+                      WHERE id = new.id;
+
+                  RETURN new;
+              END;
+              $BODY$
+              language plpgsql;
+
+CREATE TRIGGER update_poll_option_vote_total BEFORE UPDATE
+    ON Votes FOR EACH ROW EXECUTE PROCEDURE 
+    update_vote_total();
+
+CREATE TABLE IF NOT EXISTS Feedback (
+  id SERIAL PRIMARY KEY,
+  body text NOT NULL,
+  user_id int NOT NULL,
+  date_created timestamp NOT NULL DEFAULT NOW()
+);
+
+Start Service:
+
+1. node app.js
+
+
+ 

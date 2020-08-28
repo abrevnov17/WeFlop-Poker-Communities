@@ -4,3 +4,5 @@ Game Service/GameService/data/evaluator_data/TwoPlusTwo/HandRanks.dat
 Backend API/Game Service/GameService/data/db/**
 Backend API/Accounts Service/data/db/**
 Backend API/Accounts Service/logfile
+Backend API/Feedback Service/data/db/**
+Backend API/Feedback Service/logfile
