@@ -249,24 +249,24 @@ router.post(global.gConfig.forgot_password_route, function(req, res) {
 // Define route that changes a password given reset token credentials are present and valid
 router.post(global.gConfig.change_password_route, function(req, res) {
   // parsing out request parameters
-  const { email, resetToken, newPassword } = req.body
+  const { email, reset_token, new_password } = req.body
 
   if (email == undefined) {
     res.status(400).send({ error: "Missing required parameter: 'email'" });
     return
   }
 
-  if (resetToken == undefined) {
-    res.status(400).send({ error: "Missing required parameter: 'resetToken'" });
+  if (reset_token == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'reset_token'" });
     return
   }
 
-  if (newPassword == undefined) {
-    res.status(400).send({ error: "Missing required parameter: 'newPassword'" });
+  if (new_password == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'new_password'" });
     return
   }
 
-  if (!inputValidator.validatePassword(newPassword)) {
+  if (!inputValidator.validatePassword(new_password)) {
     // invalid password format
     res.status(400).send({ error: "Invalid password formatting." });
     return
@@ -274,11 +274,9 @@ router.post(global.gConfig.change_password_route, function(req, res) {
 
   // we first fetch the reset token and expiration date to ensure that the provided token
   // matches the token in our DB and that the expiration term has not been violated
-  db.getResetTokenInfo(email).then(result => {
-    const password_reset_token = result[0];
-    const reset_token_expiration_date = result[1];
+  db.getResetTokenInfo(email).then(([password_reset_token, reset_token_expiration_date]) => {
 
-    if (password_reset_token === null || password_reset_token !== resetToken) {
+    if (password_reset_token === null || password_reset_token !== reset_token) {
       res.status(400).send({ error: "Invalid password token." })
       return;
     }
@@ -289,7 +287,7 @@ router.post(global.gConfig.change_password_route, function(req, res) {
     }
 
     // token is valid, so we reset user password by generating new hash
-    bcrypt.hash(password, global.gConfig.salt_rounds, function(err, hash) {
+    bcrypt.hash(new_password, global.gConfig.salt_rounds, function(err, hash) {
       if (err != undefined) {
         res.status(500).send({ error: "Error generating hash of password. Please retry." });
       }

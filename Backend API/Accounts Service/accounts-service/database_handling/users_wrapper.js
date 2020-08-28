@@ -107,17 +107,17 @@ function updatePasswordResetTokenInformation(email, token, expiration_date) {
 // gets password reset token and corresponding expiration date (as timestamp)
 function getResetTokenInfo(email) {
 	return new Promise(function (resolve, reject) {
-		pool.query('SELECT (password_reset_token,reset_token_expiration_date) FROM Users WHERE email = $1', [email], (err, results) => {
+		pool.query('SELECT * FROM Users WHERE email = $1', [email], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
 		    }
 
 		    if (results.rows.length != 1) {
-		    	resolve(-1)
+		    	resolve([-1,-1])
 		    }
 
-		    resolve(results.rows[0])
+		    resolve([results.rows[0].password_reset_token, results.rows[0].reset_token_expiration_date])
 	  	})
 	})
 }
