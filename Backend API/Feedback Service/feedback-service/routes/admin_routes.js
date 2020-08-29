@@ -12,7 +12,7 @@ const config = require('./../config/config');
 const db = require('./../database_handling/db_wrapper')
 
 // creates a new announcement
-router.get(global.gConfig.create_announcement_route, function(req, res) {
+router.post(global.gConfig.create_announcement_route, function(req, res, next) {
   const { body } = req.body;
 
   if (body == undefined) {
@@ -23,12 +23,12 @@ router.get(global.gConfig.create_announcement_route, function(req, res) {
  db.insertAnnouncement(body).then(announcement_id => {
    res.status(200).send({ announcement_id: announcement_id});
  }).catch(err =>
- res.status(400).send({ error: err })
+   res.status(400).send({error: err})
  )
 });
 
 // creates a new poll with given options and description
-router.get(global.gConfig.create_poll_route, function(req, res) {
+router.post(global.gConfig.create_poll_route, function(req, res) {
   const { options, description } = req.body;
 
   if (options == undefined) {
@@ -53,7 +53,7 @@ router.get(global.gConfig.create_poll_route, function(req, res) {
 });
 
 // deletes an announcement
-router.get(global.gConfig.delete_announcement_route, function(req, res) {
+router.delete(global.gConfig.delete_announcement_route, function(req, res) {
     const { announcement_id } = req.body;
 
     if (announcement_id == undefined) {
@@ -69,7 +69,7 @@ router.get(global.gConfig.delete_announcement_route, function(req, res) {
 });
 
 // deletes a poll
-router.get(global.gConfig.delete_poll_route, function(req, res) {
+router.delete(global.gConfig.delete_poll_route, function(req, res) {
     const { poll_id } = req.body;
 
     if (poll_id == undefined) {

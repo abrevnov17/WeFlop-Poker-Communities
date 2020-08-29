@@ -24,7 +24,9 @@ Setup DB:
 
 3. Set up DB:
 
-Run Query:
+a) Sign into weflop: psql -p <port> -U weflop -d feedback
+
+b) Run Queries:
 
 	CREATE TABLE IF NOT EXISTS Users (
   	ID SERIAL PRIMARY KEY,

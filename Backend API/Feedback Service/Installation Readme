@@ -1,6 +1,6 @@
 Installation:
 
-1. Setup node environment:
+1. Setup node environment (from inside feedback-service directory):
 https://developer.mozilla.org/en-US/docs/Learn/Server-side/Express_Nodejs/development_environment
 
 2. Install node dependencies: npm install
@@ -25,7 +25,9 @@ Setup DB:
 
 3. Set up DB:
 
-Run Queries:
+a) Sign into weflop: psql -p <port> -U weflop -d feedback
+
+b) Run Queries:
 
 CREATE TABLE IF NOT EXISTS Announcements (
   id SERIAL PRIMARY KEY,

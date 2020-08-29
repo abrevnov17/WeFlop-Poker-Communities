@@ -10,7 +10,7 @@ function insertUser(username, email, hash) {
 		    if (err) {
 		      reject(err)
 		    } else {
-		    	resolve(results.rows[0].id)
+		      resolve(results.rows[0].id)
 		    }
   		})
 	})

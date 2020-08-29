@@ -5,12 +5,15 @@ const pool = require('./conn').pool;
 
 // creates a new announcement and returns id of created announcement
 function insertAnnouncement(body) {
+	// const bodyInput = array["line one", "line two"]
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Announcements (body) VALUES ($1)', [body], (err, result) => {
+		pool.query('INSERT INTO announcements (body) VALUES (ARRAY[$1]) RETURNING id', [body], (err, results) => {
 		    if (err) {
-		      reject(error)
+		      reject(err)
+		      return;
 		    }
-		    resolve(result.insertId)
+		    
+		    resolve(results.rows[0].id)
   		})
 	})
 }
@@ -18,11 +21,13 @@ function insertAnnouncement(body) {
 // creates a new poll and returns id of created poll
 function insertPoll(description) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Polls (description) VALUES ($1)', [description], (err, result) => {
+		pool.query('INSERT INTO Polls (description) VALUES ($1) RETURNING id', [description], (err, results) => {
 		    if (err) {
-		      reject(error)
+		      reject(err)
+		      return;
 		    }
-		    resolve(result.insertId)
+		      
+		    resolve(results.rows[0].id)
   		})
 	})
 }
@@ -33,12 +38,13 @@ function appendOptionsToPoll(poll_id, options) {
 	return new Promise(function (resolve, reject) {
 		option_ids = []
 		for (const option in options) {
-			pool.query('INSERT INTO PollOptions (poll_id, description) VALUES ($1, $2)', [poll_id, options[option]], (err, result) => {
+			pool.query('INSERT INTO PollOptions (poll_id, description) VALUES ($1, $2) RETURNING id', [poll_id, options[option]], (err, results) => {
 			    if (err) {
-			      reject(error)
+			      reject(err)
+			      return;
 			    }
 
-			    option_ids.push(result.insertId)
+			    option_ids.push(results.rows[0].id)
   			})
 		}
 
@@ -49,11 +55,12 @@ function appendOptionsToPoll(poll_id, options) {
 // creates a new feedback element and returns id of created row in Feedback table
 function insertFeedback(user_id, body) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Feedback (body, user_id) VALUES ($1, $2)', [body, user_id], (err, result) => {
+		pool.query('INSERT INTO Feedback (body, user_id) VALUES ($1, $2) RETURNING id', [body, user_id], (err, results) => {
 		    if (err) {
-		      reject(error)
+		      reject(err)
+		      return;
 		    }
-		    resolve(result.insertId)
+		    resolve(results.rows[0].id)
   		})
 	})
 }
@@ -61,11 +68,12 @@ function insertFeedback(user_id, body) {
 // creates a new vote and returns id of created vote
 function createVote(user_id, option_id) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Votes (option_id, cast_by) VALUES ($1, $2)', [option_id, user_id], (err, result) => {
+		pool.query('INSERT INTO Votes (option_id, cast_by) VALUES ($1, $2) RETURNING id', [option_id, user_id], (err, results) => {
 		    if (err) {
-		      reject(error)
+		      reject(err)
+		      return;
 		    }
-		    resolve(result.insertId)
+		    resolve(results.rows[0].id)
   		})
 	})
 }
@@ -76,10 +84,12 @@ function getVoteTotal(option_id) {
 		pool.query('SELECT vote_total FROM PollOptions WHERE id = $1', [option_id], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    if (results.rows.length != 1) {
 		    	resolve(-1)
+		    	return;
 		    }
 
 		    resolve(results.rows[0][0])
@@ -93,6 +103,7 @@ function getPollOptions(poll_id) {
 		pool.query('SELECT * FROM PollOptions WHERE poll_id = $1', [poll_id], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    resolve(results.rows)
@@ -106,6 +117,7 @@ function deleteAnnouncement(announcement_id) {
 		pool.query('DELETE FROM Announcements WHERE id = $1', [announcement_id], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 		    resolve()
 		})
@@ -118,6 +130,7 @@ function deletePoll(poll_id) {
 		pool.query('DELETE FROM Polls WHERE id = $1', [announcement_id], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 		    resolve()
 		})
@@ -130,6 +143,7 @@ function getAnnouncements() {
 		pool.query('SELECT * FROM Announcements', [], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    resolve(results.rows)
@@ -143,6 +157,7 @@ function getPolls() {
 		pool.query('SELECT * FROM Polls', [], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    resolve(results.rows)
@@ -156,6 +171,7 @@ function getUserVotes(user_id) {
 		pool.query('SELECT option_id FROM Votes WHERE cast_by = $1', [user_id], (err, results) => {
 		    if (err) {
 		      reject(err)
+		      return;
 		    }
 
 		    resolve(results.rows)

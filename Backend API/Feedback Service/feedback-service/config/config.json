@@ -1,7 +1,7 @@
 {
     "database": {
         "db_host": "localhost",
-        "db_identifier": "Feedback",
+        "db_identifier": "feedback",
         "db_password": "iKWKy2VmfPBUk5xnz8",
         "db_port": 5002
     },

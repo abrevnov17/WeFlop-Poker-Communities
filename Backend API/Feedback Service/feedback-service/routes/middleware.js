@@ -13,10 +13,10 @@ function adminVerification(req, res, next){
 
 	if (global.gConfig.admin_password === admin_password) {
 		next();
+	} else {
+		// otherwise, admin password is not valid
+		res.sendStatus(401);
 	}
-
-	// otherwise, admin password is not valid
-	res.sendStatus(401);
 }
 
 module.exports = {

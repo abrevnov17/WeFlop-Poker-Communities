@@ -14,7 +14,7 @@ const config = require('./config/config');
 
 // setting up middleware
 middleware = require("./routes/middleware");
-app.use(middleware.adminVerification);
+app.use(global.gConfig.admin_base_url, middleware.adminVerification);
 
 // setting up our routes
 app.use(global.gConfig.public_base_url, require('./routes/public_routes'));
