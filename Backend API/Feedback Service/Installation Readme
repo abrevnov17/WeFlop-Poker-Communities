@@ -52,27 +52,11 @@ CREATE TABLE IF NOT EXISTS PollOptions (
 
 CREATE TABLE IF NOT EXISTS Votes (
   id SERIAL PRIMARY KEY,
+  poll_id integer NOT NULL REFERENCES Polls(id) ON DELETE CASCADE,
   option_id integer NOT NULL REFERENCES PollOptions(id) ON DELETE CASCADE,
   cast_by integer NOT NULL,
   date_created timestamp NOT NULL DEFAULT NOW()
 );
-
-CREATE OR REPLACE FUNCTION update_vote_total()
-              RETURNS TRIGGER AS 
-              $BODY$
-              BEGIN
-                  UPDATE PollOptions
-                      SET vote_total = vote_total + 1
-                      WHERE id = new.id;
-
-                  RETURN new;
-              END;
-              $BODY$
-              language plpgsql;
-
-CREATE TRIGGER update_poll_option_vote_total BEFORE UPDATE
-    ON Votes FOR EACH ROW EXECUTE PROCEDURE 
-    update_vote_total();
 
 CREATE TABLE IF NOT EXISTS Feedback (
   id SERIAL PRIMARY KEY,
@@ -80,6 +64,34 @@ CREATE TABLE IF NOT EXISTS Feedback (
   user_id int NOT NULL,
   date_created timestamp NOT NULL DEFAULT NOW()
 );
+
+CREATE FUNCTION clear_stale_votes() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      UPDATE PollOptions SET vote_total = vote_total + 1 WHERE id = new.poll_id;
+      DELETE FROM Votes WHERE poll_id = new.poll_id;
+      RETURN NEW;
+    END;
+$$;
+
+
+CREATE TRIGGER clear_stale_votes AFTER INSERT
+    ON Votes FOR EACH ROW EXECUTE PROCEDURE 
+    delete_stale_votes();
+
+CREATE FUNCTION decrement_vote_count() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      UPDATE PollOptions SET vote_total = vote_total - 1 WHERE id = OLD.poll_id;
+      RETURN OLD;
+    END;
+$$;
+
+CREATE TRIGGER decrement_vote_count AFTER DELETE
+    ON Votes FOR EACH ROW EXECUTE PROCEDURE 
+    decrement_vote_count();
 
 Start Service:
 

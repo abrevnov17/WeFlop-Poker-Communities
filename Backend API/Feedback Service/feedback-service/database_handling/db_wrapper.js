@@ -21,12 +21,12 @@ function insertAnnouncement(body) {
 // creates a new poll and returns id of created poll
 function insertPoll(description) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Polls (description) VALUES ($1) RETURNING id', [description], (err, results) => {
+		pool.query('INSERT INTO Polls (description) VALUES (ARRAY[$1]) RETURNING id', [description], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
 		    }
-		      
+
 		    resolve(results.rows[0].id)
   		})
 	})
@@ -37,8 +37,10 @@ function insertPoll(description) {
 function appendOptionsToPoll(poll_id, options) {
 	return new Promise(function (resolve, reject) {
 		option_ids = []
-		for (const option in options) {
-			pool.query('INSERT INTO PollOptions (poll_id, description) VALUES ($1, $2) RETURNING id', [poll_id, options[option]], (err, results) => {
+
+		for (let index = 0; index < options.length; index++) {
+			const option = options[index];
+			pool.query('INSERT INTO PollOptions (poll_id, description) VALUES ($1, $2) RETURNING id', [poll_id, option], (err, results) => {
 			    if (err) {
 			      reject(err)
 			      return;
@@ -127,7 +129,7 @@ function deleteAnnouncement(announcement_id) {
 // deletes all Poll information associated with a given poll_id
 function deletePoll(poll_id) {
 	return new Promise(function (resolve, reject) {
-		pool.query('DELETE FROM Polls WHERE id = $1', [announcement_id], (err, results) => {
+		pool.query('DELETE FROM Polls WHERE id = $1', [poll_id], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
@@ -182,6 +184,7 @@ function getUserVotes(user_id) {
 module.exports = {
 	insertAnnouncement: insertAnnouncement,
 	insertPoll: insertPoll,
+	appendOptionsToPoll: appendOptionsToPoll,
 	createVote: createVote,
 	getVoteTotal: getVoteTotal,
 	getPollOptions: getPollOptions,

@@ -41,8 +41,10 @@ router.post(global.gConfig.create_poll_route, function(req, res) {
     return
   }
 
+  const optionsArr = JSON.parse(options); // parsing out array
+
   db.insertPoll(description).then(poll_id => {
-    db.appendOptionsToPoll(poll_id, options).then(() => {
+    db.appendOptionsToPoll(poll_id, optionsArr).then(() => {
       res.status(200).send({ poll_id: poll_id});
      }).catch(err =>
       res.status(400).send({ error: err })
