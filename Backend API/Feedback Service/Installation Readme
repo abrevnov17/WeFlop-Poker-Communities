@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS PollOptions (
   id SERIAL PRIMARY KEY,
   poll_id integer NOT NULL references Polls(id) ON DELETE CASCADE,
   description text,
-  vote_total integer,
+  vote_total integer DEFAULT 0,
   UNIQUE (poll_id, description)
 );
 
@@ -65,26 +65,26 @@ CREATE TABLE IF NOT EXISTS Feedback (
   date_created timestamp NOT NULL DEFAULT NOW()
 );
 
-CREATE FUNCTION clear_stale_votes() RETURNS trigger
+CREATE OR REPLACE FUNCTION clear_stale_votes_and_increment_vote_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-      UPDATE PollOptions SET vote_total = vote_total + 1 WHERE id = new.poll_id;
-      DELETE FROM Votes WHERE poll_id = new.poll_id;
+      UPDATE PollOptions SET vote_total = vote_total + 1 WHERE id = new.option_id;
+      DELETE FROM Votes WHERE poll_id = new.poll_id AND cast_by=new.cast_by;
       RETURN NEW;
     END;
 $$;
 
 
-CREATE TRIGGER clear_stale_votes AFTER INSERT
+CREATE TRIGGER clear_stale_votes_and_increment_vote_count BEFORE INSERT
     ON Votes FOR EACH ROW EXECUTE PROCEDURE 
-    delete_stale_votes();
+    clear_stale_votes_and_increment_vote_count();
 
-CREATE FUNCTION decrement_vote_count() RETURNS trigger
+CREATE OR REPLACE FUNCTION decrement_vote_count() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
     BEGIN
-      UPDATE PollOptions SET vote_total = vote_total - 1 WHERE id = OLD.poll_id;
+      UPDATE PollOptions SET vote_total = vote_total - 1 WHERE id = OLD.option_id;
       RETURN OLD;
     END;
 $$;

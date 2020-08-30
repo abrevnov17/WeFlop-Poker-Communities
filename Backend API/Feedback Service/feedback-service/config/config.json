@@ -9,7 +9,7 @@
         "admin_base_url": "/admin",
         "public_base_url": "/api",
         "updates_route": "/updates",
-        "vote_route": "/votes",
+        "vote_route": "/vote",
         "send_feedback_route": "/send-feedback",
         "create_announcement_route": "/create-announcement",
         "create_poll_route": "/create-poll",

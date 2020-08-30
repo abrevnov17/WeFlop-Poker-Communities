@@ -68,13 +68,14 @@ function insertFeedback(user_id, body) {
 }
 
 // creates a new vote and returns id of created vote
-function createVote(user_id, option_id) {
+function createVote(user_id, option_id, poll_id) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Votes (option_id, cast_by) VALUES ($1, $2) RETURNING id', [option_id, user_id], (err, results) => {
+		pool.query('INSERT INTO Votes (option_id, cast_by, poll_id) VALUES ($1, $2, $3) RETURNING id', [option_id, user_id, poll_id], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
 		    }
+		    console.log(results)
 		    resolve(results.rows[0].id)
   		})
 	})
@@ -109,6 +110,25 @@ function getPollOptions(poll_id) {
 		    }
 
 		    resolve(results.rows)
+	  	})
+	})
+}
+
+// gets poll_id corresponding to poll_option
+function getPollIdFromOptionId(option_id) {
+	return new Promise(function (resolve, reject) {
+		pool.query('SELECT poll_id FROM PollOptions WHERE id = $1', [option_id], (err, results) => {
+		    if (err) {
+		      reject(err)
+		      return;
+		    }
+
+		    if (results.rows.length !== 1) {
+		    	reject("Invalid poll/option pair.")
+		    	return;
+		    }
+
+		    resolve(results.rows[0].poll_id)
 	  	})
 	})
 }
@@ -188,6 +208,7 @@ module.exports = {
 	createVote: createVote,
 	getVoteTotal: getVoteTotal,
 	getPollOptions: getPollOptions,
+	getPollIdFromOptionId: getPollIdFromOptionId,
 	deleteAnnouncement: deleteAnnouncement,
 	deletePoll: deletePoll,
 	getAnnouncements: getAnnouncements,

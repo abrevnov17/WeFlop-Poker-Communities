@@ -92,11 +92,15 @@ router.post(global.gConfig.vote_route, function(req, res) {
       return
     }
 
-   db.createVote(user_id, option_id).then(() => {
-    res.sendStatus(200);
-   }).catch(err =>
-    res.status(400).send({ error: err })
-  )
+   db.getPollIdFromOptionId(option_id).then(poll_id => {
+     db.createVote(user_id, option_id, poll_id).then(() => {
+      res.sendStatus(200);
+     }).catch(err =>
+      res.status(400).send({ error: "Unable to create vote. Please try again." })
+    )
+  }).catch(err =>
+      res.status(400).send({ error: "Unable to create vote. Please try again." })
+    )
 });
 
 // sends new feedback
