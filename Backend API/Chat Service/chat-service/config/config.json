@@ -9,10 +9,10 @@
     },
     "development": {
         "config_id": "development",
-        "port": 8002
+        "port": 8003
     },
     "production": {
         "config_id": "production",
-        "port": 8082
+        "port": 8083
     }
 }

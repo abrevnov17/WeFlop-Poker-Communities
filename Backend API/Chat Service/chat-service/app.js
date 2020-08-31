@@ -12,8 +12,8 @@ const enableWebSockets = require('express-ws');
 enableWebSockets(app);
 
 const MESSAGE_TYPE = {
-    JOIN: 0, // outgoing only
-    CHAT: 1,
+    CHAT: 0,
+    JOIN: 1, // outgoing only
     EXIT: 2 // outgoing only
 }
 
@@ -21,7 +21,6 @@ var roomIdToSockets = {};
 
 app.ws('/:room_id', function(ws, req) {
     const room_id = req.params.room_id;
-    console.log("connection opened with id: " + room_id)
 
     if (room_id in roomIdToSockets) {
         roomIdToSockets[room_id].push(ws);
@@ -29,28 +28,43 @@ app.ws('/:room_id', function(ws, req) {
         roomIdToSockets[room_id] = [ws];
     }
     
-    propogateMessageToRoom(room_id, constructJoinMessage())
+    // propogateMessageToRoom(room_id, constructJoinMessage())
 
     ws.on('message', function(data) {
-        const { type, payload } = JSON.parse(data);
+        const { type, username, payload } = JSON.parse(data);
 
         switch (type) {
             case MESSAGE_TYPE.CHAT:
-                if (payload === undefined || !verifyUsername(payload.message)) {
+                if (payload === undefined || !verifyMessage(payload.message) || !(verifyUsername(username))) {
                     ws.close(); // client is attempting to send an invalid message (should not be possible in standard use cases)
                 } else {
-                    propogateMessageToRoom(room_id, payload);
+                    let msg = new Object();
+                    msg.type = type;
+                    msg.username = username;
+                    msg.payload = new Object();
+                    msg.payload.message = payload.message;
+                    propogateMessageToRoom(room_id, msg);
                 }
                 break;
         }
     });
 
     ws.on('close', () => {
-        propogateMessageToRoom(room_id, constructDisconnectMessage())
+        // propogateMessageToRoom(room_id, constructDisconnectMessage())
     })
 });
 
-function verifyUsername(message) {
+// ensures username is defined
+function verifyUsername(username) {
+    if (username === undefined || username.length == 0) {
+        return false;
+    }
+
+    return true;
+}
+
+// ensures message is valid length and is defined
+function verifyMessage(message) {
     if (message === undefined || message.length > 200 || message.length == 0) {
         return false;
     }
@@ -60,12 +74,14 @@ function verifyUsername(message) {
 
 function propogateMessageToRoom(room_id, msg) {
     const socketsInRoom = roomIdToSockets[room_id];
-    for (socket in socketsInRoom) {
+
+    for (let i = 0; i < socketsInRoom.length; i++) {
+        const socket = socketsInRoom[i];
         try {
-            socketsInRoom[socket].send(msg);
+            socket.send(JSON.stringify(msg));
         } catch(err) {
             // socket must be closed or player has disconnected
-            roomIdToSockets[room_id][socket] = undefined;
+            roomIdToSockets[room_id][i] = undefined;
         }
     }
 
