@@ -20,7 +20,9 @@ router.post(global.gConfig.create_announcement_route, function(req, res, next) {
     return
   }
 
- db.insertAnnouncement(body).then(announcement_id => {
+ const bodyArr = JSON.parse(body);
+
+ db.insertAnnouncement(bodyArr).then(announcement_id => {
    res.status(200).send({ announcement_id: announcement_id});
  }).catch(err =>
    res.status(400).send({error: err})
@@ -41,9 +43,11 @@ router.post(global.gConfig.create_poll_route, function(req, res) {
     return
   }
 
+  const descriptionArr = JSON.parse(description); // parsing out array
+
   const optionsArr = JSON.parse(options); // parsing out array
 
-  db.insertPoll(description).then(poll_id => {
+  db.insertPoll(descriptionArr).then(poll_id => {
     db.appendOptionsToPoll(poll_id, optionsArr).then(() => {
       res.status(200).send({ poll_id: poll_id});
      }).catch(err =>

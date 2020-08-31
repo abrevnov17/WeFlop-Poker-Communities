@@ -6,8 +6,8 @@ const app = express();
 
 // configuring request body parsing
 var bodyParser = require('body-parser')
-app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 
 // importing our config module
 const config = require('./config/config');

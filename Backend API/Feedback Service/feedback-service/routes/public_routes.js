@@ -15,62 +15,50 @@ router.get(global.gConfig.updates_route, async function(req, res) {
   let polls = []
   let announcements = []
   // getting polls and announcements
-  const [poll_rows_promise, announcement_rows_promise] = await Promise.all([ db.getPolls(), db.getAnnouncements()])
-  
-  if (poll_rows_promise.state === "rejected") {
-    res.status(400).send({ error: poll_rows_promise.reason })
-    return;
-  }
-
-  if (announcement_rows_promise.state === "rejected") {
-    res.status(400).send({ error: announcement_rows_promise.reason })
-    return;
-  }
-
-  const poll_rows = poll_rows_promise.value;
-  const announcement_rows = announcement_rows_promise.value;
+  const [poll_rows, announcement_rows] = await Promise.all([ db.getPolls(), db.getAnnouncements()])
 
   // for each poll, we need to get the rest of the associated options
   // we construct a list of promises to be executed simulatenously
   const option_promises = []
 
   for (const row in poll_rows) {
-      option_promises.push(getPollOptions(poll_rows[row][id]))
-
       const poll_row = poll_rows[row];
+
+      option_promises.push(db.getPollOptions(poll_row.id))
+
       
       let poll = new Object();
-      poll.id = poll_row[id]
-      poll.description = poll_row[description]
-      poll.timestamp = poll_row[date_created]
+      poll.id = poll_row.id
+      poll.description = poll_row.description
+      poll.timestamp = poll_row.date_created
       poll.options = []
 
       polls.push(poll)
   }
 
-  const options_promises = await Promise.all(option_promises)
+  const poll_options = await Promise.all(option_promises)
 
-  for (const option_promise in options_promises) {
-    if (options_promises[option_promise].state === "rejected") {
-      res.status(400).send({ error: options_promises[option_promise].reason })
-      return;
+  for (let index = 0; index < poll_options.length; index++) {
+    const options = poll_options[index];
+
+    for (let o = 0; o < options.length; o++) {
+      const option_r = options[o];
+
+      let option = new Object();
+      option.id = option_r.id;
+      option.description = option_r.description;
+      option.vote_count = option_r.vote_total;
+      polls[index].options.push(option);
     }
-
-    const option_r = options_promises[option_promise].value;
-
-    let option = new Object();
-    option.description = option_r.description;
-    option.vote_count = option_r.vote_count;
-    polls[option_row].options.push(option);
   }
 
   for (const row in announcement_rows) {
     const announcement_row = announcement_rows[row];
 
     let announcement = new Object();
-    announcement.id = announcement_row[id];
-    announcement.body = announcement_row[body];
-    announcement.timestamp = announcement_row[date_created];
+    announcement.id = announcement_row.id;
+    announcement.body = announcement_row.body;
+    announcement.timestamp = announcement_row.date_created;
 
     announcements.push(announcement)
   }

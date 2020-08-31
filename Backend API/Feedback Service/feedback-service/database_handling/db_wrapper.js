@@ -5,9 +5,8 @@ const pool = require('./conn').pool;
 
 // creates a new announcement and returns id of created announcement
 function insertAnnouncement(body) {
-	// const bodyInput = array["line one", "line two"]
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO announcements (body) VALUES (ARRAY[$1]) RETURNING id', [body], (err, results) => {
+		pool.query('INSERT INTO announcements (body) VALUES ($1) RETURNING id', [body], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
@@ -21,7 +20,7 @@ function insertAnnouncement(body) {
 // creates a new poll and returns id of created poll
 function insertPoll(description) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Polls (description) VALUES (ARRAY[$1]) RETURNING id', [description], (err, results) => {
+		pool.query('INSERT INTO Polls (description) VALUES ($1) RETURNING id', [description], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
@@ -75,7 +74,6 @@ function createVote(user_id, option_id, poll_id) {
 		      reject(err)
 		      return;
 		    }
-		    console.log(results)
 		    resolve(results.rows[0].id)
   		})
 	})
