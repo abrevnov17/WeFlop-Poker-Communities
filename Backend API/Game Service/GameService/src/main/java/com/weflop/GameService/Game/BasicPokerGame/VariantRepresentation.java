@@ -1,4 +1,4 @@
-package com.weflop.Game.BasicPokerGame;
+package com.weflop.GameService.Game.BasicPokerGame;
 
 /**
  * Describes a representation of a standard Poker variant of the form 'a|b|c|d e

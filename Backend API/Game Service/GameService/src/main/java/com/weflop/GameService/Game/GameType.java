@@ -1,4 +1,4 @@
-package com.weflop.Game;
+package com.weflop.GameService.Game;
 
 /**
  * Enum describes all supported game types.

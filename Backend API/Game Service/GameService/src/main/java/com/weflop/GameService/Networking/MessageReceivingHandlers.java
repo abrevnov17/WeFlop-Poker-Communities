@@ -1,9 +1,9 @@
 package com.weflop.GameService.Networking;
 
 import com.google.gson.JsonObject;
-import com.weflop.Game.Action;
-import com.weflop.Game.ActionType;
-import com.weflop.Game.Game;
+import com.weflop.GameService.Game.Action;
+import com.weflop.GameService.Game.ActionType;
+import com.weflop.GameService.Game.Game;
 
 import java.io.IOException;
 

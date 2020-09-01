@@ -3,8 +3,8 @@ package com.weflop.GameService.Networking;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.weflop.Game.Player;
 import com.weflop.GameService.Database.DomainObjects.PlayerPOJO;
+import com.weflop.GameService.Game.Player;
 
 /**
  * CRUD object wrapping player information for another player (that is not the

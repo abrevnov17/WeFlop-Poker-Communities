@@ -6,10 +6,10 @@ import java.util.List;
 import org.springframework.web.socket.TextMessage;
 
 import com.google.gson.JsonObject;
-import com.weflop.Game.Action;
-import com.weflop.Game.Group;
-import com.weflop.Game.Player;
 import com.weflop.GameService.Database.DomainObjects.ActionPOJO;
+import com.weflop.GameService.Game.Action;
+import com.weflop.GameService.Game.Group;
+import com.weflop.GameService.Game.Player;
 
 public class MessageSendingHandlers {
 	/**

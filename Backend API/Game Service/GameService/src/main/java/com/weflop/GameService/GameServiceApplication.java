@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.weflop.Evaluation.TwoPlusTwo.TwoPlusTwoHandEvaluator;
-import com.weflop.Game.GameManager;
+import com.weflop.GameService.Game.GameManager;
 
 @SpringBootApplication
 public class GameServiceApplication {

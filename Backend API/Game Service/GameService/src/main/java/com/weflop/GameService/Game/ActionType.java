@@ -1,4 +1,4 @@
-package com.weflop.Game;
+package com.weflop.GameService.Game;
 
 /**
  * Enum describing all supported types of actions a user can make in the context

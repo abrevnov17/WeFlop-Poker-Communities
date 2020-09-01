@@ -2,16 +2,17 @@ package com.weflop.GameService.REST;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import com.weflop.Game.Game;
-import com.weflop.Game.GameFactory;
-import com.weflop.Game.GameManager;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
+import com.weflop.GameService.Game.Game;
+import com.weflop.GameService.Game.GameFactory;
+import com.weflop.GameService.Game.GameManager;
 import com.weflop.GameService.REST.Errors.ForbiddenOperationException;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -25,6 +26,9 @@ public class RESTController {
 
 	@Autowired
 	private GameRepository repository;
+	
+	@Autowired
+	private GameFactory factory;
 
 	@PostMapping("/api/create-game")
 	@ResponseBody
@@ -40,7 +44,7 @@ public class RESTController {
 			throw new IllegalArgumentException("Small blind must be greater than or equal to 0.5");
 		}
 
-		return GameFactory.generateStandardPokerGame(name, smallBlind, minBuyInBB, maxBuyInBB, userId); // returning id of newly created game
+		return factory.generateStandardPokerGame(name, smallBlind, minBuyInBB, maxBuyInBB, userId); // returning id of newly created game
 	}
 
 	@GetMapping("/api/game-metadata")
@@ -53,6 +57,8 @@ public class RESTController {
 			return game.getGameMetadata();
 		}
 		
+		System.out.println("Loading game from db to fetch metadata...");
+		
 		// otherwise, we need to load from database
 		Optional<GameDocument> gameDocument = repository.findById(gameId);
 		
@@ -62,7 +68,7 @@ public class RESTController {
 		
 	    GameDocument doc = gameDocument.get();
 		
-		return new GameMetadata(doc.getStartTime(), doc.getPot(), doc.getMetadata(), doc.getLedger());
+		return doc.toMetadata();
 	}
 	
 	@GetMapping("/api/ledger")
@@ -75,6 +81,8 @@ public class RESTController {
 			return game.getGameMetadata().getLedger();
 		}
 		
+		System.out.println("Loading game from db to fetch ledger...");
+
 		// otherwise, we need to load from database
 		Optional<GameDocument> gameDocument = repository.findById(gameId);
 		
@@ -89,16 +97,20 @@ public class RESTController {
 	
 	@GetMapping("/api/active-games")
 	@ResponseBody
-	public List<GameDocument> getActiveGames(@RequestParam(name = "user_id", required = true) String userId) {
+	public List<GameMetadata> getActiveGames(@RequestParam(name = "user_id", required = true) String userId) {
 		// fetching all active games by timestamp in descending order
-		return repository.findByIdAndActiveAndSort(userId, true, Sort.by(Sort.Direction.DESC, "startTime"));
+		return repository.findByIdAndActive(userId, true, Sort.by(Sort.Direction.DESC, "startTime"))
+				.stream().map(doc -> doc.toMetadata())
+				.collect(Collectors.toList());
 	}
 	
 	@GetMapping("/api/archived-games")
 	@ResponseBody
-	public List<GameDocument> getArchivedGames(@RequestParam(name = "user_id", required = true) String userId) {
+	public List<GameMetadata> getArchivedGames(@RequestParam(name = "user_id", required = true) String userId) {
 		// fetching all archived games by timestamp in descending order
-		return repository.findByIdAndActiveAndSort(userId, false, Sort.by(Sort.Direction.DESC, "startTime"));
+		return repository.findByIdAndActive(userId, false, Sort.by(Sort.Direction.DESC, "startTime"))
+				.stream().map(doc -> doc.toMetadata())
+				.collect(Collectors.toList());
 	}
 	
 	@PostMapping("/api/archive-game")
@@ -119,6 +131,8 @@ public class RESTController {
 			return;
 		}
 		
+		System.out.println("Loading game from db to archive game...");
+
 		// since game is not on this replica, we must load it from the db
 		Optional<GameDocument> gameDocument = repository.findById(gameId);
 		

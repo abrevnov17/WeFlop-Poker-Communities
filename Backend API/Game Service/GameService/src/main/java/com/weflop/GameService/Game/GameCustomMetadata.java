@@ -1,6 +1,6 @@
-package com.weflop.Game;
+package com.weflop.GameService.Game;
 
-import java.time.Duration;
+import org.springframework.data.annotation.PersistenceConstructor;
 
 /**
  * Defines class that acts as a wrapper for information that users can manually
@@ -15,7 +15,7 @@ public class GameCustomMetadata {
 	private String description;
 	private float smallBlind;
 	private float bigBlind;
-	private Duration turnDuration;
+	private long turnDuration; // seconds
 	private int tableSize;
 	private String createdBy;
 	private GameType type;
@@ -36,13 +36,14 @@ public class GameCustomMetadata {
 		this.bigBlind = smallBlind * 2.00f;
 		this.minBuyIn = minBuyInBB * this.bigBlind;
 		this.maxBuyIn = maxBuyInBB * this.bigBlind;
-		this.turnDuration = Duration.ofSeconds(60);
+		this.turnDuration = 60;
 		this.tableSize = 9;
 		this.createdBy = createdBy;
 		this.type = GameType.STANDARD_REPRESENTATION;
 	}
 
-	public GameCustomMetadata(String name, String description, float smallBlind, float bigBlind, Duration turnDuration,
+	@PersistenceConstructor
+	public GameCustomMetadata(String name, String description, float smallBlind, float bigBlind, long turnDuration,
 			int tableSize, String createdBy, GameType type, float minBuyIn, float maxBuyIn) {
 		this.name = name;
 		this.description = description;
@@ -88,11 +89,11 @@ public class GameCustomMetadata {
 		this.bigBlind = bigBlind;
 	}
 
-	public Duration getTurnDuration() {
+	public long getTurnDuration() {
 		return turnDuration;
 	}
 
-	public void setTurnDuration(Duration turnDuration) {
+	public void setTurnDuration(long turnDuration) {
 		this.turnDuration = turnDuration;
 	}
 

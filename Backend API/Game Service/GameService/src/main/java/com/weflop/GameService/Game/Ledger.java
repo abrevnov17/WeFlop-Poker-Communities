@@ -1,4 +1,4 @@
-package com.weflop.Game;
+package com.weflop.GameService.Game;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

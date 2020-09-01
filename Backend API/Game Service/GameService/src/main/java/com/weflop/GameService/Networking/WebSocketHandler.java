@@ -14,11 +14,11 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.weflop.Game.Game;
-import com.weflop.Game.GameFactory;
-import com.weflop.Game.GameManager;
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
+import com.weflop.GameService.Game.Game;
+import com.weflop.GameService.Game.GameFactory;
+import com.weflop.GameService.Game.GameManager;
 
 @Component
 public class WebSocketHandler extends TextWebSocketHandler {
@@ -29,6 +29,9 @@ public class WebSocketHandler extends TextWebSocketHandler {
 	
 	@Autowired
 	private GameRepository repository;
+	
+	@Autowired 
+	private GameFactory factory;
 
 	@Override
 	public void handleTextMessage(WebSocketSession session, TextMessage message)
@@ -52,7 +55,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 			}
 			
 		    GameDocument doc = gameDocument.get();
-			game = GameFactory.fromDocument(doc);
+			game = factory.fromDocument(doc);
 		}
 
 		JsonObject payload = received.get("payload").getAsJsonObject();

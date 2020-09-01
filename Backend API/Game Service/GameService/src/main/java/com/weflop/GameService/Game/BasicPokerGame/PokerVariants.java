@@ -1,4 +1,4 @@
-package com.weflop.Game.BasicPokerGame;
+package com.weflop.GameService.Game.BasicPokerGame;
 
 /**
  * Contains static methods that are used to get representations of poker

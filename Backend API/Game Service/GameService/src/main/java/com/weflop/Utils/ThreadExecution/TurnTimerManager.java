@@ -1,6 +1,6 @@
 package com.weflop.Utils.ThreadExecution;
 
-import com.weflop.Game.AbstractGame;
+import com.weflop.GameService.Game.AbstractGame;
 
 /**
  * Provides a method that handles when a turn timer expires.

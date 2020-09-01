@@ -2,7 +2,7 @@ package com.weflop.GameService.REST;
 
 import java.util.Map;
 
-import com.weflop.Game.GameCustomMetadata;
+import com.weflop.GameService.Game.GameCustomMetadata;
 
 /**
  * POJO class wrapping game metadata exposed by our REST API.
@@ -24,6 +24,8 @@ public class GameMetadata {
 		this.customMetadata = customMetadata;
 		this.ledger = ledger;
 	}
+	
+	/* Getters and Setters */
 
 	public long getStartTimestamp() {
 		return startTimestamp;

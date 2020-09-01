@@ -1,4 +1,4 @@
-package com.weflop.Game;
+package com.weflop.GameService.Game;
 
 import org.springframework.util.Assert;
 import org.springframework.web.socket.WebSocketSession;

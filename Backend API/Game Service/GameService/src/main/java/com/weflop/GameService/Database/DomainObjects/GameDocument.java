@@ -7,7 +7,8 @@ import java.util.Map;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.weflop.Game.GameCustomMetadata;
+import com.weflop.GameService.Game.GameCustomMetadata;
+import com.weflop.GameService.REST.GameMetadata;
 
 /**
  * CRUD object containing game information as stored on database.
@@ -69,6 +70,14 @@ public class GameDocument {
 		this.active = active;
 		this.round = round;
 		this.epoch = epoch;
+	}
+	
+	/** Retrieves an instance of GameMetadata from object
+	 * 
+	 * @return GameMetadata instance
+	 */
+	public GameMetadata toMetadata() {
+		return new GameMetadata(this.startTime, this.pot, this.metadata, this.ledger);
 	}
 
 	// getters and setters

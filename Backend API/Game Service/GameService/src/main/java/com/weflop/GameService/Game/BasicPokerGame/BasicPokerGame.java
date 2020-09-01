@@ -1,4 +1,4 @@
-package com.weflop.Game.BasicPokerGame;
+package com.weflop.GameService.Game.BasicPokerGame;
 
 import java.time.Instant;
 
@@ -9,16 +9,17 @@ import org.springframework.util.Assert;
 import com.weflop.Cards.Deck;
 import com.weflop.Cards.StandardDeck;
 import com.weflop.Evaluation.HandRankEvaluator;
-import com.weflop.Game.AbstractGame;
-import com.weflop.Game.Action;
-import com.weflop.Game.ActionType;
-import com.weflop.Game.BootReason;
-import com.weflop.Game.GameCustomMetadata;
-import com.weflop.Game.History;
-import com.weflop.Game.InitialState;
-import com.weflop.Game.Player;
-import com.weflop.Game.PlayerState;
+import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
+import com.weflop.GameService.Game.AbstractGame;
+import com.weflop.GameService.Game.Action;
+import com.weflop.GameService.Game.ActionType;
+import com.weflop.GameService.Game.BootReason;
+import com.weflop.GameService.Game.GameCustomMetadata;
+import com.weflop.GameService.Game.History;
+import com.weflop.GameService.Game.InitialState;
+import com.weflop.GameService.Game.Player;
+import com.weflop.GameService.Game.PlayerState;
 
 /**
  * This class represents an actual Poker game following the
@@ -33,15 +34,15 @@ public class BasicPokerGame extends AbstractGame {
 
 	/* Constructors */
 
-	public BasicPokerGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
-		super(metadata, evaluator);
+	public BasicPokerGame(GameRepository repository, GameCustomMetadata metadata, HandRankEvaluator evaluator) {
+		super(repository, metadata, evaluator);
 		this.variant = PokerVariants.getStandardHoldem(); // default is hold'em
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 
-	public BasicPokerGame(GameCustomMetadata metadata, VariantRepresentation variant, Deck deck,
+	public BasicPokerGame(GameRepository repository, GameCustomMetadata metadata, VariantRepresentation variant, Deck deck,
 			HandRankEvaluator evaluator) {
-		super(metadata, evaluator);
+		this(repository, metadata, evaluator);
 		this.variant = variant;
 		this.deck = deck;
 	}
@@ -50,8 +51,8 @@ public class BasicPokerGame extends AbstractGame {
 	 * Loads an existing game state as described by the game document.
 	 * @param document
 	 */
-	public BasicPokerGame(GameDocument document, HandRankEvaluator evaluator) {
-		super(document, evaluator);
+	public BasicPokerGame(GameRepository repository, GameDocument document, HandRankEvaluator evaluator) {
+		super(repository, document, evaluator);
 	}
 
 	/* Overrided methods from abstract superclass */
@@ -419,9 +420,6 @@ public class BasicPokerGame extends AbstractGame {
 
 		// start betting rounds
 		this.beginBettingRounds();
-
-		// spawning a thread that periodically saves the game
-		spawnSaveGameThread();
 		
 		// spawning a thread that updates player states
 		spawnSynchronizationPacketSendingThread();

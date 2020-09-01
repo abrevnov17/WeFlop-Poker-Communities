@@ -1,4 +1,4 @@
-package com.weflop.Game;
+package com.weflop.GameService.Game;
 
 import java.io.IOException;
 
@@ -10,7 +10,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.TextMessage;
 
 import com.weflop.Cards.Board;
@@ -71,12 +70,12 @@ public abstract class AbstractGame implements Game {
 	
 	private List<Player> beginningOfRoundActivePlayers; // keeps track of the active players at beginning of betting round
 
-	@Autowired
 	private GameRepository gameRepository;
 	
 	private int muckDecisionTime; // time in seconds that user has to make a decision about whether or not to muck cards
 	
-	protected AbstractGame(GameCustomMetadata metadata, HandRankEvaluator evaluator) {
+	protected AbstractGame(GameRepository gameRepository, GameCustomMetadata metadata, HandRankEvaluator evaluator) {
+		this.gameRepository = gameRepository;
 		this.metadata = metadata;
 		this.id = UUID.randomUUID();
 		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind(), 
@@ -94,6 +93,7 @@ public abstract class AbstractGame implements Game {
 		this.active = true;
 		this.beginningOfRoundActivePlayers = new ArrayList<Player>();
 		this.setMuckDecisionTime(5);
+		this.spawnSaveGameThread();
 	}
 	
 	/**
@@ -102,7 +102,8 @@ public abstract class AbstractGame implements Game {
 	 * Note: 
 	 * @param document
 	 */
-	protected AbstractGame(GameDocument document, HandRankEvaluator evaluator) {
+	protected AbstractGame(GameRepository gameRepository, GameDocument document, HandRankEvaluator evaluator) {
+		this.gameRepository = gameRepository;
 		this.id = UUID.fromString(document.getId());
 		this.metadata = document.getMetadata();
 		this.betController = new BetController(metadata.getSmallBlind(), metadata.getBigBlind(), 
@@ -118,6 +119,7 @@ public abstract class AbstractGame implements Game {
 		this.epoch = 0;
 		this.threadExecutor = Executors.newSingleThreadScheduledExecutor();
 		this.active = true;
+		this.spawnSaveGameThread();
 	}
 
 	@Override
@@ -173,8 +175,15 @@ public abstract class AbstractGame implements Game {
 	 * Flushes game state and history to database.
 	 */
 	synchronized public void flushToDatabase() {
-		GameDocument document = this.toDocument();
-		this.getGameRepository().save(document);
+		try {
+			GameDocument document = this.toDocument();			
+			this.gameRepository.save(document);
+			
+			System.out.println("Flushed to database...");
+		} catch(Exception e) {
+			System.out.println("Error flushing to database...");
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -198,7 +207,7 @@ public abstract class AbstractGame implements Game {
 		Runnable turnExpirationHandler = new TurnTimerManager(this, this.turn.getCount());
 
 		// resent packets after the duration of the turn has passed
-		threadExecutor.schedule(turnExpirationHandler, metadata.getTurnDuration().getSeconds(), TimeUnit.SECONDS);
+		threadExecutor.schedule(turnExpirationHandler, metadata.getTurnDuration(), TimeUnit.SECONDS);
 	}
 
 	/**
@@ -601,7 +610,7 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected GameDocument toDocument() {
 		return new GameDocument(id.toString(), metadata.getType().toValue(), started ? startTime.toEpochMilli() : -1, 
-				board.toPOJO(), betController.getTotalPot(), group.toPOJO(), turn.toPOJO(), history.toPOJO(), 
+				board.toPOJO(), betController.getTotalPot(), group.toPOJO(), started ? turn.toPOJO() : null, started ? history.toPOJO() : null, 
 				betController.getLedger().toPOJO(), this.metadata, this.active, this.round, this.epoch);
 	}
 	
