@@ -38,7 +38,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 			throws InterruptedException, IOException {
 		JsonObject received = GSON.fromJson(message.getPayload(), JsonObject.class);
 
-		MessageType type = MessageType.getTypeFromInt(received.get("type").getAsInt());
+		MessageType type = MessageType.fromValue(received.get("type").getAsString());
 
 		// getting game from game id in message
 		String gameId = received.get("game_id").getAsString();

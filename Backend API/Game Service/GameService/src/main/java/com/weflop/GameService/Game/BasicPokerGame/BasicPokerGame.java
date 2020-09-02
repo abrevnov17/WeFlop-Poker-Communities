@@ -244,8 +244,12 @@ public class BasicPokerGame extends AbstractGame {
 
 				this.getGroup().moveSpectatorToActivePlayer(participant, action.getSlot());
 				
-				getBetController().buyIn(participant, action.getValue());
-				
+				try {
+					getBetController().buyIn(participant, action.getValue());
+				} catch (Exception e) {
+					this.getGroup().movePlayerToSpectator(participant);
+				}
+								
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
 				
 				// propagate action to members of group
@@ -254,9 +258,10 @@ public class BasicPokerGame extends AbstractGame {
 				if (!this.isStarted() && this.getGroup().getPlayers().size() >= 2) {
 					// all players who joined before start should be active in first hand
 					getGroup().setAllPlayersCurrentAndFutureStates(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
-					
+
 					this.startGame();
 				}
+
 				participant.setDisplayingInactivity(false);
 			}
 			break;
@@ -407,6 +412,7 @@ public class BasicPokerGame extends AbstractGame {
 	}
 	
 	private void startGame() {
+		System.out.println("Starting game...");
 		// initializing game history
 		InitialState state = new InitialState(this.getGroup().getPlayers());
 		this.setHistory(new History(state, new ArrayList<Action>()));

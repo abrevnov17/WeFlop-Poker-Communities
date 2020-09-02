@@ -14,10 +14,6 @@ public enum MessageType {
 	public String toValue() {
 		return value;
 	}
-
-	public static MessageType getTypeFromInt(int type) {
-		return MessageType.values()[type];
-	}
 	
 	public static MessageType fromValue(String value) {  
 		if (value != null) {  
