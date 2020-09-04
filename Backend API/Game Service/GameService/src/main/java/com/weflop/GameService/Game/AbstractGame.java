@@ -350,12 +350,18 @@ public abstract class AbstractGame implements Game {
 		
 		List<Pot> pots = betController.endOfBettingRoundGeneratePots(this.group);
 
+		System.out.println("Calculating pots and winners...");
+
 		// calculate winners and distribute side pots
 		List<Propagatable> propagatables = betController.distributePots(group, pots);
+
+		System.out.println("Propagating pot messages...");
 
 		// propagate information about pot winners
 		this.propagate(propagatables);
 		
+		System.out.println("Propagating mucking option to relevant players...");
+
 		// we give players who folded during last round of betting the change to muck
 		for (Player player : this.beginningOfRoundActivePlayers) {
 			if (player.getState() == PlayerState.FOLDED) {
@@ -368,6 +374,7 @@ public abstract class AbstractGame implements Game {
 			}
 		}
 		
+		System.out.println("Initiating mucking period...");
 		this.initiateMucking();
 	}
 	
@@ -388,10 +395,14 @@ public abstract class AbstractGame implements Game {
 	 * After all players have decided to muck their cards or not, we wait for players to decide whether or not to muck.
 	 */
 	protected void continueEndingHandAfterMuck() {
+		System.out.println("Reached mucking timer...");
+
 		if (this.muckDecisionTime != 0) {
 			initiateMucking();
 			return;
 		}
+		
+		System.out.println("Continuing with game-ending...");
 		
 		this.printGameState();
 

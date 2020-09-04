@@ -172,6 +172,7 @@ public class BetController {
 
 		// while players with chips exist, we match players to side pots
 		float offset = 0;
+		this.totalPot = 0;
 		while (players.size() > 0) {
 			Pot pot = new Pot();
 
