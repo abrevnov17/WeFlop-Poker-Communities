@@ -291,12 +291,23 @@ public class Group {
 	}
 	
 	/**
-	 * Resets all player round-bets to zero (called at ends of rounds).
+	 * Resets all player round-bets to zero (called at ends of individual betting rounds).
 	 */
 	synchronized public void resetPlayerRoundBets() {
 		for (int i = 0; i < players.length; i++) {
 			if (players[i] != null) {
-				players[i].setCurrentRoundBet(0);
+				players[i].setRoundBet(0.00f);
+			}
+		}
+	}
+	
+	/**
+	 * Resets bets players made during overall hand.
+	 */
+	synchronized public void resetHandBets() {
+		for (int i = 0; i < players.length; i++) {
+			if (players[i] != null) {
+				players[i].setHandBet(0.00f);
 			}
 		}
 	}
@@ -347,6 +358,8 @@ public class Group {
 		// setting hand balances to be player total balance
 		for (Player player : this.getPlayers()) {
 			player.setHandBalance(player.getBalance());
+			player.setHandBet(0.00f);
+			player.setRoundBet(0.00f);
 		}
 	}
 	
@@ -366,7 +379,7 @@ public class Group {
 			}
 		}
 		
-		for (int i=0; i < players.length; i++) {
+		for (int i=1; i < players.length + 1; i++) {
 			this.smallBlindIndex = (this.dealerIndex + i) % players.length;
 			
 			if (players[smallBlindIndex] != null && players[smallBlindIndex].canBeBlind()) {
@@ -392,7 +405,7 @@ public class Group {
 			}
 		}
 		
-		for (int i=0; i < players.length; i++) {
+		for (int i=2; i < players.length + 2; i++) {
 			this.bigBlindIndex = (this.smallBlindIndex + i) % players.length;
 			
 			if (players[smallBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.BUSTED) {

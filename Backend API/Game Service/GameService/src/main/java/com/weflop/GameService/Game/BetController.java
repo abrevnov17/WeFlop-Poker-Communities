@@ -70,7 +70,7 @@ public class BetController {
 	synchronized public void raise(Player player, float bet) {
 		float amountRaised = bet - roundBet;
 
-		Assert.isTrue(player.getCurrentRoundBet() + bet > this.roundBet,
+		Assert.isTrue(player.getRoundBet() + bet > this.roundBet,
 				"You have to raise more than the prior bet");
 		Assert.isTrue(amountRaised >= 2.00f * lastRaise, "Insufficient raise amount");
 		Assert.isTrue(bet >= this.smallBlind, "Any bet must be at least as large as small blind.");
@@ -103,7 +103,7 @@ public class BetController {
 	 */
 	synchronized public void postBigBlinds(List<Player> playersPostingBigBlind) {		
 		for (Player player : playersPostingBigBlind) {
-			if (player.getCurrentRoundBet() != bigBlind) {
+			if (player.getRoundBet() != bigBlind) {
 				bet(player, bigBlind);
 			}
 		}
@@ -162,35 +162,33 @@ public class BetController {
 
 		// we subtract everyone's bets for this hand from the ledger
 		for (Player player : group.getActivePlayersInHand()) {
-			this.ledger.updateEntry(player.getId(), -player.getCurrentBet());
+			this.ledger.updateEntry(player.getId(), -player.getHandBet());
 		}
 
 		List<Player> players = new ArrayList<Player>(group.getActivePlayersInBettingRound());
 
 		// sorts players by their current bet in increasing order
-		Collections.sort(players, Comparator.comparingDouble(Player :: getCurrentBet));
+		Collections.sort(players, Comparator.comparingDouble(Player :: getHandBet));
 
-		// while players with chips exist, we match players to side pots and distribute
-		// chips to winners of pots:
+		// while players with chips exist, we match players to side pots
+		float offset = 0;
 		while (players.size() > 0) {
 			Pot pot = new Pot();
 
-			Player minStackPlayer = players.get(0); // peeking player with minimum currentBet
-			float minStack = minStackPlayer.getCurrentBet();
+			Player minStackPlayer = players.remove(0); // removing player with minimum currentBet
+			float minStack = minStackPlayer.getHandBet();
 
 			// updating pot
-			pot.setSize(minStack * players.size());
+			pot.setSize((minStack-offset) * players.size());
 			pot.addAllPlayers(players);
 
-			for (Player player : players) {
-				player.setCurrentBet(player.getCurrentBet() - minStack);
-			}
-
 			// removing all players with no more chips left after contributing to the current pot
-			players = players.stream().filter(player -> player.getCurrentBet() > 0).collect(Collectors.toList());
+			players = players.stream().filter(player -> player.getHandBet() != minStack).collect(Collectors.toList());
 
 			// updating total pot
-			this.totalPot += minStack;
+			this.totalPot += minStack-offset;
+			
+			offset += minStack;
 		}
 
 		return pots;
@@ -239,6 +237,7 @@ public class BetController {
 			// distribute funds to winner(s)
 			float perPlayerWinnings = pot.getSize() / playersWithMaxRank.size(); // split pot between winners
 			for (Player player : playersWithMaxRank) {
+				System.out.println("Player with id: " + player.getId() + " has won winnings: " + perPlayerWinnings);
 				player.increaseBalance(perPlayerWinnings);
 				ledger.updateEntry(player.getId(), perPlayerWinnings);
 			}

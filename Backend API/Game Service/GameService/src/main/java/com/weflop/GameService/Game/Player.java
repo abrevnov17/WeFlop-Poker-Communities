@@ -23,8 +23,8 @@ public class Player {
 	private float balance; // player total balance
 	private float handBalance; // balance available during hand
 	
-	private float currentBet;
-	private float currentRoundBet;
+	private float roundBet; // current bet for round
+	private float handBet; // current bet for hand
 	
 	private PlayerState state;
 	private PlayerState nextHandState; // state player will transition to at start of next hand
@@ -44,8 +44,8 @@ public class Player {
 		this.setHand(hand);
 		this.setBalance(0.00f);
 		this.setHandBalance(0.00f);
-		this.setCurrentBet(0.00f);
-		this.setCurrentRoundBet(0.00f);
+		this.setHandBet(0.00f);
+		this.setRoundBet(0.00f);
 		this.setState(PlayerState.WATCHING);
 		this.setNextHandState(PlayerState.WATCHING);
 		this.setPrevState(PlayerState.WATCHING);
@@ -55,12 +55,12 @@ public class Player {
 	}
 	
 	Player(String id, WebSocketSession session, Hand hand, float balance, 
-			float currentBet, float currentRoundBet, PlayerState state, 
+			float handBet, float roundBet, PlayerState state, 
 			PlayerState nextHandState, PlayerState prevState, int slot) {
 		this(id, session, hand);
 		this.setBalance(balance);
-		this.setCurrentBet(currentBet);
-		this.setCurrentRoundBet(currentRoundBet);
+		this.setHandBet(handBet);
+		this.setRoundBet(roundBet);
 		this.setState(state);
 		this.setNextHandState(nextHandState);
 		this.setPrevState(prevState);
@@ -98,8 +98,8 @@ public class Player {
 		Assert.isTrue(this.canBet(amount), "Insufficient funds to place bet");
 		this.balance -= amount;
 		this.handBalance -= amount;
-		this.currentBet += amount;
-		this.currentRoundBet += amount;
+		this.handBet += amount;
+		this.roundBet += amount;
 	}
 
 	/**
@@ -115,17 +115,17 @@ public class Player {
 		
 		updateCurrentAndFutureState(PlayerState.ALL_IN, PlayerState.WAITING_FOR_TURN);
 
-		this.currentBet += currHandBalance;
-		this.currentRoundBet += currHandBalance;
+		this.handBet += currHandBalance;
+		this.roundBet += currHandBalance;
 
 		return currHandBalance;
 	}
 
 	synchronized void convertToSpectator() {
 		this.discardHand();
-		this.currentBet = 0.00f;
+		this.handBet = 0.00f;
 		this.setState(PlayerState.WATCHING);
-		this.currentRoundBet = 0.00f;
+		this.roundBet = 0.00f;
 		this.setNextHandState(PlayerState.WATCHING);
 		this.slot = -1;
 	}
@@ -150,13 +150,13 @@ public class Player {
 	 * @return Corresponding instance of PlayerPOJO
 	 */
 	synchronized public PlayerPOJO toPOJO() {
-		return new PlayerPOJO(this.id, this.balance, this.handBalance, this.currentBet, this.currentRoundBet,
+		return new PlayerPOJO(this.id, this.balance, this.handBalance, this.handBet, this.roundBet,
 				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(), this.prevState.toValue(), this.slot);
 	}
 	
 	public static Player fromPOJO(PlayerPOJO pojo) {
 		return new Player(pojo.getId(), null, Hand.fromPOJO(pojo.getCards()), pojo.getBalance(), 
-				pojo.getCurrentBet(), pojo.getCurrentRoundBet(), PlayerState.fromValue(pojo.getState()), 
+				pojo.getHandBet(), pojo.getRoundBet(), PlayerState.fromValue(pojo.getState()), 
 				PlayerState.fromValue(pojo.getNextHandState()), 
 				PlayerState.fromValue(pojo.getPrevState()), pojo.getSlot());
 	}
@@ -292,12 +292,12 @@ public class Player {
 		this.balance = balance;
 	}
 
-	synchronized public float getCurrentBet() {
-		return currentBet;
+	synchronized public float getHandBet() {
+		return handBet;
 	}
 
-	public void setCurrentBet(float currentBet) {
-		this.currentBet = currentBet;
+	public void setHandBet(float handBet) {
+		this.handBet = handBet;
 	}
 
 	synchronized public PlayerState getState() {
@@ -325,12 +325,12 @@ public class Player {
 		this.slot = slot;
 	}
 
-	synchronized public float getCurrentRoundBet() {
-		return currentRoundBet;
+	synchronized public float getRoundBet() {
+		return roundBet;
 	}
 
-	synchronized public void setCurrentRoundBet(float currentRoundBet) {
-		this.currentRoundBet = currentRoundBet;
+	synchronized public void setRoundBet(float roundBet) {
+		this.roundBet = roundBet;
 	}
 
 	synchronized public Hand getHand() {

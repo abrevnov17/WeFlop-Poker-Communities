@@ -130,7 +130,7 @@ public class BasicPokerGame extends AbstractGame {
 				assertIsPlayerTurn(participant);
 
 				// update player balances and pot
-				float bet = getBetController().getRoundBet() - participant.getCurrentRoundBet();
+				float bet = getBetController().getRoundBet() - participant.getRoundBet();
 
 				// update player balances and pot
 				getBetController().bet(participant, bet); // verification performed in 'bet' method
@@ -153,7 +153,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				Player participant = this.getParticipantById(action.getPlayerId());
 
-				Assert.isTrue(getBetController().getRoundBet() == participant.getCurrentRoundBet(), "Current player bet is insufficient to check.");
+				Assert.isTrue(getBetController().getRoundBet() == participant.getRoundBet(), "Current player bet is insufficient to check.");
 
 				assertIsPlayerTurn(participant);
 				// update player state to waiting for turn
@@ -423,6 +423,10 @@ public class BasicPokerGame extends AbstractGame {
 
 		// propagate action that game has started to all members of group
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).build());
+		
+		// updating dealer index and cycling
+		this.getGroup().setDealerIndex(0);
+		this.getGroup().resetForNewHand();
 
 		// start betting rounds
 		this.beginBettingRounds();
@@ -502,14 +506,14 @@ public class BasicPokerGame extends AbstractGame {
 	 */
 	@Override
 	protected boolean isLastBettingRound() {
-		if (this.getRound() == this.variant.getBettingRounds()) {
+		if (this.getRound() + 1 == this.variant.getBettingRounds()) {
 			return true;
 		}
 
 		// if all players have folded or are all-in, the round is over
 		int count = 0;
 		for (Player player : getGroup().getPlayers()) {
-			if (!player.isActive()) {
+			if (player.isActive()) {
 				count++;
 			}
 		}

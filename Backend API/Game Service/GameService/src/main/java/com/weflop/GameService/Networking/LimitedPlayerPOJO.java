@@ -21,13 +21,13 @@ public class LimitedPlayerPOJO {
 
 	private float handBalance;
 
-	private float currentBet;
+	private float roundBet;
 	
 	private String state;
 
-	public LimitedPlayerPOJO(String id, float handBalance, float currentBet, String state) {
+	public LimitedPlayerPOJO(String id, float handBalance, float roundBet, String state) {
 		this.id = id;
-		this.currentBet = currentBet;
+		this.roundBet = roundBet;
 		this.state = state;
 	}
 
@@ -38,7 +38,7 @@ public class LimitedPlayerPOJO {
 	 * @return Corresponding instance of LimitedPlayerPOJO
 	 */
 	public static LimitedPlayerPOJO fromPlayerPOJO(PlayerPOJO player) {
-		return new LimitedPlayerPOJO(player.getId(), player.getHandBalance(), player.getCurrentBet(), player.getState());
+		return new LimitedPlayerPOJO(player.getId(), player.getHandBalance(), player.getRoundBet(), player.getState());
 	}
 	
 	public static List<LimitedPlayerPOJO> fromPlayers(List<Player> players) {
@@ -53,12 +53,12 @@ public class LimitedPlayerPOJO {
 		this.id = id;
 	}
 
-	public float getCurrentBet() {
-		return currentBet;
+	public float getRoundBet() {
+		return roundBet;
 	}
 
-	public void setCurrentBet(float currentBet) {
-		this.currentBet = currentBet;
+	public void setRoundBet(float roundBet) {
+		this.roundBet = roundBet;
 	}
 
 	public String getState() {

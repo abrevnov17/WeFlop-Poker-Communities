@@ -425,6 +425,8 @@ public abstract class AbstractGame implements Game {
 		this.setRound(0);
 		
 		this.muckDecisionTime = 5; // resetting mucking decision time
+		
+		this.betController.resetForNewBettingRound();
 
 		// resetting and starting next set of betting rounds
 		this.beginBettingRounds();
@@ -475,11 +477,12 @@ public abstract class AbstractGame implements Game {
 	synchronized protected void endBettingRound() {
 		group.resetPlayerRoundBets(); // setting all player round bets to 0
 		group.preparePlayerStatesForNewRound(); // prepares player states for new round
-
+		
 		if (this.isLastBettingRound()) {
 			this.endOfBettingRounds();
 		} else {
 			calculatePotsAndPropagateEndOfBettingRound();
+			this.betController.resetForNewBettingRound();
 			this.incrementRound();
 			this.beginNewRound();
 		}
@@ -535,7 +538,7 @@ public abstract class AbstractGame implements Game {
 			this.lock.unlock(); // preventing deadlock when calling performAction again
 			
 			Action action;
-			if (nextPlayer.getCurrentRoundBet() < betController.getRoundBet()) {
+			if (nextPlayer.getRoundBet() < betController.getRoundBet()) {
 				action = new Action.ActionBuilder(ActionType.FOLD).withPlayerId(this.turn.getPlayer().getId()).build();
 			} else {
 				action = new Action.ActionBuilder(ActionType.CHECK).withPlayerId(this.turn.getPlayer().getId()).build();
@@ -583,7 +586,7 @@ public abstract class AbstractGame implements Game {
 
 		for (Player player : this.group.getPlayers()) {
 			if (!(!player.canMoveInRound() 
-					|| player.getCurrentRoundBet() == betController.getRoundBet() )) {
+					|| player.getRoundBet() == betController.getRoundBet() )) {
 				return false;
 			}
 		}
@@ -739,9 +742,9 @@ public abstract class AbstractGame implements Game {
 		System.out.printf("Center cards: %s\n", WebSocketHandler.GSON.toJson(this.board));
 
 		for (Player player : group.getPlayers()) {
-			System.out.printf("Player id: %s, state: %s, round_bet: %.2f, current_bet: %.2f, balance: %.2f, slot: %d, cards: %s\n", 
-					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getCurrentRoundBet(), player.getCurrentBet(), 
-					player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getHand()));
+			System.out.printf("Player id: %s, state: %s, round_bet: %.2f, current_bet: %.2f, hand balance: %.2f, overall balance: %.2f, slot: %d, cards: %s\n", 
+					player.getId(), WebSocketHandler.GSON.toJson(player.getState()), player.getRoundBet(),
+					player.getHandBet(), player.getHandBalance(), player.getBalance(), player.getSlot(), WebSocketHandler.GSON.toJson(player.getHand()));
 		}
 
 		System.out.printf("Turn player id: %s\n", turn != null ? turn.getPlayer().getId() : "no turn exists yet");

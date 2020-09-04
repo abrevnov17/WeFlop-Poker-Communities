@@ -16,9 +16,9 @@ public class PlayerPOJO {
 	
 	private float handBalance;
 
-	private float currentBet;
+	private float handBet;
 	
-	private float currentRoundBet;
+	private float roundBet;
 
 	private List<CardPOJO> cards;
 
@@ -30,13 +30,13 @@ public class PlayerPOJO {
 
 	private int slot;
 
-	public PlayerPOJO(String id, float balance, float handBalance, float currentBet, float currentRoundBet, List<CardPOJO> cards, 
+	public PlayerPOJO(String id, float balance, float handBalance, float handBet, float roundBet, List<CardPOJO> cards, 
 			String state, String nextHandState, String prevState, int slot) {
 		this.id = id;
 		this.balance = balance;
 		this.handBalance = handBalance;
-		this.currentBet = currentBet;
-		this.currentRoundBet = currentRoundBet;
+		this.handBet = handBet;
+		this.roundBet = roundBet;;
 		this.cards = cards;
 		this.state = state;
 		this.nextHandState = nextHandState;
@@ -60,12 +60,12 @@ public class PlayerPOJO {
 		this.balance = balance;
 	}
 
-	public float getCurrentBet() {
-		return currentBet;
+	public float getHandBet() {
+		return handBet;
 	}
 
-	public void setCurrentBet(float currentBet) {
-		this.currentBet = currentBet;
+	public void setHandBet(float handBet) {
+		this.handBet = handBet;
 	}
 
 	public List<CardPOJO> getCards() {
@@ -92,12 +92,12 @@ public class PlayerPOJO {
 		this.slot = slot;
 	}
 
-	public float getCurrentRoundBet() {
-		return currentRoundBet;
+	public float getRoundBet() {
+		return roundBet;
 	}
 
-	public void setCurrentRoundBet(float currentRoundBet) {
-		this.currentRoundBet = currentRoundBet;
+	public void setRoundBet(float roundBet) {
+		this.roundBet = roundBet;
 	}
 
 	public String getNextHandState() {
