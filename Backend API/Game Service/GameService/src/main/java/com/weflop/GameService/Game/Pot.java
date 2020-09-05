@@ -2,7 +2,9 @@ package com.weflop.GameService.Game;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A Pot has a float value (indicating pot size) and a set of player ids
@@ -18,6 +20,12 @@ public class Pot {
 	public Pot() {
 		this.size = 0.00f;
 		this.players = new HashSet<Player>();
+	}
+	
+	@Override
+	public String toString() {
+		List<String> playerIds = this.players.stream().map(player -> player.getId()).collect(Collectors.toList());
+		return "Size: " + size + ", Players: " + playerIds.toString();
 	}
 	
 	public void addPlayer(Player player) {

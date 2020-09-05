@@ -357,6 +357,8 @@ public abstract class AbstractGame implements Game {
 
 		System.out.println("Propagating pot messages...");
 
+		System.out.println("Propagatables: " + propagatables.toString());
+		
 		// propagate information about pot winners
 		this.propagate(propagatables);
 		

@@ -175,21 +175,25 @@ public class BetController {
 		this.totalPot = 0;
 		while (players.size() > 0) {
 			Pot pot = new Pot();
+			
+			// all players still in player list are elligible for pot
+			pot.addAllPlayers(players);
 
 			Player minStackPlayer = players.remove(0); // removing player with minimum currentBet
 			float minStack = minStackPlayer.getHandBet();
 
 			// updating pot
 			pot.setSize((minStack-offset) * players.size());
-			pot.addAllPlayers(players);
 
 			// removing all players with no more chips left after contributing to the current pot
-			players = players.stream().filter(player -> player.getHandBet() != minStack).collect(Collectors.toList());
+			players = players.stream().filter(player -> player.getHandBet() > minStack).collect(Collectors.toList());
 
 			// updating total pot
 			this.totalPot += minStack-offset;
 			
 			offset += minStack;
+			
+			pots.add(pot);
 		}
 
 		return pots;
@@ -204,13 +208,16 @@ public class BetController {
 		Set<Player> playersForcedToShowCards = new HashSet<Player>();
 		Set<Player> playersWithOptionToMuck = new HashSet<Player>();
 
+		System.out.println("Distributing pots: " + pots);
 		for (Pot pot : pots) {
 			List<Player> playersWithMaxRank = new ArrayList<Player>();
 	
 			HandRank maxRank = null;
 			int startingSlot = lastRaisePlayer != null ? lastRaisePlayer.getSlot() : group.getSmallBlindIndex();
 	
+			System.out.println("Distributing a pot...");
 			for (Player player : group.getPlayersClockwiseFromSlot(startingSlot)) {
+				System.out.println("player id: " + player.getId());
 				if (pot.getPlayers().contains(player)) {
 					HandRank rank = player.getHand().getRank();
 					if (maxRank == null || rank.compareTo(maxRank) == 0) {
@@ -234,7 +241,10 @@ public class BetController {
 					}
 				}
 			}
-	
+			
+			
+			System.out.println("Players with max rank for pot with size: " + pot.getSize());
+			System.out.println(playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList()));
 			// distribute funds to winner(s)
 			float perPlayerWinnings = pot.getSize() / playersWithMaxRank.size(); // split pot between winners
 			for (Player player : playersWithMaxRank) {
