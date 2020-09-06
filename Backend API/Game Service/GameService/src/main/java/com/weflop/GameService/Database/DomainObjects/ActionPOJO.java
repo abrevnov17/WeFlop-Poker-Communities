@@ -2,6 +2,8 @@ package com.weflop.GameService.Database.DomainObjects;
 
 import java.util.List;
 
+import org.springframework.data.annotation.PersistenceConstructor;
+
 /**
  * CRUD object wrapping information about user actions
  * 
@@ -31,6 +33,7 @@ public class ActionPOJO {
 		this.value = value;
 	}
 
+	@PersistenceConstructor
 	public ActionPOJO(String type, String userId, long timestamp, Float value, List<CardPOJO> cards,
 			List<String> playerIds, Integer slot, List<Float> pots) {
 		this(type, userId, timestamp, value);

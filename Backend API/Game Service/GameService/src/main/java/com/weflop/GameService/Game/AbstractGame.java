@@ -334,18 +334,23 @@ public abstract class AbstractGame implements Game {
 	 */
 	synchronized protected void endOfBettingRounds() {
 		System.out.println("End of betting rounds...");
+		
+		// updating everyones ledgers
+		for (Player player : group.getActivePlayersInHand()) {
+			betController.getLedger().updateEntry(player.getId(), -player.getHandBet());
+		}
 
 		// calculate side pots
-		List<Player> activePlayers = group.getActivePlayersInBettingRound();
+		List<Player> activePlayersInBettingRound = group.getActivePlayersInBettingRound();
 		
 		// we only need to deal remaining cards and update hand ranks if > 1
 		// player has not folded
-		if (activePlayers.size() > 0) {
+		if (activePlayersInBettingRound.size() > 0) {
 			// need to deal the remaining center cards (if any)
 			this.dealRemainingCenterCards();
 			
 			// update hand ranks
-			this.updatePlayerHandRanks(activePlayers);
+			this.updatePlayerHandRanks(activePlayersInBettingRound);
 		}
 		
 		List<Pot> pots = betController.endOfBettingRoundGeneratePots(this.group);
@@ -446,7 +451,11 @@ public abstract class AbstractGame implements Game {
 	}
 
 	synchronized protected void bootPlayer(Player player, BootReason reason) {
+		
+		betController.getLedger().updateEntry(player.getId(), -player.getHandBalance());
+
 		this.group.movePlayerToSpectator(player);
+		
 		switch (reason) {
 		case INSUFFICIENT_FUNDS:
 			try {

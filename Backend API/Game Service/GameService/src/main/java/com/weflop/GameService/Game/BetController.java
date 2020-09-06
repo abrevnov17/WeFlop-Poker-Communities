@@ -160,11 +160,6 @@ public class BetController {
 	synchronized public List<Pot> endOfBettingRoundGeneratePots(Group group) {
 		List<Pot> pots = new ArrayList<Pot>(); // list of all pots
 
-		// we subtract everyone's bets for this hand from the ledger
-		for (Player player : group.getActivePlayersInHand()) {
-			this.ledger.updateEntry(player.getId(), -player.getHandBet());
-		}
-
 		List<Player> players = new ArrayList<Player>(group.getActivePlayersInBettingRound());
 
 		// sorts players by their current bet in increasing order

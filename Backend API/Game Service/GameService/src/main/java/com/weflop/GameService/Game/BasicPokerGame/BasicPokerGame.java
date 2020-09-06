@@ -268,6 +268,8 @@ public class BasicPokerGame extends AbstractGame {
 			case STAND: {
 				Player participant = this.getParticipantById(action.getPlayerId());
 
+				getBetController().getLedger().updateEntry(participant.getId(), -participant.getHandBalance());
+
 				// transition player from player to spectator
 				this.getGroup().movePlayerToSpectator(participant);
 
@@ -280,6 +282,8 @@ public class BasicPokerGame extends AbstractGame {
 			break;
 			case DISCONNECT: {
 				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				getBetController().getLedger().updateEntry(participant.getId(), -participant.getHandBalance());
 
 				this.getGroup().deleteParticipant(participant);
 
