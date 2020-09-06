@@ -255,12 +255,16 @@ public class Group {
 	synchronized public List<Player> getPlayersClockwiseFromSlot(int slot) {
 		List<Player> playersBeginningWithSlot = new ArrayList<Player>();
 		
-		for (int index = slot % players.length; 
-				index != ((slot - 1 % players.length) + players.length) % players.length; 
+		int index;
+		for (index = slot % players.length; 
+				index != (((slot - 1) % players.length) + players.length) % players.length; 
 				index = (index + 1) % players.length) {
 			if (players[index] != null)
 				playersBeginningWithSlot.add(players[index]);
 		}
+		
+		if (players[index] != null)
+			playersBeginningWithSlot.add(players[index]);
 		
 		return playersBeginningWithSlot;
 	}

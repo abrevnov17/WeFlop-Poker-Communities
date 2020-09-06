@@ -176,8 +176,8 @@ public class BetController {
 		while (players.size() > 0) {
 			Pot pot = new Pot();
 			
-			// all players still in player list are elligible for pot
-			pot.addAllPlayers(players);
+			// all players still in player list are eligible for pot
+			pot.addAllPlayers(new ArrayList<Player>(players));
 
 			Player minStackPlayer = players.remove(0); // removing player with minimum currentBet
 			float minStack = minStackPlayer.getHandBet();

@@ -41,7 +41,7 @@ public class Pot {
 	}
 	
 	public void addAllPlayers(Collection<Player> players) {
-		players.addAll(players);
+		this.players.addAll(players);
 	}
 	
 	/* Getters and Setters */
