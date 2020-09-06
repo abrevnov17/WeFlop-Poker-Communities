@@ -99,7 +99,7 @@ public class RESTController {
 	@ResponseBody
 	public List<GameMetadata> getActiveGames(@RequestParam(name = "user_id", required = true) String userId) {
 		// fetching all active games by timestamp in descending order
-		return repository.findByIdAndActive(userId, true, Sort.by(Sort.Direction.DESC, "startTime"))
+		return repository.findByMetadataCreatedByAndActive(userId, true, Sort.by(Sort.Direction.DESC, "startTime"))
 				.stream().map(doc -> doc.toMetadata())
 				.collect(Collectors.toList());
 	}
@@ -108,7 +108,7 @@ public class RESTController {
 	@ResponseBody
 	public List<GameMetadata> getArchivedGames(@RequestParam(name = "user_id", required = true) String userId) {
 		// fetching all archived games by timestamp in descending order
-		return repository.findByIdAndActive(userId, false, Sort.by(Sort.Direction.DESC, "startTime"))
+		return repository.findByMetadataCreatedByAndActive(userId, false, Sort.by(Sort.Direction.DESC, "startTime"))
 				.stream().map(doc -> doc.toMetadata())
 				.collect(Collectors.toList());
 	}
