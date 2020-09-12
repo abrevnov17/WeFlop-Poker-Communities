@@ -1,8 +1,10 @@
 node_modules
-Game Service/GameService/data/evaluator_data/TwoPlusTwo/HandRanks.dat
+GameService/GameService/data/evaluator_data/TwoPlusTwo/HandRanks.dat
 *.dat
-Backend API/Game Service/GameService/data/db/**
-Backend API/Accounts Service/data/db/**
-Backend API/Accounts Service/logfile
-Backend API/Feedback Service/data/db/**
-Backend API/Feedback Service/logfile
+Backend API/Services/Game Service/GameService/data/db/**
+Backend API/Services/ccounts Service/data/db/**
+Backend API/Services//Accounts Service/logfile
+Backend API/Services/Feedback Service/data/db/**
+Backend API/Services/Feedback Service/logfile
+Backend API/Services/Accounts Service/data/db/
+Backend API/Services/Game Service/database/data/

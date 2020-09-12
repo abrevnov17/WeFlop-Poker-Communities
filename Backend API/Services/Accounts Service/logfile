@@ -1,0 +1,52 @@
+/bin/sh: line 0: exec: 5000: not found
+2020-08-25 21:33:58.431 EDT [47972] LOG:  starting PostgreSQL 12.3 on x86_64-apple-darwin17.7.0, compiled by Apple LLVM version 10.0.0 (clang-1000.11.45.5), 64-bit
+2020-08-25 21:33:58.433 EDT [47972] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2020-08-25 21:33:58.433 EDT [47972] LOG:  listening on IPv6 address "::1", port 5432
+2020-08-25 21:33:58.434 EDT [47972] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2020-08-25 21:33:58.450 EDT [47973] LOG:  database system was shut down at 2020-08-25 21:29:47 EDT
+2020-08-25 21:33:58.456 EDT [47972] LOG:  database system is ready to accept connections
+2020-08-25 21:34:16.758 EDT [47972] LOG:  received fast shutdown request
+2020-08-25 21:34:16.760 EDT [47972] LOG:  aborting any active transactions
+2020-08-25 21:34:16.761 EDT [47972] LOG:  background worker "logical replication launcher" (PID 47979) exited with exit code 1
+2020-08-25 21:34:16.762 EDT [47974] LOG:  shutting down
+2020-08-25 21:34:16.768 EDT [47972] LOG:  database system is shut down
+/bin/sh: line 0: exec: 5000: not found
+2020-08-25 21:39:43.090 EDT [48047] LOG:  starting PostgreSQL 12.3 on x86_64-apple-darwin17.7.0, compiled by Apple LLVM version 10.0.0 (clang-1000.11.45.5), 64-bit
+2020-08-25 21:39:43.092 EDT [48047] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2020-08-25 21:39:43.092 EDT [48047] LOG:  listening on IPv6 address "::1", port 5432
+2020-08-25 21:39:43.093 EDT [48047] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2020-08-25 21:39:43.113 EDT [48048] LOG:  database system was shut down at 2020-08-25 21:34:16 EDT
+2020-08-25 21:39:43.123 EDT [48047] LOG:  database system is ready to accept connections
+2020-08-25 21:41:23.257 EDT [48047] LOG:  received fast shutdown request
+2020-08-25 21:41:23.257 EDT [48047] LOG:  aborting any active transactions
+2020-08-25 21:41:23.260 EDT [48047] LOG:  background worker "logical replication launcher" (PID 48054) exited with exit code 1
+2020-08-25 21:41:23.260 EDT [48049] LOG:  shutting down
+2020-08-25 21:41:23.273 EDT [48047] LOG:  database system is shut down
+2020-08-25 21:42:26.654 EDT [48080] LOG:  starting PostgreSQL 12.3 on x86_64-apple-darwin17.7.0, compiled by Apple LLVM version 10.0.0 (clang-1000.11.45.5), 64-bit
+2020-08-25 21:42:26.655 EDT [48080] LOG:  listening on IPv4 address "127.0.0.1", port 5000
+2020-08-25 21:42:26.655 EDT [48080] LOG:  listening on IPv6 address "::1", port 5000
+2020-08-25 21:42:26.656 EDT [48080] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5000"
+2020-08-25 21:42:26.670 EDT [48081] LOG:  database system was shut down at 2020-08-25 21:41:23 EDT
+2020-08-25 21:42:26.677 EDT [48080] LOG:  database system is ready to accept connections
+2020-08-25 21:43:00.502 EDT [48080] LOG:  received fast shutdown request
+2020-08-25 21:43:00.503 EDT [48080] LOG:  aborting any active transactions
+2020-08-25 21:43:00.505 EDT [48080] LOG:  background worker "logical replication launcher" (PID 48087) exited with exit code 1
+2020-08-25 21:43:00.505 EDT [48082] LOG:  shutting down
+2020-08-25 21:43:00.514 EDT [48080] LOG:  database system is shut down
+2020-08-26 23:13:03.407 EDT [50753] FATAL:  data directory "/Users/abrevnov/Documents/GitHub/WeFlop/Backend API/Accounts Service/data/db" has invalid permissions
+2020-08-26 23:13:03.407 EDT [50753] DETAIL:  Permissions should be u=rwx (0700) or u=rwx,g=rx (0750).
+2020-08-26 23:14:54.499 EDT [50776] LOG:  starting PostgreSQL 12.3 on x86_64-apple-darwin17.7.0, compiled by Apple LLVM version 10.0.0 (clang-1000.11.45.5), 64-bit
+2020-08-26 23:14:54.500 EDT [50776] LOG:  listening on IPv6 address "::1", port 5000
+2020-08-26 23:14:54.500 EDT [50776] LOG:  listening on IPv4 address "127.0.0.1", port 5000
+2020-08-26 23:14:54.501 EDT [50776] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5000"
+2020-08-26 23:14:54.531 EDT [50777] LOG:  database system was interrupted; last known up at 2020-08-25 22:19:58 EDT
+2020-08-26 23:14:54.592 EDT [50777] LOG:  database system was not properly shut down; automatic recovery in progress
+2020-08-26 23:14:54.598 EDT [50777] LOG:  redo starts at 0/16CF6A0
+2020-08-26 23:14:54.598 EDT [50777] LOG:  invalid record length at 0/16CF788: wanted 24, got 0
+2020-08-26 23:14:54.598 EDT [50777] LOG:  redo done at 0/16CF750
+2020-08-26 23:14:54.608 EDT [50776] LOG:  database system is ready to accept connections
+2020-08-26 23:15:04.446 EDT [50776] LOG:  received fast shutdown request
+2020-08-26 23:15:04.446 EDT [50776] LOG:  aborting any active transactions
+2020-08-26 23:15:04.448 EDT [50776] LOG:  background worker "logical replication launcher" (PID 50783) exited with exit code 1
+2020-08-26 23:15:04.449 EDT [50778] LOG:  shutting down
+2020-08-26 23:15:04.457 EDT [50776] LOG:  database system is shut down
