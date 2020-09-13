@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-service-app-deployment
+  labels:
+    app: chat-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-service-app
+  template:
+    metadata:
+      labels:
+        app: chat-service-app
+    spec:
+      containers:
+      - name: chat-service-app
+        image: weflop/chat-service-app
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8083

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts-service-app-deployment
+  labels:
+    app: accounts-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accounts-service-app
+  template:
+    metadata:
+      labels:
+        app: accounts-service-app
+    spec:
+      containers:
+      - name: accounts-service-app
+        image: weflop/accounts-service-app
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080

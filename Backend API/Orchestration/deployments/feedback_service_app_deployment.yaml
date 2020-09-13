@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback-service-app-deployment
+  labels:
+    app: feedback-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: feedback-service-app
+  template:
+    metadata:
+      labels:
+        app: feedback-service-app
+    spec:
+      containers:
+      - name: feedback-service-app
+        image: weflop/feedback-service-app
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8082
