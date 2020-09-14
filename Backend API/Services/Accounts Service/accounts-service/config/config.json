@@ -1,6 +1,6 @@
 {
     "database": {
-        "db_host": "localhost",
+        "db_host": "host.docker.internal",
         "db_identifier": "accounts",
         "db_password": "iKWKy2VmfPBUk5xn",
         "db_port": 5000

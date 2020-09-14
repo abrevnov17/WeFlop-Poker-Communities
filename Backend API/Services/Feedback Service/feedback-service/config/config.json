@@ -1,6 +1,6 @@
 {
     "database": {
-        "db_host": "localhost",
+        "db_host": "host.docker.internal",
         "db_identifier": "feedback",
         "db_password": "iKWKy2VmfPBUk5xnz8",
         "db_port": 5002
