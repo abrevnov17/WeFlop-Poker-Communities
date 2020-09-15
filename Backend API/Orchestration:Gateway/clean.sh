@@ -20,3 +20,6 @@ kubectl delete endpoints game-service-db
 
 # deleting autoscalers
 kubectl delete hpa game-service-app
+
+# deleting mappings
+kubectl delete mappings game-service-mapping
