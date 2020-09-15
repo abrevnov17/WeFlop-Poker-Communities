@@ -8,3 +8,5 @@ Backend API/Services/Feedback Service/data/db/**
 Backend API/Services/Feedback Service/logfile
 Backend API/Services/Accounts Service/data/db/
 Backend API/Services/Game Service/database/data/
+*.DS_Store
+*.DS_Store?
