@@ -19,4 +19,4 @@ kubectl apply -f services/game_service_db_service.yaml
 kubectl apply -f endpoints/game_service_db_endpoint.yaml
 
 # necessary autoscaling
-kubectl autoscale deployment game-service-app-deployment --cpu-percent=80 --min=1 --max=5
+kubectl autoscale deployment game-service-app --cpu-percent=80 --min=1 --max=5

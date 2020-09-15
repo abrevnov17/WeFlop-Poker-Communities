@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: game-service-app-deployment
+  name: game-service-app
   labels:
     app: game-service-app
 spec:
