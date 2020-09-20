@@ -39,7 +39,7 @@ public class RESTController {
 			@RequestParam(name = "min_buy_in", required = true) int minBuyInBB,
 			@RequestParam(name = "max_buy_in", required = true) int maxBuyInBB
 			) {
-
+		System.out.println("Creating game...");
 		if (smallBlind < 0.5) {
 			throw new IllegalArgumentException("Small blind must be greater than or equal to 0.5");
 		}

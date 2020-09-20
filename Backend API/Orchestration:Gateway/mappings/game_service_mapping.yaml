@@ -4,6 +4,6 @@ metadata:
   name: game-service-mapping
 spec:
   prefix: /game/
-  service: game-service
+  service: game-service-app
   allow_upgrade:
   - websocket

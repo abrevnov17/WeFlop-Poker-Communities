@@ -4,6 +4,6 @@ metadata:
  name: game-service-db
 subsets:
  - addresses:
-     - ip: 192.168.1.171
+     - ip: 127.0.0.1
    ports:
      - port: 27017

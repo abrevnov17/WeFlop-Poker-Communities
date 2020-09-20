@@ -1,0 +1,25 @@
+{
+    "redis": {
+        "redis_port": 6379,
+        "redis_host": "localhost"
+    },
+    "api": {
+        "base_url": "/api",
+        "create_session_route": "/create-session",
+        "fetch_user_route": "/user",
+        "create_game_route": "/create-game",
+        "fetch_game_route": "/game"
+    },
+    "default": {
+        "app_name": "Sessions Service",
+        "description": "Serves api calls related to session verification and game information (related to routing)."
+    },
+    "development": {
+        "config_id": "development",
+        "port": 8005
+    },
+    "production": {
+        "config_id": "production",
+        "port": 8085
+    }
+}

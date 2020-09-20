@@ -1,7 +1,6 @@
 {
     "api": {
-        "base_url": "/api",
-        "create_account_route": "/create-account"
+        "base_url": "/api"
     },
     "default": {
         "app_name": "Chat Service",

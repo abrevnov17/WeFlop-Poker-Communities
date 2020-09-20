@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sessions-service-app
+  labels:
+    app: sessions-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sessions-service-app
+  template:
+    metadata:
+      labels:
+        app: sessions-service-app
+    spec:
+      containers:
+      - name: csessions-service-app
+        image: weflop/sessions-service-app
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8085

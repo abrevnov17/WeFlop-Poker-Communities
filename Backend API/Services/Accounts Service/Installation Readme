@@ -42,5 +42,8 @@ Start Service:
 
 1. node app.js
 
+Build Docker Image:
+docker build -t weflop/accounts-service-app .
+
 
  
