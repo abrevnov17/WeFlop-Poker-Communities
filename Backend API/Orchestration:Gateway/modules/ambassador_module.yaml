@@ -2,6 +2,7 @@ apiVersion: getambassador.io/v2
 kind: Module
 metadata:
   name: ambassador
+  namespace: production
 spec:
   config:
     diagnostics:

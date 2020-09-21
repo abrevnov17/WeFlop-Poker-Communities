@@ -2,8 +2,9 @@ apiVersion: getambassador.io/v2
 kind: Mapping
 metadata:
   name: game-service-mapping
+  namespace: ambassador
 spec:
   prefix: /game/
-  service: game-service-app
+  service: game-service-app.production:8084
   allow_upgrade:
   - websocket

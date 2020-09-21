@@ -2,6 +2,7 @@ apiVersion: getambassador.io/v2
 kind: Host
 metadata:
   name: wildcard-host
+  namespace: ambassador
 spec:
   hostname: "*"
   acmeProvider:

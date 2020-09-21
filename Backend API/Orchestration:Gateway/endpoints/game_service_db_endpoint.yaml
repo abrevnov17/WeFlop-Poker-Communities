@@ -2,6 +2,7 @@ kind: Endpoints
 apiVersion: v1
 metadata:
  name: game-service-db
+ namespace: production
 subsets:
  - addresses:
      - ip: 127.0.0.1

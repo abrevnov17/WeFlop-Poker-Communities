@@ -2,6 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
  name: game-service-db
+ namespace: production
 spec:
  type: ClusterIP
  ports:

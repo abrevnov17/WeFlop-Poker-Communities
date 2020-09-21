@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: feedback-service-app
+  namespace: production
   labels:
     app: feedback-service-app
 spec:

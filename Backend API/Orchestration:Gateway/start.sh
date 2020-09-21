@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# creating namespaces
+for FILE in namespaces; do kubectl apply -f $FILE; done
+
 # generating deployments
 for FILE in deployments; do kubectl apply -f $FILE; done
 
