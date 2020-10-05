@@ -20,6 +20,7 @@ const MESSAGE_TYPE = {
 var roomIdToSockets = {};
 
 app.ws('/:room_id', function(ws, req) {
+    console.log("opened connection")
     const room_id = req.params.room_id;
 
     if (room_id in roomIdToSockets) {

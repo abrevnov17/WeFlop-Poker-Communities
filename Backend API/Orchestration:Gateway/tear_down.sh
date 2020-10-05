@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# establishing context
+kubectl config set-context --current --namespace=production
+
 # deleting deployments
 kubectl delete deployment game-service-app
 kubectl delete deployment accounts-service-app
@@ -32,7 +35,7 @@ kubectl delete hpa game-service-app
 kubectl delete mappings game-service-mapping
 
 # deleting hosts
-# kubectl delete hosts wildcard-host
+kubectl delete hosts wildcard-host
 
 # deleting modules
 kubectl delete modules ambassador
