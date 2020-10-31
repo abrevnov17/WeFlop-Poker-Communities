@@ -1,9 +1,7 @@
 // app.js - Main entrypoint to our server
 
-// setting up express app
-const express = require('express')
-
-var http = require('http'),
+// importing proxy-related modules
+const http = require('http'),
     httpProxy = require('http-proxy');
 
 // importing our config module
@@ -40,8 +38,14 @@ const gameProxy = new httpProxy.createProxyServer({
 const server = http.createServer(function (req, res) {
   const splitUrl = req.url.split("/");
 
+  console.log(parseCookies(req.headers.cookie));
   // getting service name
   const service = splitUrl[1];
+
+	collectRequestData(req, result => {
+        console.log(result);
+        res.end(`Parsed data belonging to ${result.test}`);
+   });
 
   // removing service name from path
   delete splitUrl[1]
@@ -49,16 +53,16 @@ const server = http.createServer(function (req, res) {
 
   switch(service) {
       case global.gConfig.accounts_service_endpoint:
-        accountsProxy.ws(req, socket, head);
+        accountsProxy.web(req, res);
         break;
       case global.gConfig.feedback_service_endpoint:
-        feedbackProxy.ws(req, socket, head);
+        feedbackProxy.web(req, res);
         break;
       case global.gConfig.chat_service_endpoint:
-        chatProxy.ws(req, socket, head);
+        chatProxy.web(req, res);
         break;
       case global.gConfig.game_service_endpoint:
-        gameProxy.ws(req, socket, head);
+        gameProxy.web(req, res);
         break;
       default:
         // service does not support this url

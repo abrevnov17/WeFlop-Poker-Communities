@@ -19,6 +19,10 @@
         "forgot_password_route": "/forgot-password",
         "change_password_route": "/change-password"
     },
+    "services": {
+        "sessions_service_host": "localhost",
+        "sessions_service_port": 8006
+    },
     "default": {
         "app_name": "Accounts Service",
         "description": "Serves api calls related to user authentication and account management."

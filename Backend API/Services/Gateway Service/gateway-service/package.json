@@ -19,6 +19,8 @@
     "express-ws": "^4.0.0",
     "http-proxy": "^1.18.1",
     "http-proxy-middleware": "^1.0.5",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.15",
+    "querystring": "^0.2.0",
+    "unirest": "^0.6.0"
   }
 }

@@ -9,6 +9,9 @@ const config = require('./../config/config');
 // importing module containing util functions to validate various input formats
 const inputValidator = require('./../utils/input_validation')
 
+// importing module used to communicate with sessions service
+const sessions = require('./../services/sessions_wrapper')
+
 // importing module that handles hashing / password comparisons
 const bcrypt = require('bcrypt');
 
@@ -87,8 +90,10 @@ router.post(global.gConfig.create_account_route, function(req, res) {
           res.status(500).send({ error: "Error generating session token. Try logging in.." })
         } else { 
           token = buff.toString('hex')
-				res.status(200).send({ userID: user_id, sessionID: token }); // success
-			}
+          sessions.createSession(user_id, token); // creating/updating session (asyncronous)
+            res.cookie("sessionID", token); // setting cookie
+            res.status(200).send({ userID: user_id }); // success
+        }
 		});
     }).catch(err =>
     res.status(500).send({ error: "Error creating account. Please retry." })
@@ -134,8 +139,9 @@ router.post(global.gConfig.login_route, function(req, res) {
             return;
           } else { 
             token = buff.toString('hex')
-
-            res.status(200).send({ userID: user_id, sessionID: token }); // success
+            sessions.createSession(user_id, token); // creating/updating session (asyncronous)
+            res.cookie("sessionID", token); // setting cookie
+            res.status(200).send({ userID: user_id }); // success
             return;
             }
         });

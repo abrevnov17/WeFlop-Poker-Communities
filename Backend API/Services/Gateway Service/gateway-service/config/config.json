@@ -10,7 +10,9 @@
         "chat_service_host": "localhost",
         "chat_service_port": 8003,
         "game_service_host": "localhost",
-        "game_service_port": 8005
+        "game_service_port": 8005,
+        "sessions_service_host": "localhost",
+        "sessions_service_port": 8006
     },
     "services": {
         "accounts_service_endpoint": "accounts",
