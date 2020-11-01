@@ -18,7 +18,6 @@ const TTL_SECONDS = 60 * 60 * 24; // expiration time for keys
 
 // Define the session creation route
 router.post(global.gConfig.create_session_route, function(req, res) {
-
   // parsing out request parameters
   const { session_id, user_id } = req.body
 

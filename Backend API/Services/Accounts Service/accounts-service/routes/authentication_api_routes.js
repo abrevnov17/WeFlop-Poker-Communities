@@ -159,19 +159,26 @@ router.post(global.gConfig.login_route, function(req, res) {
 // Define the delete_account route
 router.delete(global.gConfig.delete_account_route, function(req, res) {
   // parsing out request parameters
-  const { user_id } = req.body
+  const sessionID = req.cookies["session_id"]
 
-  // ensuring user_id was provided as a parameter
-  if (user_id == undefined) {
-   res.status(400).send({ error: "Missing required parameter: 'user_id'" });
-   return
- }
+  if (sessionID == undefined) {
+    res.status(400).send({ error: "Missing required cookie: 'session_id'" });
+    return
+  }
 
- db.deleteEntry(user_id).then(() => {
-   res.sendStatus(200);
- }).catch(err =>
- res.status(400).send({ error: err })
- )
+  sessions.getUserFromSession(sessionID, user_id => {
+     // ensuring user_id was provided as a parameter
+      if (user_id == undefined) {
+       res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+       return
+     }
+
+     db.deleteEntry(user_id).then(() => {
+       res.sendStatus(200);
+     }).catch(err =>
+     res.status(400).send({ error: err })
+     )
+  })
 });
 
 // Define route that returns whether a username is taken or not

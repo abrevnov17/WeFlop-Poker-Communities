@@ -9,6 +9,9 @@ const config = require('./../config/config');
 // import module that acts as a wrapper to interactions with our database
 const db = require('./../database_handling/db_wrapper')
 
+// importing module used to communicate with sessions service
+const sessions = require('./../services/sessions_wrapper')
+
 // route that retrieves all updates (announcements and polls)
 // in order of time (recent first)
 router.get(global.gConfig.updates_route, async function(req, res) {
@@ -68,10 +71,11 @@ router.get(global.gConfig.updates_route, async function(req, res) {
 
 // casts a vote
 router.post(global.gConfig.vote_route, function(req, res) {
-    const { user_id, option_id } = req.body;
+    const { option_id } = req.body;
+    const sessionID = req.cookies["session_id"]
 
-    if (user_id == undefined) {
-      res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+    if (sessionID == undefined) {
+      res.status(400).send({ error: "Missing required cookie: 'session_id'" });
       return
     }
 
@@ -80,23 +84,27 @@ router.post(global.gConfig.vote_route, function(req, res) {
       return
     }
 
-   db.getPollIdFromOptionId(option_id).then(poll_id => {
-     db.createVote(user_id, option_id, poll_id).then(() => {
-      res.sendStatus(200);
-     }).catch(err =>
-      res.status(400).send({ error: "Unable to create vote. Please try again." })
-    )
-  }).catch(err =>
-      res.status(400).send({ error: "Unable to create vote. Please try again." })
-    )
+  sessions.getUserFromSession(sessionID, user_id => {
+     db.getPollIdFromOptionId(option_id).then(poll_id => {
+       db.createVote(user_id, option_id, poll_id).then(() => {
+        res.sendStatus(200);
+       }).catch(err =>
+        res.status(400).send({ error: "Unable to create vote. Please try again." })
+      )
+    }).catch(err =>
+        res.status(400).send({ error: "Unable to create vote. Please try again." })
+      )
+  })
 });
 
 // sends new feedback
 router.post(global.gConfig.send_feedback_route, function(req, res) {
-    const { user_id, body } = req.body;
+    const { body } = req.body;
 
-    if (user_id == undefined) {
-      res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+    const sessionID = req.cookies["session_id"]
+
+    if (sessionID == undefined) {
+      res.status(400).send({ error: "Missing required cookie: 'session_id'" });
       return
     }
 
@@ -105,27 +113,31 @@ router.post(global.gConfig.send_feedback_route, function(req, res) {
       return
     }
 
-   db.insertFeedback(user_id, body).then(() => {
-    res.sendStatus(200);
-   }).catch(err =>
-    res.status(400).send({ error: err })
-  )
+  sessions.getUserFromSession(sessionID, user_id => {
+     db.insertFeedback(user_id, body).then(() => {
+      res.sendStatus(200);
+     }).catch(err =>
+      res.status(400).send({ error: err })
+    )
+  })
 });
 
 // gets all posts the user has voted for
 router.get(global.gConfig.get_votes_route, function(req, res) {
-    const { user_id } = req.body;
+    const sessionID = req.cookies["session_id"]
 
-    if (user_id == undefined) {
-      res.status(400).send({ error: "Missing required parameter: 'user_id'" });
+    if (sessionID == undefined) {
+      res.status(400).send({ error: "Missing required cookie: 'session_id'" });
       return
     }
 
-   db.getUserVotes(user_id).then(votes => {
-    res.status(200).send({votes: votes});
-   }).catch(err =>
-    res.status(400).send({ error: err })
-  )
+  sessions.getUserFromSession(sessionID, user_id => {
+     db.getUserVotes(user_id).then(votes => {
+      res.status(200).send({votes: votes});
+     }).catch(err =>
+      res.status(400).send({ error: err })
+    )
+  })
 });
 
 module.exports = router;

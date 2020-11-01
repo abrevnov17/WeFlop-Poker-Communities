@@ -18,6 +18,10 @@
         "delete_poll_route": "/delete-poll",
         "admin_password": "SCGk38FydUgPDrWD"
     },
+    "services": {
+        "sessions_service_host": "localhost",
+        "sessions_service_port": 8005
+    },
     "default": {
         "app_name": "Feedback Service",
         "description": "Serves api calls related to user user feedback."

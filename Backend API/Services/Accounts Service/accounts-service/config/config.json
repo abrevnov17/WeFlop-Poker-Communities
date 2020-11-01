@@ -21,7 +21,7 @@
     },
     "services": {
         "sessions_service_host": "localhost",
-        "sessions_service_port": 8006
+        "sessions_service_port": 8005
     },
     "default": {
         "app_name": "Accounts Service",
