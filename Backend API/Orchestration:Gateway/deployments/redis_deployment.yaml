@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sessions_service_deployment.yaml
+  name: redis
   namespace: production
   labels:
     app: redis       

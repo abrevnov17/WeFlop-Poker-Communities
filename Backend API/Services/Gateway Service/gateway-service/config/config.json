@@ -3,15 +3,15 @@
         "base_url": "/api"
     },
     "proxy": {
-        "accounts_service_host": "localhost",
+        "accounts_service_host": "accounts-service-app",
         "accounts_service_port": 8000,
-        "feedback_service_host": "localhost",
+        "feedback_service_host": "feedback-service-app",
         "feedback_service_port": 8002,
-        "chat_service_host": "localhost",
+        "chat_service_host": "chat-service-app",
         "chat_service_port": 8003,
-        "game_service_host": "localhost",
+        "game_service_host": "game-service-app",
         "game_service_port": 8005,
-        "sessions_service_host": "localhost",
+        "sessions_service_host": "sessions-service-app",
         "sessions_service_port": 8006
     },
     "services": {

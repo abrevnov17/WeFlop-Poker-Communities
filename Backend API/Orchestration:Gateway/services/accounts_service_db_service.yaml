@@ -1,11 +1,11 @@
 kind: Service
 apiVersion: v1
 metadata:
- name: game-service-db
+ name: accounts-service-db
  namespace: production
 spec:
  type: ExternalName
  externalName: host.docker.internal
  ports:
   - name: port
-    port: 27017
+    port: 5000

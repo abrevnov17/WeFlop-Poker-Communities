@@ -16,7 +16,7 @@ spec:
         app: sessions-service-app
     spec:
       containers:
-      - name: csessions-service-app
+      - name: sessions-service-app
         image: weflop/sessions-service-app
         imagePullPolicy: Never
         ports:

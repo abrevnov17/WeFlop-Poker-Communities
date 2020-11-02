@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: game-service-app
+  name: gateway-service-app
   namespace: production
   labels:
-    app: game-service-app
+    app: gateway-service-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: game-service-app
+      app: gateway-service-app
   template:
     metadata:
       labels:
-        app: game-service-app
+        app: gateway-service-app
     spec:
       containers:
-      - name: game-service-app
-        image: weflop/game-service-app
+      - name: gateway-service-app
+        image: weflop/gateway-service-app
         imagePullPolicy: Never
         ports:
-        - containerPort: 8084
+        - containerPort: 8080

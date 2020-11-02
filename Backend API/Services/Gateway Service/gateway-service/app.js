@@ -38,14 +38,10 @@ const gameProxy = new httpProxy.createProxyServer({
 const server = http.createServer(function (req, res) {
   const splitUrl = req.url.split("/");
 
-  console.log(parseCookies(req.headers.cookie));
   // getting service name
   const service = splitUrl[1];
 
-	collectRequestData(req, result => {
-        console.log(result);
-        res.end(`Parsed data belonging to ${result.test}`);
-   });
+  console.log("recieved request to service: " + service)
 
   // removing service name from path
   delete splitUrl[1]
