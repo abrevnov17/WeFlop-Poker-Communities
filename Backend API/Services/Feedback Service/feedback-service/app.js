@@ -5,9 +5,13 @@ const express = require('express')
 const app = express();
 
 // configuring request body parsing
-var bodyParser = require('body-parser')
+const bodyParser = require('body-parser')
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
+
+// configuring cookie parsing
+const cookieParser = require('cookie-parser')
+app.use(cookieParser()); 
 
 // importing our config module
 const config = require('./config/config');

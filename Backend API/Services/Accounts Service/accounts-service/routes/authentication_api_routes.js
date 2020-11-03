@@ -96,7 +96,7 @@ router.post(global.gConfig.create_account_route, function(req, res) {
         }
 		});
     }).catch(err =>
-    res.status(500).send({ error: "Error creating account. Please retry." })
+      res.status(500).send({ error: "Error creating account. Please retry." })
     )
   });
 });
@@ -161,17 +161,17 @@ router.delete(global.gConfig.delete_account_route, function(req, res) {
   // parsing out request parameters
   const sessionID = req.cookies["session_id"]
 
-  if (sessionID == undefined) {
+  if (sessionID === undefined || sessionID == "" || sessionID == null) {
     res.status(400).send({ error: "Missing required cookie: 'session_id'" });
     return
   }
 
   sessions.getUserFromSession(sessionID, user_id => {
      // ensuring user_id was provided as a parameter
-      if (user_id == undefined) {
-       res.status(400).send({ error: "Missing required parameter: 'user_id'" });
-       return
-     }
+    if (user_id === undefined || user_id == "" || user_id == null) {
+      res.status(401).send({error: "Invalid session id"})
+      return;
+    }
 
      db.deleteEntry(user_id).then(() => {
        res.sendStatus(200);
