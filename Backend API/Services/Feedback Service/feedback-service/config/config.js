@@ -13,9 +13,8 @@ const environmentConfig = config[environment];
 const apiConfig = config.api
 const securityConfig = config.security
 const databaseConfig = config.database
-const servicesConfig = config.services
 
-const finalConfig = _.merge(defaultConfig, environmentConfig, apiConfig, databaseConfig, servicesConfig);
+const finalConfig = _.merge(defaultConfig, environmentConfig, apiConfig, databaseConfig);
 
 // defining a global config variable
 global.gConfig = finalConfig;

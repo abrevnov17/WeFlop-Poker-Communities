@@ -12,6 +12,9 @@ RUN npm install
 RUN npm ci --only=production
 ENV NODE_ENV production
 
+ENV PGDATABASE accounts
+ENV PGUSER weflop
+
 # Bundle app source
 COPY . .
 

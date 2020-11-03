@@ -19,9 +19,7 @@ kubectl delete service feedback-service-app
 kubectl delete service chat-service-app
 kubectl delete service gateway-service-app
 kubectl delete service sessions-service-app
-kubectl delete service redis
-
-kubectl delete service game-service-app
+kubectl delete service redis-master
 
 # deleting external services
 kubectl delete service game-service-db

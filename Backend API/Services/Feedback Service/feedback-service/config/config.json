@@ -18,20 +18,20 @@
         "delete_poll_route": "/delete-poll",
         "admin_password": "SCGk38FydUgPDrWD"
     },
-    "services": {
-        "sessions_service_host": "sessions-service-app",
-        "sessions_service_port": 8005
-    },
     "default": {
         "app_name": "Feedback Service",
         "description": "Serves api calls related to user user feedback."
     },
     "development": {
         "config_id": "development",
-        "port": 8002
+        "port": 8002,
+        "sessions_service_host": "sessions-service-app",
+        "sessions_service_port": 8005
     },
     "production": {
         "config_id": "production",
-        "port": 8082
+        "port": 8082,
+        "sessions_service_host": "sessions-service-app",
+        "sessions_service_port": 8085
     }
 }

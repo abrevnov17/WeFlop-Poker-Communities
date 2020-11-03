@@ -1,6 +1,7 @@
 {
     "database": {
         "db_host": "host.docker.internal",
+        "db_username": "weflop",
         "db_identifier": "accounts",
         "db_password": "iKWKy2VmfPBUk5xn",
         "db_port": 5000
@@ -19,20 +20,20 @@
         "forgot_password_route": "/forgot-password",
         "change_password_route": "/change-password"
     },
-    "services": {
-        "sessions_service_host": "sessions-service-app",
-        "sessions_service_port": 8005
-    },
     "default": {
         "app_name": "Accounts Service",
         "description": "Serves api calls related to user authentication and account management."
     },
     "development": {
         "config_id": "development",
-        "port": 8000
+        "port": 8000,
+        "sessions_service_host": "sessions-service-app",
+        "sessions_service_port": 8005
     },
     "production": {
         "config_id": "production",
-        "port": 8080
+        "port": 8080,
+        "sessions_service_host": "sessions-service-app",
+        "sessions_service_port": 8085
     }
 }
