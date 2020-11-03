@@ -13,10 +13,14 @@ function createSession(userId, sessionId) {
 
 	unirest
 	  .post("http://" + options.hostname + ":" + options.port + options.path)
-	  .headers({'Accept': 'application/json'})
-	  .send({"session_id": sessionId, "user_id": userId})
-	  .then(function (response) {
-	    console.log(response)
+	  .type('json')
+	  .send({session_id: sessionId, user_id: userId}).then(function (response) {
+	  	if (response.body === undefined) {
+	  		callback(null);
+	  	}
+	    else {
+	    	callback(response.body["user_id"])
+	    }
 	  })
 }
 
@@ -30,10 +34,15 @@ function getUserFromSession(sessionId, callback) {
 
 	unirest
 	  .get("http://" + options.hostname + ":" + options.port + options.path)
-	  .headers({'Accept': 'application/json'})
-	  .send({"session_id": sessionId})
+  	  .type('json')
+      .send({session_id: sessionId})
 	  .then(function (response) {
-	    callback(response.body["user_id"])
+	  	if (response.body === undefined) {
+	  		callback(null);
+	  	}
+	    else {
+	    	callback(response.body["user_id"])
+	    }
 	  })
 }
 

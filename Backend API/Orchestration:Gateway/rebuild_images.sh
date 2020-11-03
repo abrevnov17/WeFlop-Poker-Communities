@@ -14,3 +14,6 @@ docker build -t weflop/chat-service-app ../Services/Chat\ Service/chat-service/
 
 # building game service image
 docker build -t weflop/game-service-app ../Services/Game\ Service/GameService/
+
+# building sessions service image
+docker build -t weflop/sessions-service-app ../Services/Sessions\ Service/sessions-service/
