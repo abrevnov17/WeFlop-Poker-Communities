@@ -159,10 +159,10 @@ router.post(global.gConfig.login_route, function(req, res) {
 // Define the delete_account route
 router.delete(global.gConfig.delete_account_route, function(req, res) {
   // parsing out request parameters
-  const sessionID = req.cookies["session_id"]
+  const sessionID = req.cookies["sessionID"]
 
   if (sessionID === undefined || sessionID == "" || sessionID == null) {
-    res.status(400).send({ error: "Missing required cookie: 'session_id'" });
+    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 

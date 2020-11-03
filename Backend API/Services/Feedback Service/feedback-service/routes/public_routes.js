@@ -72,10 +72,10 @@ router.get(global.gConfig.updates_route, async function(req, res) {
 // casts a vote
 router.post(global.gConfig.vote_route, function(req, res) {
   const { option_id } = req.body;
-  const sessionID = req.cookies["session_id"]
+  const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'session_id'" });
+    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 
@@ -105,10 +105,10 @@ router.post(global.gConfig.vote_route, function(req, res) {
 router.post(global.gConfig.send_feedback_route, function(req, res) {
   const { body } = req.body;
 
-  const sessionID = req.cookies["session_id"]
+  const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'session_id'" });
+    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 
@@ -132,10 +132,10 @@ router.post(global.gConfig.send_feedback_route, function(req, res) {
 
 // gets all posts the user has voted for
 router.get(global.gConfig.get_votes_route, function(req, res) {
-  const sessionID = req.cookies["session_id"]
+  const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'session_id'" });
+    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 
