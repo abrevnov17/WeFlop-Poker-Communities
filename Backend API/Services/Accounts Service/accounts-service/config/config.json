@@ -1,6 +1,6 @@
 {
     "database": {
-        "db_host": "host.docker.internal",
+        "db_host": "accounts-service-db",
         "db_username": "weflop",
         "db_identifier": "accounts",
         "db_password": "iKWKy2VmfPBUk5xn",

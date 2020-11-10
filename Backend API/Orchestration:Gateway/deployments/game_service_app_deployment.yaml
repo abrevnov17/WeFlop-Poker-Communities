@@ -18,6 +18,6 @@ spec:
       containers:
       - name: game-service-app
         image: weflop/game-service-app
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8084

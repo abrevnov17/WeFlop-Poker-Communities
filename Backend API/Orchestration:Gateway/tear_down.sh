@@ -27,7 +27,9 @@ kubectl delete service accounts-service-db
 kubectl delete service feedback-service-db
 
 # deleting endpoints
-# kubectl delete endpoints game-service-db
+kubectl delete endpoints game-service-db
+kubectl delete endpoints accounts-service-db
+kubectl delete endpoints feedback-service-db
 
 # deleting autoscalers
 # kubectl delete hpa game-service-app

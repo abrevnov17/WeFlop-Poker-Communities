@@ -4,7 +4,8 @@ metadata:
  name: accounts-service-db
  namespace: production
 spec:
-  ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000
+ type: ExternalName
+ externalName: host.docker.internal
+ ports:
+  - name: port
+    port: 5000

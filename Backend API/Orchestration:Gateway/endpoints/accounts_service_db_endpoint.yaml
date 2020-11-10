@@ -5,6 +5,6 @@ metadata:
  namespace: production
 subsets:
  - addresses:
-     - ip: host.docker.internal
+     - ip: 10.128.0.7
    ports:
      - port: 5000

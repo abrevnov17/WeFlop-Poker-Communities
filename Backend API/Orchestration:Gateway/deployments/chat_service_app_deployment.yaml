@@ -18,6 +18,6 @@ spec:
       containers:
       - name: chat-service-app
         image: weflop/chat-service-app
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8083

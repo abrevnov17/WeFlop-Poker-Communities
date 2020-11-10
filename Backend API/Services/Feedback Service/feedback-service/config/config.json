@@ -1,8 +1,8 @@
 {
     "database": {
-        "db_host": "host.docker.internal",
+        "db_host": "feedback-service-db",
         "db_identifier": "feedback",
-        "db_password": "iKWKy2VmfPBUk5xnz8",
+        "db_password": "iKWKy2VmfPBUk5xn",
         "db_port": 5002
     },
     "api": {

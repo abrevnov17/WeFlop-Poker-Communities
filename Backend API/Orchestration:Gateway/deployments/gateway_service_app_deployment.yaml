@@ -18,6 +18,6 @@ spec:
       containers:
       - name: gateway-service-app
         image: weflop/gateway-service-app
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080

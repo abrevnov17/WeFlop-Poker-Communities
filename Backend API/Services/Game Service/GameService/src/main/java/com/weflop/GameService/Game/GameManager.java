@@ -34,7 +34,7 @@ public class GameManager {
 		System.out.println("Spawning garbage collection thread...");
 
 		// resent packets after the duration of the turn has passed
-		threadExecutor.scheduleAtFixedRate(garbageCollector, 3, 3, TimeUnit.MINUTES);
+		// threadExecutor.scheduleAtFixedRate(garbageCollector, 3, 3, TimeUnit.MINUTES);
 	}
 	
 	/**

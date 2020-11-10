@@ -18,6 +18,6 @@ spec:
       containers:
       - name: accounts-service-app
         image: weflop/accounts-service-app
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080

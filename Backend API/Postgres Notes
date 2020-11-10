@@ -1,0 +1,24 @@
+sudo apt-get update
+
+sudo apt-get -y install postgresql postgresql-client postgresql-contrib
+
+sudo -s
+
+sudo -u postgres psql postgres
+
+sudo pg_createcluster 11 accounts -p 5000
+sudo pg_ctlcluster 11 accounts start
+sudo -u postgres psql -p 5000
+CREATE ROLE weflop SUPERUSER CREATEROLE CREATEDB PASSWORD 'iKWKy2VmfPBUk5xn' LOGIN;
+sudo -u postgres psql -p 5000 -U weflop -h 127.0.0.1 -d accounts
+
+sudo pg_createcluster 11 feedback -p 5002
+sudo pg_ctlcluster 11 feedback start
+sudo -u postgres psql -p 5002
+CREATE ROLE weflop SUPERUSER CREATEROLE CREATEDB PASSWORD 'iKWKy2VmfPBUk5xn' LOGIN;
+sudo -u postgres psql -p 5002 -U weflop -h 127.0.0.1 -d feedback
+
+
+pg_lsclusters
+
+sudo pg_dropcluster --stop 11 main

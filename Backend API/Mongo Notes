@@ -1,0 +1,1 @@
+mongod --fork --logpath game_service_db_logs --dbpath game_service_db/

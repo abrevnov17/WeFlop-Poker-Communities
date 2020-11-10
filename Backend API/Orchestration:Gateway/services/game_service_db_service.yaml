@@ -4,8 +4,7 @@ metadata:
  name: game-service-db
  namespace: production
 spec:
- type: ExternalName
- externalName: host.docker.internal
- ports:
-  - name: port
-    port: 27017
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017

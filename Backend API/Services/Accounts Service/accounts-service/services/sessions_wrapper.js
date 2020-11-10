@@ -15,12 +15,7 @@ function createSession(userId, sessionId) {
 	  .post("http://" + options.hostname + ":" + options.port + options.path)
 	  .type('json')
 	  .send({session_id: sessionId, user_id: userId}).then(function (response) {
-	  	if (response.body === undefined) {
-	  		callback(null);
-	  	}
-	    else {
-	    	callback(response.body["user_id"])
-	    }
+	  	console.log(response)
 	  })
 }
 

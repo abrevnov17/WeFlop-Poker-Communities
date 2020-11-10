@@ -10,3 +10,4 @@ Backend API/Services/Accounts Service/data/db/
 Backend API/Services/Game Service/database/data/
 *.DS_Store
 *.DS_Store?
+.DS_Store

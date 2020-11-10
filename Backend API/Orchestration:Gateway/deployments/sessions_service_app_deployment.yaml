@@ -18,6 +18,6 @@ spec:
       containers:
       - name: sessions-service-app
         image: weflop/sessions-service-app
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         ports:
         - containerPort: 8085

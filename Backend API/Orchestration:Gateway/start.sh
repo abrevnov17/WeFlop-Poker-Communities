@@ -13,7 +13,7 @@ for FILE in deployments; do kubectl apply -f $FILE; done
 for FILE in services; do kubectl apply -f $FILE; done
 
 # creating external endpoints
-# for FILE in endpoints; do kubectl apply -f $FILE; done
+for FILE in endpoints; do kubectl apply -f $FILE; done
 
 # necessary autoscaling
 # kubectl autoscale deployment game-service-app --cpu-percent=80 --min=1 --max=5

@@ -38,6 +38,8 @@ router.post(global.gConfig.create_account_route, function(req, res) {
   // parsing out request parameters
   const { username, email, password} = req.body
 
+  console.log("recieved request to create account with params")
+
   // ensuring username, email, and password are provided
 
   if (username == undefined) {
@@ -96,7 +98,7 @@ router.post(global.gConfig.create_account_route, function(req, res) {
         }
 		});
     }).catch(err =>
-      res.status(500).send({ error: "Error creating account. Please retry." })
+      res.status(500).send({ error: "Error creating account. Please retry.", err: err })
     )
   });
 });
@@ -235,8 +237,8 @@ router.post(global.gConfig.forgot_password_route, function(req, res) {
           }
 
           // sending email
-          const text = "Please click on the following link to reset your password: http://localhost:8000/change-password?token=" + token;
-          const html = "Please click on the following link to reset your password: <a href='http://localhost:8000/change-password?token=" + token + "'>Reset Password</a>"
+          const text = "Please click on the following link to reset your password: http://localhost:3000/reset/reset-password?token=" + token;
+          const html = "Please click on the following link to reset your password: <a href='http://localhost:3000/reset/reset-password?token=" + token + "'>Reset Password</a>"
           const mailOptions = {
             from: 'weflop3@gmail.com',
             to: email,

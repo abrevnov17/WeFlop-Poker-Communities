@@ -4,7 +4,8 @@ metadata:
  name: feedback-service-db
  namespace: production
 spec:
-  ports:
-    - protocol: TCP
-      port: 5002
-      targetPort: 5002
+ type: ExternalName
+ externalName: host.docker.internal
+ ports:
+  - name: port
+    port: 5002
