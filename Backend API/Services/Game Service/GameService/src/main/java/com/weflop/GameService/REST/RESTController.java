@@ -1,6 +1,6 @@
 package com.weflop.GameService.REST;
 
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.weflop.GameService.Database.GameRepository;
 import com.weflop.GameService.Database.DomainObjects.GameDocument;
@@ -16,10 +16,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 @RestController
 public class RESTController {
@@ -33,11 +29,11 @@ public class RESTController {
 	@PostMapping("/api/create-game")
 	@ResponseBody
 	public String createGame(
-			@RequestParam(name = "user_id", required = true) String userId,
-			@RequestParam(name = "name", required = true) String name,
-			@RequestParam(name = "small_blind", required = true) float smallBlind,
-			@RequestParam(name = "min_buy_in", required = true) int minBuyInBB,
-			@RequestParam(name = "max_buy_in", required = true) int maxBuyInBB
+			@RequestBody(name = "user_id", required = true) String userId,
+			@RequestBody(name = "name", required = true) String name,
+			@RequestBody(name = "small_blind", required = true) float smallBlind,
+			@RequestBody(name = "min_buy_in", required = true) int minBuyInBB,
+			@RequestBody(name = "max_buy_in", required = true) int maxBuyInBB
 			) {
 		System.out.println("Creating game...");
 		if (smallBlind < 0.5) {
@@ -116,8 +112,8 @@ public class RESTController {
 	@PostMapping("/api/archive-game")
 	@ResponseBody
 	public void archiveGame(
-			@RequestParam(name = "user_id", required = true) String userId,
-			@RequestParam(name = "game_id", required = true) String gameId
+			@RequestBody(name = "user_id", required = true) String userId,
+			@RequestBody(name = "game_id", required = true) String gameId
 			) {
 		
 		// first, we check to see if game is being hosted on this replica

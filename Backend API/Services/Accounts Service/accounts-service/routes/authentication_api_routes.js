@@ -186,7 +186,7 @@ router.delete(global.gConfig.delete_account_route, function(req, res) {
 // Define route that returns whether a username is taken or not
 router.get(global.gConfig.username_taken_route, function(req, res) {
   // parsing out request parameters
-  const { username } = req.body
+  const { username } = req.query
 
   // ensuring user_id was provided as a parameter
   if (username == undefined) {
