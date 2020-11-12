@@ -5,6 +5,6 @@ metadata:
  namespace: production
 subsets:
  - addresses:
-     - ip: 35.223.136.249
+     - ip: 10.128.0.7
    ports:
      - port: 5002
