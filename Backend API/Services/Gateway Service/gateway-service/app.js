@@ -1,41 +1,65 @@
 // app.js - Main entrypoint to our server
 
 // importing proxy-related modules
-const http = require('http'),
+const https = require('https'),
     httpProxy = require('http-proxy');
+
+const fs = require('fs')
 
 // importing our config module
 const config = require('./config/config');
 
 const accountsProxy = new httpProxy.createProxyServer({
   target: {
+    protocol: 'https:',
     host: global.gConfig.accounts_service_host,
-    port: global.gConfig.accounts_service_port
-  }
+    port: global.gConfig.accounts_service_port,
+  },
+  ssl: {
+    key: fs.readFileSync('perm/server.key'),
+    cert: fs.readFileSync('perm/server.cert'),
+  },
+  secure: false
 });
 
 const feedbackProxy = new httpProxy.createProxyServer({
   target: {
+    protocol: 'https:',
     host: global.gConfig.feedback_service_host,
     port: global.gConfig.feedback_service_port
-  }
+  },
+  ssl: {
+    key: fs.readFileSync('perm/server.key'),
+    cert: fs.readFileSync('perm/server.cert'),
+  },
+  secure: false
 });
 
 const chatProxy = new httpProxy.createProxyServer({
   target: {
+    protocol: 'https:',
     host: global.gConfig.chat_service_host,
     port: global.gConfig.chat_service_port
-  }
+  },
+  ssl: {
+    key: fs.readFileSync('perm/server.key'),
+    cert: fs.readFileSync('perm/server.cert'),
+  },
+  secure: false
 });
 
 const gameProxy = new httpProxy.createProxyServer({
   target: {
+    protocol: 'http:',
     host: global.gConfig.game_service_host,
     port: global.gConfig.game_service_port
   }
 });
 
-const server = http.createServer(function (req, res) {
+const server = https.createServer({
+  key: fs.readFileSync('perm/server.key'),
+  cert: fs.readFileSync('perm/server.cert')
+}, function (req, res) {
   const splitUrl = req.url.split("/");
 
   // getting service name

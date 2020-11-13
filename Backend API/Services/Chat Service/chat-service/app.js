@@ -4,6 +4,9 @@
 const express = require('express')
 const app = express();
 
+const https = require('https')
+const fs = require('fs')
+
 // importing our config module
 const config = require('./config/config');
 
@@ -106,6 +109,9 @@ function constructDisconnectMessage(username) {
 
 
 // listening for requests to port defined in our config
-app.listen(global.gConfig.port, () => {
+https.createServer({
+  key: fs.readFileSync('perm/server.key'),
+  cert: fs.readFileSync('perm/server.cert')
+}, app).listen(global.gConfig.port, () => {
     console.log(`${global.gConfig.app_name} listening on port ${global.gConfig.port}`);
 });

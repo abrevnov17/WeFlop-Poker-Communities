@@ -93,7 +93,7 @@ router.post(global.gConfig.create_account_route, function(req, res) {
         } else { 
           token = buff.toString('hex')
           sessions.createSession(user_id, token); // creating/updating session (asyncronous)
-            res.cookie("sessionID", token); // setting cookie
+            res.cookie("sessionID", token, {sameSite: "none", secure: true}); // setting cookie
             res.status(200).send({ userID: user_id }); // success
         }
 		});
@@ -142,7 +142,7 @@ router.post(global.gConfig.login_route, function(req, res) {
           } else { 
             token = buff.toString('hex')
             sessions.createSession(user_id, token); // creating/updating session (asyncronous)
-            res.cookie("sessionID", token); // setting cookie
+            res.cookie("sessionID", token, {sameSite: "none", secure: true}); // setting cookie
             res.status(200).send({ userID: user_id }); // success
             return;
             }
