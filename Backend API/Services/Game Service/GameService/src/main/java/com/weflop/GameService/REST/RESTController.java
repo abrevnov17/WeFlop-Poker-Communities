@@ -26,6 +26,12 @@ public class RESTController {
 	@Autowired
 	private GameFactory factory;
 
+	@GetMapping("/")
+	@ResponseBody
+	public String getGameMetadata() {
+		return "Welcome to the Game Service API!";
+	}
+
 	@PostMapping("/api/create-game")
 	@ResponseBody
 	public String createGame(

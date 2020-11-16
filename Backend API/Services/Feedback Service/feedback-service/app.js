@@ -4,9 +4,6 @@
 const express = require('express')
 const app = express();
 
-const https = require('https')
-const fs = require('fs')
-
 // configuring request body parsing
 const bodyParser = require('body-parser')
 app.use(bodyParser.json())
@@ -27,10 +24,12 @@ app.use(global.gConfig.admin_base_url, middleware.adminVerification);
 app.use(global.gConfig.public_base_url, require('./routes/public_routes'));
 app.use(global.gConfig.admin_base_url, require('./routes/admin_routes'));
 
+
+app.get('/', function(req, res) {
+  res.send('Welcome to the Feedback Service api!');
+});
+
 // listening for requests to port defined in our config
-https.createServer({
-  key: fs.readFileSync('perm/server.key'),
-  cert: fs.readFileSync('perm/server.cert')
-}, app).listen(global.gConfig.port, () => {
+app.listen(global.gConfig.port, () => {
     console.log(`${global.gConfig.app_name} listening on port ${global.gConfig.port}`);
 });

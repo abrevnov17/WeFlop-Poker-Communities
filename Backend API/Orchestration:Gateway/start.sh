@@ -15,6 +15,9 @@ for FILE in services; do kubectl apply -f $FILE; done
 # creating external endpoints
 for FILE in endpoints; do kubectl apply -f $FILE; done
 
+# creating ingress objects
+for FILE in ingress; do kubectl apply -f $FILE; done
+
 # necessary autoscaling
 # kubectl autoscale deployment game-service-app --cpu-percent=80 --min=1 --max=5
 

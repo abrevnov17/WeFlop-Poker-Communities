@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: backend-ingress
+  namespace: production
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    kubernetes.io/ingress.global-static-ip-name: "weflop-ip"
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: weflop.com
+    http:
+      paths:
+      - path: /accounts(/|$)(.*)
+        pathType: Prefix
+        backend:
+          serviceName: accounts-service-app
+          servicePort: 8080
+      - path: /feedback(/|$)(.*)
+        pathType: Prefix
+        backend:
+          serviceName: feedback-service-app
+          servicePort: 8082
+      - path: /game(/|$)(.*)
+        pathType: Prefix
+        backend:
+          serviceName: game-service-app
+          servicePort: 8084
