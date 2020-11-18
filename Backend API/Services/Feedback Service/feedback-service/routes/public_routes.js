@@ -32,6 +32,7 @@ router.get(global.gConfig.updates_route, async function(req, res) {
 
     let poll = new Object();
     poll.id = poll_row.id
+    poll.title = poll_row.title
     poll.description = poll_row.description
     poll.timestamp = poll_row.date_created
     poll.options = []
@@ -60,6 +61,7 @@ router.get(global.gConfig.updates_route, async function(req, res) {
 
     let announcement = new Object();
     announcement.id = announcement_row.id;
+    announcement.title = announcement_row.title;
     announcement.body = announcement_row.body;
     announcement.timestamp = announcement_row.date_created;
 

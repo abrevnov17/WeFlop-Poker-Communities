@@ -4,9 +4,9 @@
 const pool = require('./conn').pool;
 
 // creates a new announcement and returns id of created announcement
-function insertAnnouncement(body) {
+function insertAnnouncement(title, body) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO announcements (body) VALUES ($1) RETURNING id', [body], (err, results) => {
+		pool.query('INSERT INTO announcements (title, body) VALUES ($1, $2) RETURNING id', [title, body], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;
@@ -18,9 +18,9 @@ function insertAnnouncement(body) {
 }
 
 // creates a new poll and returns id of created poll
-function insertPoll(description) {
+function insertPoll(title, description) {
 	return new Promise(function (resolve, reject) {
-		pool.query('INSERT INTO Polls (description) VALUES ($1) RETURNING id', [description], (err, results) => {
+		pool.query('INSERT INTO Polls (title, description) VALUES ($1, $2) RETURNING id', [title, description], (err, results) => {
 		    if (err) {
 		      reject(err)
 		      return;

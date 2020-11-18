@@ -13,7 +13,12 @@ const db = require('./../database_handling/db_wrapper')
 
 // creates a new announcement
 router.post(global.gConfig.create_announcement_route, function(req, res, next) {
-  const { body } = req.body;
+  const { title, body } = req.body;
+
+  if (title == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'title'" });
+    return
+  }
 
   if (body == undefined) {
     res.status(400).send({ error: "Missing required parameter: 'body'" });
@@ -22,7 +27,7 @@ router.post(global.gConfig.create_announcement_route, function(req, res, next) {
 
  const bodyArr = JSON.parse(body);
 
- db.insertAnnouncement(bodyArr).then(announcement_id => {
+ db.insertAnnouncement(title, bodyArr).then(announcement_id => {
    res.status(200).send({ announcement_id: announcement_id});
  }).catch(err =>
    res.status(400).send({error: err})
@@ -31,7 +36,12 @@ router.post(global.gConfig.create_announcement_route, function(req, res, next) {
 
 // creates a new poll with given options and description
 router.post(global.gConfig.create_poll_route, function(req, res) {
-  const { options, description } = req.body;
+  const { title, options, description } = req.body;
+
+  if (title == undefined) {
+    res.status(400).send({ error: "Missing required parameter: 'title'" });
+    return
+  }
 
   if (options == undefined) {
     res.status(400).send({ error: "Missing required parameter: 'options'" });
@@ -47,7 +57,7 @@ router.post(global.gConfig.create_poll_route, function(req, res) {
 
   const optionsArr = JSON.parse(options); // parsing out array
 
-  db.insertPoll(descriptionArr).then(poll_id => {
+  db.insertPoll(title, descriptionArr).then(poll_id => {
     db.appendOptionsToPoll(poll_id, optionsArr).then(() => {
       res.status(200).send({ poll_id: poll_id});
      }).catch(err =>

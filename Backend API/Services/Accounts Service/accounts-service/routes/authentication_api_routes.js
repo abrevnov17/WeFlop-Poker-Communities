@@ -27,9 +27,11 @@ const nodemailer = require('nodemailer');
 const mail_transporter = nodemailer.createTransport({
   service: 'gmail',
   port: 587,
+  ignoreTLS: false,
+  secure: false,
   auth: {
     user: 'weflop3@gmail.com',
-    pass: 'BigBoysBopping1!'
+    pass: 'etuswknwleityywt'
   }
 });
 
@@ -98,7 +100,7 @@ router.post(global.gConfig.create_account_route, function(req, res) {
         }
 		});
     }).catch(err =>
-      res.status(500).send({ error: "Error creating account. Please retry.", err: err })
+      res.status(400).send({ error: "An account already exists with that email and or username."})
     )
   });
 });
@@ -153,7 +155,7 @@ router.post(global.gConfig.login_route, function(req, res) {
       } 
     });
   }).catch(err =>
-    res.status(500).send({ error: "Invalid username/password combination." })
+    res.status(400).send({ error: "Invalid username/password combination." })
   );
 });
 
@@ -176,6 +178,7 @@ router.delete(global.gConfig.delete_account_route, function(req, res) {
     }
 
      db.deleteEntry(user_id).then(() => {
+       res.clearCookie("sessionID")
        res.sendStatus(200);
      }).catch(err =>
      res.status(400).send({ error: err })
@@ -237,8 +240,8 @@ router.post(global.gConfig.forgot_password_route, function(req, res) {
           }
 
           // sending email
-          const text = "Please click on the following link to reset your password: http://localhost:3000/reset/reset-password?token=" + token;
-          const html = "Please click on the following link to reset your password: <a href='http://localhost:3000/reset/reset-password?token=" + token + "'>Reset Password</a>"
+          const text = "Please click on the following link to reset your password: http://localhost:3000/reset/reset-password?token=" + token + "&email=" + email;
+          const html = "Please click on the following link to reset your password: <a href='http://localhost:3000/reset/reset-password?token=" + token + "&email=" + email + "'>Reset Password</a>"
           const mailOptions = {
             from: 'weflop3@gmail.com',
             to: email,
@@ -249,14 +252,14 @@ router.post(global.gConfig.forgot_password_route, function(req, res) {
 
          mail_transporter.sendMail(mailOptions, function(error, info){
             if (error) {
-              res.status(500).send({ error: "Unable to send password reset email. Please try again later." })
+              res.status(500).send({ error: "Unable to send password reset email. Please try again later.", err: error })
               return;
             }
             res.sendStatus(200);
             return;
           });
         }).catch(err =>
-          res.status(500).send({ error: "Unable to send password reset email. Please try again later." })
+          res.status(500).send({ error: "Unable to send password reset email. Please try again later.", err: err })
         )
   });
 });
