@@ -66,6 +66,24 @@ function isUsernameTaken(username) {
 	})
 }
 
+// gets username from user_id
+function getUsernameFromId(user_id) {
+	return new Promise(function (resolve, reject) {
+		pool.query('SELECT username FROM Users WHERE id = $1', [user_id], (err, results) => {
+		    if (err) {
+		      reject(err)
+		      return;
+		    }
+
+		    if (results.rows.length != 1) {
+		    	resolve(false)
+		    }
+
+		    resolve(results.rows[0].username)
+	  	})
+	})
+}
+
 // sets hash for user with given email
 // returns false if no user exists with given email
 function resetPassword(email, new_hash) {
@@ -129,5 +147,6 @@ module.exports = {
 	isUsernameTaken: isUsernameTaken,
 	resetPassword: resetPassword,
 	updatePasswordResetTokenInformation: updatePasswordResetTokenInformation,
-	getResetTokenInfo: getResetTokenInfo
+	getResetTokenInfo: getResetTokenInfo,
+	getUsernameFromId: getUsernameFromId
 }

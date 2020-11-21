@@ -328,4 +328,28 @@ router.post(global.gConfig.change_password_route, function(req, res) {
   )
 });
 
+// Define the route to fetch a username from session id
+router.get(global.gConfig.get_username_route, function(req, res) {
+  const sessionID = req.cookies["sessionID"]
+
+  if (sessionID === undefined || sessionID == "" || sessionID == null) {
+    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    return
+  }
+
+  sessions.getUserFromSession(sessionID, user_id => {
+     // ensuring user_id was provided as a parameter
+    if (user_id === undefined || user_id == "" || user_id == null) {
+      res.status(401).send({error: "Invalid session id"})
+      return;
+    }
+
+     db.getUsernameFromId(user_id).then((username) => {
+       res.status(200).send({username: username});
+     }).catch(err =>
+       res.status(400).send({ error: err })
+     )
+  })
+});
+
 module.exports = router;
