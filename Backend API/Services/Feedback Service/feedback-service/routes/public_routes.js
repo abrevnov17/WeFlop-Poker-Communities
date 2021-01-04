@@ -15,6 +15,28 @@ const sessions = require('./../services/sessions_wrapper')
 // route that retrieves all updates (announcements and polls)
 // in order of time (recent first)
 router.get(global.gConfig.updates_route, async function(req, res) {
+  // first, we verify that the user is authenticated
+  const sessionID = req.cookies["sessionID"]
+
+  if (sessionID == undefined) {
+    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    return
+  }
+
+  try {
+    const user_id = await sessions.getUserFromSession();
+  } catch(err) {
+    res.status(400).send({ error: err })
+    return;
+  }
+
+  if (user_id === undefined || user_id == "" || user_id == null) {
+      res.status(401).send({error: "Invalid session id"})
+      return;
+  }
+
+  // now that we have verified the user is authenticated, we proceed to fetch the announcements
+
   let polls = []
   let announcements = []
   // getting polls and announcements
