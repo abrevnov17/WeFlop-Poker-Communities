@@ -166,7 +166,7 @@ router.delete(global.gConfig.delete_account_route, function(req, res) {
   const sessionID = req.cookies["sessionID"]
 
   if (sessionID === undefined || sessionID == "" || sessionID == null) {
-    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    res.status(401).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 

@@ -6,8 +6,8 @@
         "db_port": 5002
     },
     "api": {
-        "admin_base_url": "/admin",
-        "public_base_url": "/api",
+        "admin_base_url": "/api/admin",
+        "public_base_url": "/api/feedback",
         "updates_route": "/updates",
         "vote_route": "/vote",
         "send_feedback_route": "/send-feedback",

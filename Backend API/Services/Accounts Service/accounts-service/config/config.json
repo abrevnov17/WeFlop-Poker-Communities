@@ -12,7 +12,7 @@
         "password_reset_expiration": 24
     },
     "api": {
-        "base_url": "/api",
+        "base_url": "/api/accounts",
         "create_account_route": "/create-account",
         "login_route": "/login",
         "delete_account_route": "/delete-account",

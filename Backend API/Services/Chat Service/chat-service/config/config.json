@@ -1,6 +1,6 @@
 {
     "api": {
-        "base_url": "/api"
+        "base_url": "/api/chat"
     },
     "default": {
         "app_name": "Chat Service",

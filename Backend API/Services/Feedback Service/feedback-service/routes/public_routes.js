@@ -19,18 +19,19 @@ router.get(global.gConfig.updates_route, async function(req, res) {
   const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    res.status(401).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 
+  let user_id = ""
   try {
-    const user_id = await sessions.getUserFromSession();
+    user_id = await sessions.getUserFromSession(sessionID);
   } catch(err) {
     res.status(400).send({ error: err })
     return;
   }
 
-  if (user_id === undefined || user_id == "" || user_id == null) {
+  if (user_id == "") {
       res.status(401).send({error: "Invalid session id"})
       return;
   }
@@ -99,7 +100,7 @@ router.post(global.gConfig.vote_route, function(req, res) {
   const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    res.status(401).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 
@@ -132,7 +133,7 @@ router.post(global.gConfig.send_feedback_route, function(req, res) {
   const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    res.status(401).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 
@@ -159,7 +160,7 @@ router.get(global.gConfig.get_votes_route, function(req, res) {
   const sessionID = req.cookies["sessionID"]
 
   if (sessionID == undefined) {
-    res.status(400).send({ error: "Missing required cookie: 'sessionID'" });
+    res.status(401).send({ error: "Missing required cookie: 'sessionID'" });
     return
   }
 

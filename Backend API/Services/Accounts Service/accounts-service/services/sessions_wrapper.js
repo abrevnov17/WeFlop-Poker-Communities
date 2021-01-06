@@ -8,7 +8,7 @@ function createSession(userId, sessionId) {
 	const options = {
 	  hostname: global.gConfig.sessions_service_host,
 	  port: global.gConfig.sessions_service_port,
-	  path: '/api/create-session'
+	  path: '/create-session'
 	}
 
 	unirest
@@ -24,7 +24,7 @@ function getUserFromSession(sessionId, callback) {
 	const options = {
 	  hostname: global.gConfig.sessions_service_host,
 	  port: global.gConfig.sessions_service_port,
-	  path: '/api/user'
+	  path: '/user'
 	}
 
 	unirest

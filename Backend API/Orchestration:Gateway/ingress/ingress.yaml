@@ -4,7 +4,7 @@ metadata:
   name: backend-ingress
   namespace: production
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2
     kubernetes.io/ingress.global-static-ip-name: "weflop-ip"
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -12,27 +12,42 @@ spec:
   tls:
   - hosts:
     - weflop.com
+    - api.weflop.com
+    - wwww.weflop.com
     secretName: weflop-tls-secret
   rules:
-  - host: weflop.com
-    http:
+   - host: weflop.com
+     http:
       paths:
-      - path: /accounts(/|$)(.*)
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: frontend-service-app
+          servicePort: 80
+   - host: www.weflop.com
+     http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: frontend-service-app
+          servicePort: 80
+      - path: /accounts
         pathType: Prefix
         backend:
           serviceName: accounts-service-app
           servicePort: 8080
-      - path: /feedback(/|$)(.*)
+      - path: /feedback
         pathType: Prefix
         backend:
           serviceName: feedback-service-app
           servicePort: 8082
-      - path: /chat(/|$)(.*)
+      - path: /chat
         pathType: Prefix
         backend:
           serviceName: chat-service-app
           servicePort: 8083
-      - path: /game(/|$)(.*)
+      - path: /game
         pathType: Prefix
         backend:
           serviceName: game-service-app

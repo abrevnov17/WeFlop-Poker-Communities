@@ -4,7 +4,7 @@
         "redis_host": "redis-master"
     },
     "api": {
-        "base_url": "/api",
+        "base_url": "/",
         "create_session_route": "/create-session",
         "fetch_user_route": "/user",
         "create_game_route": "/create-game",

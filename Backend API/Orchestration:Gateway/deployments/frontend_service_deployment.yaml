@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-service-app
+  namespace: production
+  labels:
+    app: frontend-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-service-app
+  template:
+    metadata:
+      labels:
+        app: frontend-service-app
+    spec:
+      containers:
+      - name: frontend-service-app
+        image: weflop/frontend-service-app
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
