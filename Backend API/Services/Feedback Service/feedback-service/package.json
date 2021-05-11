@@ -18,7 +18,7 @@
     "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
     "express-ws": "^4.0.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "nodemailer": "^6.4.11",
     "pg": "^8.3.2",
     "socket.io": "^2.3.0",
