@@ -1,0 +1,29 @@
+@keyframes setHeight {
+    to {
+        height: 100%;
+    }
+}
+
+@keyframes fadeText {
+    from {
+        opacity: 0%;
+    }
+    to {
+        opacity: 100%;
+    }
+}
+
+@keyframes fadeInputs {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.react-slidedown.slidedown-updates {
+    transition-duration: 0.3s;
+    transition-timing-function: linear;
+}

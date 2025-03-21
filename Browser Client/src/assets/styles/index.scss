@@ -1,0 +1,52 @@
+@font-face {
+    font-family: "Avenir";
+    src: local("Avenir-Next-Light"), url(../fonts/AvenirNextCyr-Light.woff2) format("woff2");
+    font-weight: 200;
+}
+
+@font-face {
+    font-family: "Avenir";
+    src: local("Avenir-Next-Medium"), url(../fonts/AvenirNextCyr-Medium.woff2) format("woff2");
+    font-weight: 500;
+}
+
+@font-face {
+    font-family: "Avenir";
+    src: local("Avenir-Next-Demi"), url(../fonts/AvenirNextCyr-Demi.woff2) format("woff2");
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: "Avenir";
+    src: local("Avenir-Next-Bold"), url(../fonts/AvenirNextCyr-Bold.woff2) format("woff2");
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: "Avenir";
+    src: local("Avenir-Next-Heavy"), url(../fonts/AvenirNextCyr-Heavy.woff2) format("woff2");
+    font-weight: 800;
+}
+
+html {
+    font-size: 10px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+
+// reset number input
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
