@@ -34,7 +34,8 @@ public class Turn {
 	 * player to be the player associated with the turn. Updates turn time
 	 * @param player
 	 */
-	synchronized public void nextTurn(Player player) {
+	synchronized public 
+void nextTurn(Player player) {
 		this.setPlayer(player);
 		this.setStartTime(System.nanoTime());
 		this.setCount(this.getCount() + 1);

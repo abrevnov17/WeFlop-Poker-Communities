@@ -21,10 +21,12 @@ public enum ActionType {
 	// Logistics-related actions:
 	JOIN("JOIN"), 
 	SIT("SIT"), 
+	SIT_IN("SIT_IN"), 
 	STAND("STAND"), 
 	DISCONNECT("DISCONNECT"), 
 	SIT_OUT_HAND("SIT_OUT_HAND"), 
-	SIT_OUT_BB("SIT_OUT_BB"), 
+	SIT_OUT_BB("SIT_OUT_BB"),
+	CANCEL_BUY_IN("CANCEL_BUY_IN"),
 	POST_BIG_BLIND("POST_BIG_BLIND"), 
 	TOP_OFF("TOP_OFF"), 
 	CHANGE_SEAT("CHANGE_SEAT"),
@@ -40,7 +42,8 @@ public enum ActionType {
 	BIG_BLIND("BIG_BLIND"), // player has paid big blind
 	BETTING_ROUND_OVER("BETTING_ROUND_OVER"), // round of betting has concluded
 	OPTION_TO_SHOW_CARDS("OPTION_TO_SHOW_CARDS"), // present user option to show cards or muck
-	NEW_HAND("NEW_HAND"); // new hand has begun
+	NEW_HAND("NEW_HAND"), // new hand has begun
+	NEW_TURN("NEW_TURN"); // indicates that a new players turn has begun
 	
 	private final String value;
 

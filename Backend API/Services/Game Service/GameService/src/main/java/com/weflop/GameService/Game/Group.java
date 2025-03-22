@@ -23,21 +23,21 @@ import com.weflop.GameService.Database.DomainObjects.SpectatorPOJO;
 public class Group {
 	private Player[] players;
 	private List<Player> spectators;
-	
+
 	private int smallBlindIndex; // -1 if no small blind
 	private int bigBlindIndex;
 	private int dealerIndex;
-	
+
 	private Set<Player> playersWhoCanMuck; // list of players with option to muck
 
 	Group(int numPlayers) {
 		this.setPlayerSlots(new Player[numPlayers]);
 		this.setSpectators(new ArrayList<Player>());
-		
+
 		this.smallBlindIndex = -1;
 		this.bigBlindIndex = -1;
 		this.dealerIndex = -1;
-		
+
 		this.setPlayersWhoCanMuck(Sets.newConcurrentHashSet());
 	}
 
@@ -87,49 +87,52 @@ public class Group {
 
 		return -1;
 	}
-	
+
 	/* POJO conversions */
-	
+
 	public static List<Player> playersFromPOJO(List<PlayerPOJO> players) {
 		return players.stream().map(pojo -> Player.fromPOJO(pojo)).collect(Collectors.toList());
 	}
-	
+
 	public static List<Player> spectatorsFromPOJO(List<SpectatorPOJO> spectators) {
 		return spectators.stream().map(pojo -> Player.fromSpectatorPOJO(pojo)).collect(Collectors.toList());
 	}
-	
+
 	public static Group fromPOJO(int numPlayers, GroupPOJO pojo) {
 		Group group = new Group(numPlayers);
-		
+
 		group.dealerIndex = pojo.getDealerIndex();
 		group.smallBlindIndex = pojo.getSmallBlindIndex();
 		group.bigBlindIndex = pojo.getBigBlindIndex();
-		
+
 		group.spectators = Group.spectatorsFromPOJO(pojo.getSpectators());
-		
+
 		for (Player player : Group.playersFromPOJO(pojo.getPlayers())) {
 			group.players[player.getSlot()] = player;
 		}
-		
+
 		return group;
 	}
-	
+
 	public List<PlayerPOJO> playersToPOJO() {
 		return getPlayers().stream().map(player -> player.toPOJO()).collect(Collectors.toList());
 	}
-	
+
 	public List<SpectatorPOJO> spectatorsToPOJO() {
 		return getSpectators().stream().map(spectator -> spectator.toSpectatorPOJO()).collect(Collectors.toList());
 	}
-	
+
 	public GroupPOJO toPOJO() {
-		return new GroupPOJO(this.playersToPOJO(), this.spectatorsToPOJO(), this.smallBlindIndex, this.bigBlindIndex, this.dealerIndex);
+		return new GroupPOJO(this.playersToPOJO(), this.spectatorsToPOJO(), this.smallBlindIndex, this.bigBlindIndex,
+				this.dealerIndex);
 	}
 
 	/* Getters and Setters */
-	
+
 	/**
-	 * Attempts to get participant by id. Returns null if no participant exists with provided id.
+	 * Attempts to get participant by id. Returns null if no participant exists with
+	 * provided id.
+	 * 
 	 * @param id
 	 * @return Participant with id
 	 */
@@ -139,7 +142,7 @@ public class Group {
 				return participant;
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -194,7 +197,7 @@ public class Group {
 			}
 		}
 	}
-	
+
 	synchronized public void setAllPlayersCurrentAndFutureStates(PlayerState currentState, PlayerState nextState) {
 		for (int i = 0; i < players.length; i++) {
 			if (players[i] != null) {
@@ -202,9 +205,10 @@ public class Group {
 			}
 		}
 	}
-	
+
 	/**
-	 * Sets current state to nextHandState for players. Does NOT change nextHandState.
+	 * Sets current state to nextHandState for players. Does NOT change
+	 * nextHandState.
 	 */
 	synchronized public void transitionPlayerStates() {
 		for (int i = 0; i < players.length; i++) {
@@ -216,9 +220,10 @@ public class Group {
 			}
 		}
 	}
-	
+
 	/**
 	 * Finds which slot player belongs to. Returns -1 if no slot exists
+	 * 
 	 * @param player
 	 * @return Slot (zero-indexed)
 	 */
@@ -228,44 +233,46 @@ public class Group {
 				return i;
 			}
 		}
-		
+
 		return -1;
 	}
-	
+
 	/**
 	 * Returns list of all players that could pay a blind.
 	 */
 	synchronized public List<Player> getPlayersEligibleForBlind() {
 		return getPlayers().stream().filter(player -> player.canBeBlind()).collect(Collectors.toList());
 	}
-	
+
 	/**
-	 * Returns list of players that elected to post big blind (but may not necessarily have paid yet).
+	 * Returns list of players that elected to post big blind (but may not
+	 * necessarily have paid yet).
 	 */
 	synchronized public List<Player> getPlayersWhoHavePostedBigBlind() {
-		return getPlayers().stream().filter(player -> player.getPrevState() == PlayerState.POSTING_BIG_BLIND).collect(Collectors.toList());
+		return getPlayers().stream().filter(player -> player.getPrevState() == PlayerState.POSTING_BIG_BLIND)
+				.collect(Collectors.toList());
 	}
-	
-	
+
 	/**
-	 * Returns our list of (non-null) players starting at the player at the inputted slot.
+	 * Returns our list of (non-null) players starting at the player at the inputted
+	 * slot.
+	 * 
 	 * @param slot
 	 * @return List of players.
 	 */
 	synchronized public List<Player> getPlayersClockwiseFromSlot(int slot) {
 		List<Player> playersBeginningWithSlot = new ArrayList<Player>();
-		
+
 		int index;
-		for (index = slot % players.length; 
-				index != (((slot - 1) % players.length) + players.length) % players.length; 
-				index = (index + 1) % players.length) {
+		for (index = slot % players.length; index != (((slot - 1) % players.length) + players.length)
+				% players.length; index = (index + 1) % players.length) {
 			if (players[index] != null)
 				playersBeginningWithSlot.add(players[index]);
 		}
-		
+
 		if (players[index] != null)
 			playersBeginningWithSlot.add(players[index]);
-		
+
 		return playersBeginningWithSlot;
 	}
 
@@ -278,13 +285,13 @@ public class Group {
 			removePlayerFromTable(participant);
 		}
 	}
-	
+
 	synchronized public List<Player> getAllParticipants() {
 		List<Player> participants = new ArrayList<Player>(this.getPlayers());
 		participants.addAll(this.getSpectators());
 		return participants;
 	}
-	
+
 	synchronized public boolean allWaitingPlayersInCheckedState() {
 		for (Player player : getPlayers()) {
 			if (player.canMoveInRound() && player.getState() != PlayerState.CHECKED) {
@@ -293,9 +300,10 @@ public class Group {
 		}
 		return true;
 	}
-	
+
 	/**
-	 * Resets all player round-bets to zero (called at ends of individual betting rounds).
+	 * Resets all player round-bets to zero (called at ends of individual betting
+	 * rounds).
 	 */
 	synchronized public void resetPlayerRoundBets() {
 		for (int i = 0; i < players.length; i++) {
@@ -304,7 +312,7 @@ public class Group {
 			}
 		}
 	}
-	
+
 	/**
 	 * Resets bets players made during overall hand.
 	 */
@@ -315,9 +323,10 @@ public class Group {
 			}
 		}
 	}
-	
+
 	/**
-	 * Resets player states where appropriate (such as flipping from CHECKED to WAITING_FOR_TURN).
+	 * Resets player states where appropriate (such as flipping from CHECKED to
+	 * WAITING_FOR_TURN).
 	 */
 	synchronized public void preparePlayerStatesForNewRound() {
 		for (int i = 0; i < players.length; i++) {
@@ -333,32 +342,44 @@ public class Group {
 	synchronized public void createSpectator(String id, WebSocketSession session) {
 		this.spectators.add(new Player(id, session));
 	}
-	
+
 	/**
-	 * Gets all active players for the given betting round
-	 * (i.e. players who are not spectating, waiting for next round, or have folded).
+	 * Gets all active players for the given betting round (i.e. players who are not
+	 * spectating, waiting for next round, or have folded).
+	 * 
 	 * @return List of active players.
 	 */
 	synchronized public List<Player> getActivePlayersInBettingRound() {
 		return getPlayers().stream().filter(player -> player.isActiveInBettingRound()).collect(Collectors.toList());
 	}
-	
+
 	/**
-	 * Gets all active players for the given hand
-	 * (i.e. players who were or are involved in the current hand).
+	 * Gets all active players for the given hand (i.e. players who were or are
+	 * involved in the current hand).
+	 * 
 	 * @return List of active players.
 	 */
 	synchronized public List<Player> getActivePlayersInHand() {
 		return getPlayers().stream().filter(player -> player.isActive()).collect(Collectors.toList());
 	}
+
+	synchronized public List<Player> getPlayersPlaying() {
+		return getPlayers().stream().filter(player -> player.isPlaying()).collect(Collectors.toList());
+	}
 	
+	synchronized public List<Player> getFoldedPlayers(){
+		return getPlayers().stream().filter(player -> player.hasFolded()).collect(Collectors.toList());
+	}
+	
+
 	/**
 	 * Prepares state for next hand. Called at end of hand.
 	 */
-	public void resetForNewHand() {		
+	public void resetForNewHand() {
+
 		this.cycleDealer(); // cycling dealer, small blind, big blind
 		this.playersWhoCanMuck.clear();
-		
+
 		// setting hand balances to be player total balance
 		for (Player player : this.getPlayers()) {
 			player.setHandBalance(player.getBalance());
@@ -366,66 +387,67 @@ public class Group {
 			player.setRoundBet(0.00f);
 		}
 	}
-	
-	/**
-	 * Called at end of hand. Updates dealerIndex, smallBlindIndex, and bigBlindIndex.
-	 */
-	synchronized public void cycleDealer() {		
-		// resetting bigBlind and smallBlind to -1 (not set)
-		this.smallBlindIndex = -1;
-		this.bigBlindIndex = -1;
-		
-		for (int i=0; i < players.length; i++) {
-			this.dealerIndex = (this.dealerIndex + i) % players.length;
-			
-			if (players[dealerIndex] != null && players[dealerIndex].isActive()) {
-				break;
-			}
-		}
-		
-		for (int i=1; i < players.length + 1; i++) {
-			this.smallBlindIndex = (this.dealerIndex + i) % players.length;
-			
-			if (players[smallBlindIndex] != null && players[smallBlindIndex].canBeBlind()) {
-				if (players[smallBlindIndex].getPrevState() == PlayerState.POSTING_BIG_BLIND) {
-					// player should steal dealer index
-					this.dealerIndex = smallBlindIndex;
-					continue;
-				} else if (players[smallBlindIndex].isWaitingForBigBlind()) {
-					// big blind somehow "jumped" over this player
-					// player should become big blind, and no small blind should be set
-					this.bigBlindIndex = smallBlindIndex;
-					this.smallBlindIndex = -1;
-					
-					// player is waiting for turn as they are now big blind
-					players[bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
-					
-					return;
-				}
-				
-				break;
-			} else if (players[smallBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.WAITING_FOR_HAND) {
-				players[smallBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
-			}
-		}
-		
-		for (int i=2; i < players.length + 2; i++) {
-			this.bigBlindIndex = (this.smallBlindIndex + i) % players.length;
-			
-			if (players[smallBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.BUSTED) {
-				if (players[smallBlindIndex].isDisplayingInactivity()) {
-					players[smallBlindIndex].convertToSpectator();
+
+	synchronized public void cycleDealer() {
+		System.out.println("CYCLING DEALER");
+		// Reindex blinds if game is heads-up
+		int oldsb = this.smallBlindIndex;
+		for (int i = 1; i < players.length + 1; i++) {
+			this.bigBlindIndex = (((this.bigBlindIndex + i) % players.length) + players.length) % players.length;
+			if ((players[this.bigBlindIndex] != null) && ((players[this.bigBlindIndex].getState() == PlayerState.BUSTED)|| (players[this.bigBlindIndex].getMissedBlind() && (players[this.bigBlindIndex].getState() == PlayerState.SITTING_OUT)))) {
+				if (players[this.bigBlindIndex].isDisplayingInactivity()) {
+					players[this.bigBlindIndex].convertToSpectator();
 				} else {
-					players[smallBlindIndex].setDisplayingInactivity(true);
+					players[this.bigBlindIndex].setDisplayingInactivity(true);
 				}
-			} else if (players[bigBlindIndex] != null && players[bigBlindIndex].canBeBlind()) {
-				players[bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
+			}else if ((players[this.bigBlindIndex] != null) && (!players[this.bigBlindIndex].getMissedBlind() && (players[this.bigBlindIndex].getState() == PlayerState.SITTING_OUT))){
+				players[this.bigBlindIndex].setMissedBlind(true);
+				System.out.println("\n\n\n\n\n\nSETTTING MISSED BLINDS\n\n\n\n\n\n\n\n");
+			}else if ((players[this.bigBlindIndex] != null) && players[this.bigBlindIndex].canBeBlind()) {
+				players[this.bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_TURN,
+						PlayerState.WAITING_FOR_TURN);
 				break;
-			} else if (players[bigBlindIndex] != null && players[smallBlindIndex].getState() == PlayerState.WAITING_FOR_HAND) {
-				players[smallBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
+			} else if ((players[this.bigBlindIndex] != null)
+					&& players[this.bigBlindIndex].getState() == PlayerState.WAITING_FOR_HAND) {
+				players[this.bigBlindIndex].updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND,
+						PlayerState.WAITING_FOR_BIG_BLIND);
 			}
 		}
+		System.out.printf("\n0BB: %d SB: %d D: %d\n",this.bigBlindIndex,this.smallBlindIndex,this.dealerIndex);
+
+		for (int i = -1; i > -(players.length + 1); i--) {
+			this.smallBlindIndex = ((((this.bigBlindIndex + i) % players.length) + players.length) % players.length);
+			if ((players[this.smallBlindIndex] != null) && (players[this.smallBlindIndex].isActive())) {
+				break;
+			}
+		}
+		System.out.printf("\n1BB: %d SB: %d D: %d\n",this.bigBlindIndex,this.smallBlindIndex,this.dealerIndex);
+
+		int currentPlayers;
+		currentPlayers = getPlayersPlaying().size();
+		if (currentPlayers == 2) {
+			this.dealerIndex = this.smallBlindIndex;
+		} else {
+			for (int i = -1; i > -(players.length + 1); i--) {
+				this.dealerIndex = ((((this.smallBlindIndex + i) % players.length) + players.length) % players.length);
+
+				if ((players[this.dealerIndex] != null) && (players[this.dealerIndex].isActive())) {
+					break;
+				}
+			}
+		}
+		if (oldsb == this.smallBlindIndex) {
+			this.smallBlindIndex = -1;
+		}
+		System.out.printf("\n2BB: %d SB: %d D: %d\n",this.bigBlindIndex,this.smallBlindIndex,this.dealerIndex);
+//		for (int i = 1; i < players.length + 1; i++) {
+//			int startPlayerIndex = ((((this.bigBlindIndex + i) % players.length) + players.length) % players.length);
+//			
+//		
+		
+		
 	}
+
 	
 	public Player getSmallBlindPlayer() {
 		if (smallBlindIndex == -1) {
@@ -433,12 +455,19 @@ public class Group {
 		}
 		return players[smallBlindIndex];
 	}
-	
+
 	public Player getBigBlindPlayer() {
 		if (bigBlindIndex == -1) {
 			return null;
 		}
 		return players[bigBlindIndex];
+	}
+
+	public Player getDealerPlayer() {
+		if (dealerIndex == -1) {
+			return null;
+		}
+		return players[dealerIndex];
 	}
 
 	public int getSmallBlindIndex() {

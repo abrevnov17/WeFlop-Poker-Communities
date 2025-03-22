@@ -32,6 +32,7 @@ public class Action {
 	private List<Float> pots; // some actions have associated lists of float values
 	private List<LimitedPlayerPOJO> limitedPlayers; // limited information about players
 	private Boolean enabled; // some actions have an assocaited boolean value
+	private Long duration;
 	
 	// automatically set values
 	private Instant timestamp;
@@ -48,6 +49,7 @@ public class Action {
 		private List<Float> pots;
 		private List<LimitedPlayerPOJO> limitedPlayers;
 		private Boolean enabled;
+		private Long duration;
 
 		/* Constructors */
 
@@ -100,6 +102,11 @@ public class Action {
 			this.enabled = enabled;
 			return this;
 		}
+
+		public ActionBuilder withDuration(Long duration){
+			this.duration = duration;
+			return this;
+		}
 		
 		public Action build(){
             Action action = new Action();
@@ -114,6 +121,7 @@ public class Action {
             action.pots = this.pots;
             action.limitedPlayers = this.limitedPlayers;
             action.enabled = this.enabled;
+            action.duration = this.duration;
             return action;
         }
 	}
@@ -148,7 +156,8 @@ public class Action {
 				|| this.type != ActionType.SMALL_BLIND 
 				|| this.type != ActionType.BIG_BLIND
 				|| this.type != ActionType.BETTING_ROUND_OVER
-				|| this.type != ActionType.OPTION_TO_SHOW_CARDS);
+				|| this.type != ActionType.OPTION_TO_SHOW_CARDS
+				|| this.type != ActionType.NEW_TURN);
 	}
 
 	/* Getters and Setters */
@@ -196,6 +205,7 @@ public class Action {
 	public List<Card> getCards() {
 		return cards;
 	}
+	
 
 	public void setCards(List<Card> cards) {
 		this.cards = cards;
@@ -240,4 +250,8 @@ public class Action {
 	public void setEnabled(Boolean enabled) {
 		this.enabled = enabled;
 	}
+
+	public Long getDuration() { return duration; }
+
+	public void setDuration(Long duration) { this.duration = duration; }
 }

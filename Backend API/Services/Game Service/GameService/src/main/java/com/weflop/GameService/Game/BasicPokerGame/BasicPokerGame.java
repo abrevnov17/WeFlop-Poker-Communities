@@ -1,7 +1,5 @@
 package com.weflop.GameService.Game.BasicPokerGame;
 
-import java.time.Instant;
-
 import java.util.ArrayList;
 
 import org.springframework.util.Assert;
@@ -40,8 +38,8 @@ public class BasicPokerGame extends AbstractGame {
 		this.deck = new StandardDeck(); // default is standard 52 card deck
 	}
 
-	public BasicPokerGame(GameRepository repository, GameCustomMetadata metadata, VariantRepresentation variant, Deck deck,
-			HandRankEvaluator evaluator) {
+	public BasicPokerGame(GameRepository repository, GameCustomMetadata metadata, VariantRepresentation variant, 
+			Deck deck, HandRankEvaluator evaluator) {
 		this(repository, metadata, evaluator);
 		this.variant = variant;
 		this.deck = deck;
@@ -53,6 +51,8 @@ public class BasicPokerGame extends AbstractGame {
 	 */
 	public BasicPokerGame(GameRepository repository, GameDocument document, HandRankEvaluator evaluator) {
 		super(repository, document, evaluator);
+		this.variant = PokerVariants.getStandardHoldem();
+		this.deck = new StandardDeck();
 	}
 
 	/* Overrided methods from abstract superclass */
@@ -117,8 +117,8 @@ public class BasicPokerGame extends AbstractGame {
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
-
-				System.out.printf("Player %s raised by: %d\n", action.getPlayerId(), bet);
+	 
+				System.out.printf("Player %s raised by: %f\n", action.getPlayerId(), bet);
 				participant.setDisplayingInactivity(false);
 			}
 			break;
@@ -132,7 +132,7 @@ public class BasicPokerGame extends AbstractGame {
 				// update player balances and pot
 				float bet = getBetController().getRoundBet() - participant.getRoundBet();
 
-				// update player balances and pot
+				// update player balances and pot 
 				getBetController().bet(participant, bet); // verification performed in 'bet' method
 				
 				// update player state to waiting for turn
@@ -198,7 +198,7 @@ public class BasicPokerGame extends AbstractGame {
 
 				// update player state to folded
 				participant.setState(PlayerState.FOLDED);
-				participant.setNextHandState(PlayerState.WAITING_FOR_BIG_BLIND);
+				participant.setNextHandState(PlayerState.SITTING_OUT);
 
 				// propagate action to members of group
 				this.propagateActionToGroup(action);
@@ -224,6 +224,7 @@ public class BasicPokerGame extends AbstractGame {
 					participant.setSession(action.getSession());
 					System.out.printf("Player %s re-joining game\n", action.getPlayerId());
 				} else {
+					this.getSubscribedPlayerIds().add(action.getPlayerId());
 					// add player as spectator
 					this.getGroup().createSpectator(action.getPlayerId(), action.getSession());
 	
@@ -248,6 +249,7 @@ public class BasicPokerGame extends AbstractGame {
 					getBetController().buyIn(participant, action.getValue());
 				} catch (Exception e) {
 					this.getGroup().movePlayerToSpectator(participant);
+					return;
 				}
 								
 				System.out.printf("Player %s sitting\n", action.getPlayerId());
@@ -262,6 +264,36 @@ public class BasicPokerGame extends AbstractGame {
 					this.startGame();
 				}
 
+				participant.setDisplayingInactivity(false);
+			}
+			break;
+			case SIT_IN: {
+				System.out.printf("\nSITTING IN %d\n",this.getGroup().getPlayers().size());
+
+				Player participant = this.getParticipantById(action.getPlayerId());		
+				boolean enabled = action.getEnabled();
+				// propagate action to members of group
+				System.out.printf("\n BLINDMISSED %b", participant.getMissedBlind());
+				if (participant.getMissedBlind()) {
+					if (enabled) {
+						participant.updateCurrentAndFutureState(PlayerState.POSTING_BIG_BLIND, PlayerState.WAITING_FOR_HAND);
+					}
+					else {
+						participant.updateCurrentAndFutureState(PlayerState.WAITING_FOR_BIG_BLIND, PlayerState.WAITING_FOR_BIG_BLIND);
+					}
+				}else {
+					participant.updateCurrentAndFutureState(PlayerState.WAITING_FOR_HAND, PlayerState.WAITING_FOR_HAND);
+				}
+				
+
+								
+				
+				this.propagateActionToGroup(action);
+				if (!this.isStarted() && this.getGroup().getPlayers().size() >= 2) {
+					// all players who joined before start should be active in first hand
+					getGroup().setAllPlayersCurrentAndFutureStates(PlayerState.WAITING_FOR_TURN, PlayerState.WAITING_FOR_TURN);
+					this.startGame();
+				}
 				participant.setDisplayingInactivity(false);
 			}
 			break;
@@ -301,7 +333,19 @@ public class BasicPokerGame extends AbstractGame {
 				Assert.isTrue(participant.canSitOut(), "Must be an active player to sit out.");
 				
 				// sitting player out for next round
-				participant.setNextHandState(PlayerState.WAITING_FOR_HAND);
+				participant.setNextHandState(PlayerState.SITTING_OUT);
+				
+				this.propagateActionToGroup(action);
+				participant.setDisplayingInactivity(false);
+			}
+			break;
+			case CANCEL_BUY_IN: {
+				Player participant = this.getParticipantById(action.getPlayerId());
+				
+				Assert.isTrue(participant.canSitOut(), "Must be an active player to sit out.");
+				
+				// sitting player out for next round
+				participant.setNextHandState(PlayerState.SITTING_OUT);
 				
 				this.propagateActionToGroup(action);
 				participant.setDisplayingInactivity(false);
@@ -423,7 +467,6 @@ public class BasicPokerGame extends AbstractGame {
 
 		// start game clock
 		this.setStarted(true);
-		this.setStartTime(Instant.now());
 
 		// propagate action that game has started to all members of group
 		this.propagateActionToGroup(new Action.ActionBuilder(ActionType.START).build());

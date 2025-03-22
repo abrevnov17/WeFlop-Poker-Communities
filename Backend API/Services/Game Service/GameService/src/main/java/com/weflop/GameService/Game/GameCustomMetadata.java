@@ -29,14 +29,14 @@ public class GameCustomMetadata {
 	 * @param createdBy
 	 * @param type
 	 */
-	public GameCustomMetadata(String name, float smallBlind, int minBuyInBB, int maxBuyInBB, String createdBy) {
+	public GameCustomMetadata(String name, float smallBlind, int minBuyInBB, int maxBuyInBB, String createdBy, int timeBank) {
 		this.name = name;
 		this.description = null;
 		this.smallBlind = smallBlind;
 		this.bigBlind = smallBlind * 2.00f;
 		this.minBuyIn = minBuyInBB * this.bigBlind;
 		this.maxBuyIn = maxBuyInBB * this.bigBlind;
-		this.turnDuration = 60;
+		this.turnDuration = timeBank;
 		this.tableSize = 9;
 		this.createdBy = createdBy;
 		this.type = GameType.STANDARD_REPRESENTATION;

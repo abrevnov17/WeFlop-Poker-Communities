@@ -26,6 +26,7 @@ public class Player {
 	private float roundBet; // current bet for round
 	private float handBet; // current bet for hand
 	
+	private boolean missedBlind;
 	private PlayerState state;
 	private PlayerState nextHandState; // state player will transition to at start of next hand
 	private PlayerState prevState; // prior state that player transitioned from
@@ -51,6 +52,7 @@ public class Player {
 		this.setPrevState(PlayerState.WATCHING);
 		this.setDisplayingInactivity(false);		
 		this.setSlot(-1);
+		this.setMissedBlind(false);
 		this.setSettings(new PlayerSettings()); // loading default player settings
 	}
 	
@@ -96,10 +98,12 @@ public class Player {
 	 */
 	synchronized public void bet(float amount) throws IllegalStateException {
 		Assert.isTrue(this.canBet(amount), "Insufficient funds to place bet");
+		Assert.isTrue(amount > 0,"Cannot bet 0, must check");
 		this.balance -= amount;
 		this.handBalance -= amount;
 		this.handBet += amount;
 		this.roundBet += amount;
+		System.out.printf("This: %f, Round: %f", amount, this.handBet);
 	}
 
 	/**
@@ -151,7 +155,8 @@ public class Player {
 	 */
 	synchronized public PlayerPOJO toPOJO() {
 		return new PlayerPOJO(this.id, this.balance, this.handBalance, this.handBet, this.roundBet,
-				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(), this.prevState.toValue(), this.slot);
+				hand.toPOJO(), this.state.toValue(), this.nextHandState.toValue(),
+				this.prevState.toValue(), this.slot, this.settings);
 	}
 	
 	public static Player fromPOJO(PlayerPOJO pojo) {
@@ -198,7 +203,7 @@ public class Player {
 	 * @return true if player can be a blind during the current hand, false otherwise.
 	 */
 	synchronized public boolean canBeBlind() {
-		return this.isActive() || isWaitingForBigBlind();
+		return this.isPlaying() || isWaitingForBigBlind();
 	}
 	
 	/**
@@ -257,10 +262,22 @@ public class Player {
 	synchronized public boolean isActive() {
 		return !isSpectating() 
 				&& state != PlayerState.WAITING_FOR_HAND
-				&& state != PlayerState.SITTING_OUT_BB
 				&& state != PlayerState.WAITING_FOR_BIG_BLIND
 				&& state != PlayerState.POSTING_BIG_BLIND
+				&& state != PlayerState.SITTING_OUT
 				&& state != PlayerState.BUSTED;
+	}
+	
+	synchronized public boolean isPlaying() {
+		return !isSpectating() 
+  				&& state != PlayerState.POSTING_BIG_BLIND
+				&& state != PlayerState.SITTING_OUT
+				&& state != PlayerState.BUSTED;	
+		
+	}
+	
+	synchronized public boolean hasFolded() {
+		return state == PlayerState.FOLDED;
 	}
 	
 	/**
@@ -275,6 +292,11 @@ public class Player {
 	}
 	
 	synchronized public void transitionState() {
+		System.out.print("\n STATE ");
+		System.out.print(state);
+		System.out.print(" ");
+		System.out.print(nextHandState);
+		System.out.print(" ENDSTATE \n");
 		this.state = nextHandState;
 	}
 
@@ -348,7 +370,9 @@ public class Player {
 	synchronized public void setNextHandState(PlayerState nextHandState) {
 		this.nextHandState = nextHandState;
 	}
-	
+	synchronized public void setMissedBlind(boolean missed) {
+		this.missedBlind = missed;
+	}
 	synchronized public void updateCurrentAndFutureState(PlayerState currentState, PlayerState nextHandState) {
 		setState(currentState);
 		setNextHandState(nextHandState);
@@ -399,4 +423,8 @@ public class Player {
 	public void setSettings(PlayerSettings settings) {
 		this.settings = settings;
 	}
+	public boolean getMissedBlind() {
+		return this.missedBlind;
+	}
+
 }

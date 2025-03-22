@@ -10,6 +10,9 @@ import com.weflop.GameService.Game.GameCustomMetadata;
  * @author abrevnov
  */
 public class GameMetadata {
+
+	private String id;
+
 	private long startTimestamp;
 
 	private float pot;
@@ -17,8 +20,9 @@ public class GameMetadata {
 	private GameCustomMetadata customMetadata;
 	private Map<String, Float> ledger;
 	
-	public GameMetadata(long startTimestamp, float pot, GameCustomMetadata customMetadata,
+	public GameMetadata(String id, long startTimestamp, float pot, GameCustomMetadata customMetadata,
 			Map<String, Float> ledger) {
+		this.id = id;
 		this.startTimestamp = startTimestamp;
 		this.pot = pot;
 		this.customMetadata = customMetadata;
@@ -58,5 +62,12 @@ public class GameMetadata {
 	public void setLedger(Map<String, Float> ledger) {
 		this.ledger = ledger;
 	}
-	
+
+	public String getId() {
+		return this.id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
 }

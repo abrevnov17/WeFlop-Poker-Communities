@@ -37,9 +37,7 @@ public class MessageSendingHandlers {
 		String messageString = message.toString();
 
 		// propagating message to targets
-		for (Player participant : targets) {
-			participant.getSession().sendMessage(new TextMessage(messageString));
-		}
+		sendMessageToTargets(messageString, targets);
 	}
 
 	/**
@@ -67,21 +65,21 @@ public class MessageSendingHandlers {
 		String messageString = message.toString();
 
 		// propagating message to targets
-		for (Player participant : targets) {
-			participant.getSession().sendMessage(new TextMessage(messageString));
-		}
+		sendMessageToTargets(messageString, targets);
 	}
 
 	public static void sendGameState(Player target, GameStatePOJO gameState) throws InterruptedException, IOException {
 		// creating message
 		JsonObject message = new JsonObject();
 		message.addProperty("type", MessageType.GAME_STATE.toValue());
-		message.addProperty("payload", WebSocketHandler.GSON.toJson(gameState));
+		message.add("payload", WebSocketHandler.GSON.toJsonTree(gameState));
 		
 		String messageString = message.toString();
 
 		// propagating state information to player
-		target.getSession().sendMessage(new TextMessage(messageString));
+		if (target.getSession().isOpen()) {
+			target.getSession().sendMessage(new TextMessage(messageString));
+		}
 	}
 
 	public static void sendSynchronizationPackets(String gameId, Group group, int epoch, long turnTimeRemaining)
@@ -101,9 +99,7 @@ public class MessageSendingHandlers {
 		String messageString = message.toString();
 
 		// propagating message to all participants
-		for (Player participant : group.getAllParticipants()) {
-			participant.getSession().sendMessage(new TextMessage(messageString));
-		}
+		sendMessageToTargets(messageString, group.getAllParticipants());
 	}
 	
 	private static JsonObject generatePayloadFromAction(Action action, int epoch) {
@@ -115,11 +111,11 @@ public class MessageSendingHandlers {
 		payload.addProperty("epoch", epoch);
 
 		if (action.getCards() != null) {
-			payload.addProperty("cards", WebSocketHandler.GSON.toJson(actionPOJO.getCards()));
+			payload.add("cards", WebSocketHandler.GSON.toJsonTree(actionPOJO.getCards()));
 		}
 		
 		if (action.getPlayerIds() != null) {
-			payload.addProperty("players", WebSocketHandler.GSON.toJson(action.getPlayerIds()));
+			payload.add("players", WebSocketHandler.GSON.toJsonTree(action.getPlayerIds()));
 		}
 		
 		if (action.getPlayerId() != null) {
@@ -129,18 +125,44 @@ public class MessageSendingHandlers {
 		if (action.getValue() != null) {
 			payload.addProperty("value", action.getValue());
 		}
+
+		if (action.getSlot() != null) {
+			payload.addProperty("slot", action.getSlot());
+		}
 		
 		if (action.getPots() != null) {
-			payload.addProperty("pots", WebSocketHandler.GSON.toJson(action.getPots()));
+			payload.add("pots", WebSocketHandler.GSON.toJsonTree(action.getPots()));
 		}
 		
 		if (action.getLimitedPlayers() != null) {
-			payload.addProperty("limited_players", WebSocketHandler.GSON.toJson(action.getLimitedPlayers()));
+			payload.add("limited_players", WebSocketHandler.GSON.toJsonTree(action.getLimitedPlayers()));
 		}
 		
 		if (action.getEnabled() != null) {
-			payload.addProperty("enabled", WebSocketHandler.GSON.toJson(action.getEnabled()));
+			payload.add("enabled", WebSocketHandler.GSON.toJsonTree(action.getEnabled()));
 		}
+
+		if (action.getDuration() != null) {
+			payload.addProperty("duration", action.getDuration());
+		}
+
 		return payload;
+	}
+	
+	/**
+	 * Takes a message and sends it to a list of players (or spectators).
+	 * 
+	 * @param messageString
+	 * @param targets
+	 */
+	private static void sendMessageToTargets(String messageString, List<Player> targets) 
+			throws InterruptedException, IOException { 
+		// propagating message to targets
+		for (Player participant : targets) {
+			// check that participant websocket connection is open and send message if it is
+			if (participant.getSession().isOpen()) {
+				participant.getSession().sendMessage(new TextMessage(messageString));
+			}
+		}
 	}
 }

@@ -1,7 +1,7 @@
 package com.weflop.GameService.Database.DomainObjects;
 
 import java.util.List;
-
+import java.util.Set;
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
@@ -51,11 +51,15 @@ public class GameDocument {
 	
 	private int epoch;
 
+	// players following this game (i.e. it shows up in their active games list)
+	private Set<String> subscribedPlayers;
+
 	// Constructors:
 
 	public GameDocument(String id, String type, long startTime,
 			List<CardPOJO> centerCards, float pot, GroupPOJO group, TurnPOJO turn, HistoryPOJO history, 
-			Map<String, Float> ledger, GameCustomMetadata metadata, boolean active, int round, int epoch) {
+			Map<String, Float> ledger, GameCustomMetadata metadata, boolean active, int round, int epoch,
+						Set<String> subscribedPlayers) {
 		super();
 		this.id = id;
 		this.type = type;
@@ -70,6 +74,7 @@ public class GameDocument {
 		this.active = active;
 		this.round = round;
 		this.epoch = epoch;
+		this.subscribedPlayers = subscribedPlayers;
 	}
 	
 	/** Retrieves an instance of GameMetadata from object
@@ -77,7 +82,7 @@ public class GameDocument {
 	 * @return GameMetadata instance
 	 */
 	public GameMetadata toMetadata() {
-		return new GameMetadata(this.startTime, this.pot, this.metadata, this.ledger);
+		return new GameMetadata(this.id, this.startTime, this.pot, this.metadata, this.ledger);
 	}
 
 	// getters and setters
@@ -184,5 +189,13 @@ public class GameDocument {
 
 	public void setEpoch(int epoch) {
 		this.epoch = epoch;
+	}
+
+	public Set<String> getSubscribedPlayers() {
+		return subscribedPlayers;
+	}
+
+	public void setSubscribedPlayers(Set<String> subscribedPlayers) {
+		this.subscribedPlayers = subscribedPlayers;
 	}
 }

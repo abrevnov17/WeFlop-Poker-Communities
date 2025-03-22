@@ -61,4 +61,5 @@ public class Pot {
 	public void setPlayers(Set<Player> players) {
 		this.players = players;
 	}
+	
 }

@@ -22,6 +22,7 @@ public enum PlayerState {
 	WATCHING("WATCHING"),
 	
 	// INACTIVE PLAYER STATES
+	SITTING_OUT("SITTING_OUT"), // sitting out (until next big blind comes around, although can sit back in before that WITHOUT having to pay big blind)
 	WAITING_FOR_HAND("WAITING_FOR_HAND"), // waiting for next hand to join (posted big blind or returning after having sat out)
 	SITTING_OUT_BB("SITTING_OUT_BB"), // sitting out (until next big blind comes around, although can sit back in before that WITHOUT having to pay big blind)
 	WAITING_FOR_BIG_BLIND("WAITING_FOR_BIG_BLIND"), // joins when they reach the next big blind (default state on sitting)

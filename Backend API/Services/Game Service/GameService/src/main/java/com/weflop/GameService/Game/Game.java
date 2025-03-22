@@ -14,4 +14,6 @@ public interface Game {
 	public boolean canBeRemovedFromReplica(); // true if we can delete game from replica
 	
 	public void removeFromReplica(); // removes game from replica
+
+	public void unsubscribePlayer(String userId); // game will no longer show up in player games list
 }

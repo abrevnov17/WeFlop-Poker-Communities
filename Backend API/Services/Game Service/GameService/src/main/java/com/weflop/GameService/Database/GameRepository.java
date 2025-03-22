@@ -13,5 +13,5 @@ public interface GameRepository extends MongoRepository<GameDocument, String> {
 	@Override
 	public Optional<GameDocument> findById(String id);
 	
-    public List<GameDocument> findByMetadataCreatedByAndActive(String createdBy, boolean active, Sort sort);
+    public List<GameDocument> findBySubscribedPlayersContaining(String playerId, Sort sort);
 }

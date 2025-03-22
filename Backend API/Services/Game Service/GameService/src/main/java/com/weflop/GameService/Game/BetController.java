@@ -20,7 +20,9 @@ import com.weflop.Evaluation.HandRank;
  */
 public class BetController {
 
-	private float roundBet;
+	private float roundBet; // highest amount any player has bet in round
+
+	private float totalRoundBet; // total amount everyone has bet in round
 
 	private float lastRaise;
 	private Player lastRaisePlayer;
@@ -34,9 +36,9 @@ public class BetController {
 
 	private float minBuyIn;
 	private float maxBuyIn;
-
 	public BetController(float smallBlind, float bigBlind, float minBuyIn, float maxBuyIn) {
 		this.roundBet = 0.0f;
+		this.totalRoundBet = 0.0f;
 		this.lastRaise = 0.0f;
 		this.setLedger(new Ledger());
 		this.setTotalPot(0);
@@ -57,6 +59,7 @@ public class BetController {
 
 	synchronized public void bet(Player player, float bet) {
 		player.bet(bet); // verification performed in 'bet' method
+		this.totalRoundBet += bet;
 	}
 
 	/**
@@ -72,12 +75,15 @@ public class BetController {
 
 		Assert.isTrue(player.getRoundBet() + bet > this.roundBet,
 				"You have to raise more than the prior bet");
-		Assert.isTrue(amountRaised >= 2.00f * lastRaise, "Insufficient raise amount");
-		Assert.isTrue(bet >= this.smallBlind, "Any bet must be at least as large as small blind.");
+		Assert.isTrue(amountRaised >= 1.00f * lastRaise, "Insufficient raise amount");
+		Assert.isTrue(bet >= this.bigBlind, "Any bet must be at least as large as small blind.");
 
 		player.bet(bet); // verification performed in 'bet' method
+		this.roundBet = player.getRoundBet();
 		lastRaise = amountRaised;
 		lastRaisePlayer = player;
+
+		this.totalRoundBet += amountRaised;
 	}
 
 	/**
@@ -86,7 +92,15 @@ public class BetController {
 	 * @return Amount player contributed to pot.
 	 */
 	synchronized public float goAllIn(Player player) {
-		return player.goAllIn();
+		float betValue = player.goAllIn();
+		if (this.roundBet < betValue) {
+			this.roundBet = betValue;	
+			lastRaisePlayer = player;
+
+		}
+		this.totalRoundBet += betValue;
+
+		return betValue;
 	}
 
 	synchronized public void paySmallBlind(Player player) {
@@ -161,13 +175,19 @@ public class BetController {
 		List<Pot> pots = new ArrayList<Pot>(); // list of all pots
 
 		List<Player> players = new ArrayList<Player>(group.getActivePlayersInBettingRound());
-
+		List<Player> foldedPlayers = new ArrayList<Player>(group.getFoldedPlayers());
+		
+		
 		// sorts players by their current bet in increasing order
 		Collections.sort(players, Comparator.comparingDouble(Player :: getHandBet));
 
 		// while players with chips exist, we match players to side pots
 		float offset = 0;
 		this.totalPot = 0;
+		for (Player player : players) {
+			System.out.printf("\n Player Bet %f \n", player.getHandBet());
+		}
+		
 		while (players.size() > 0) {
 			Pot pot = new Pot();
 			
@@ -178,22 +198,30 @@ public class BetController {
 			float minStack = minStackPlayer.getHandBet();
 
 			// updating pot
-			pot.setSize((minStack-offset) * players.size());
-
+			pot.setSize((minStack-offset) * (players.size() + 1) + foldedValue(offset, foldedPlayers));
+			pot.addAllPlayers(players);
 			// removing all players with no more chips left after contributing to the current pot
 			players = players.stream().filter(player -> player.getHandBet() > minStack).collect(Collectors.toList());
 
 			// updating total pot
-			this.totalPot += minStack-offset;
+			this.totalPot += pot.getSize();
 			
-			offset += minStack;
+			offset = minStack;
 			
 			pots.add(pot);
 		}
 
 		return pots;
 	}
-
+	private float foldedValue(float offset, List<Player> folded) {
+		float total;
+		total = 0.0f;
+		for (Player player: folded) {
+			total += Math.max(0, player.getHandBet() - offset);
+		}
+		return total;
+	}
+	
 	/**
 	 * Distributes pots to winners. Returns a list of propagatables to be propagated to group.
 	 */
@@ -205,15 +233,18 @@ public class BetController {
 
 		System.out.println("Distributing pots: " + pots);
 		for (Pot pot : pots) {
-			List<Player> playersWithMaxRank = new ArrayList<Player>();
-	
 			HandRank maxRank = null;
-			int startingSlot = lastRaisePlayer != null ? lastRaisePlayer.getSlot() : group.getSmallBlindIndex();
-	
+//			int startingSlot = lastRaisePlayer != null ? lastRaisePlayer.getSlot() : group.getSmallBlindIndex();
+			
+			List<Player> playersWithMaxRank = new ArrayList<Player>();
 			System.out.println("Distributing a pot...");
-			for (Player player : group.getPlayersClockwiseFromSlot(startingSlot)) {
+			for (Player player : pot.getPlayers()) {
+				System.out.println(player.getId());
+
 				System.out.println("player id: " + player.getId());
 				if (pot.getPlayers().contains(player)) {
+					playersWithOptionToMuck.add(player);
+
 					HandRank rank = player.getHand().getRank();
 					if (maxRank == null || rank.compareTo(maxRank) == 0) {
 						// either first hand rank we have found or tied with best hand rank we have found
@@ -221,22 +252,16 @@ public class BetController {
 						playersWithMaxRank.add(player);
 	
 						// forced to show cards
-						playersForcedToShowCards.add(player);
 					} else if (rank.compareTo(maxRank) > 0) {
 						// hand rank is best we have found so far
 						playersWithMaxRank.clear();
 						maxRank = rank;
 						playersWithMaxRank.add(player);
-	
-						// forced to show cards
-						playersForcedToShowCards.add(player);
-					} else {
-						// given option to muck cards
-						playersWithOptionToMuck.add(player);
-					}
+					} 
 				}
+				playersForcedToShowCards.addAll(playersWithMaxRank);
+
 			}
-			
 			
 			System.out.println("Players with max rank for pot with size: " + pot.getSize());
 			System.out.println(playersWithMaxRank.stream().map(player -> player.getId()).collect(Collectors.toList()));
@@ -255,9 +280,11 @@ public class BetController {
 					.withValue(pot.getSize())
 					.build()));
 		}
-		
+		playersForcedToShowCards.add(this.lastRaisePlayer);
+		if (group.getActivePlayersInBettingRound().size() == 1){
+			playersForcedToShowCards.clear();
+		}
 		playersWithOptionToMuck.removeAll(playersForcedToShowCards); // these sets should be mutually exclusive
-
 		for (Player player : playersForcedToShowCards) {
 			propagatables.add(new Propagatable(
 					new Action.ActionBuilder(ActionType.SHOW_CARDS)
@@ -316,6 +343,10 @@ public class BetController {
 		this.lastRaise = lastRaise;
 	}
 
+	public void setLastRaisePlayer(Player lastRaisePlayer) {
+		this.lastRaisePlayer = lastRaisePlayer;
+	}
+	
 	public Ledger getLedger() {
 		return ledger;
 	}
@@ -328,7 +359,19 @@ public class BetController {
 		return totalPot;
 	}
 
+	public float getBigBlind() {
+		return this.bigBlind;
+	}
+	
 	public void setTotalPot(float totalPot) {
 		this.totalPot = totalPot;
+	}
+
+	public float getTotalRoundBet() {
+		return totalRoundBet;
+	}
+
+	public void setTotalRoundBet(float totalRoundBet) {
+		this.totalRoundBet = totalRoundBet;
 	}
 }

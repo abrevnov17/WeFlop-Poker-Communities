@@ -18,6 +18,9 @@ public class MessageReceivingHandlers {
 		ActionType type = ActionType.fromValue(payload.get("type").getAsString());
 		String playerId = payload.get("user_id").getAsString();
 
+		JsonObject error = new JsonObject(); // returned on error
+		error.addProperty("type", "ERROR");
+		
 		// handling various action types
 		switch (type) {
 		case JOIN: {
@@ -29,7 +32,8 @@ public class MessageReceivingHandlers {
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("failing to join");
-				session.sendMessage(new TextMessage("Error attempting to join game."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -37,8 +41,8 @@ public class MessageReceivingHandlers {
 			try {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
-				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to start game."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -46,10 +50,9 @@ public class MessageReceivingHandlers {
 			try {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
-				e.printStackTrace();
-				System.out.println(e.getMessage());
 				System.out.println("Error attempting to call");
-				session.sendMessage(new TextMessage("Error attempting to call."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -58,7 +61,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to check."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -67,7 +71,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to fold."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -79,15 +84,18 @@ public class MessageReceivingHandlers {
 						.withValue(amount).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to raise."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
+			break;
 		case ALL_IN: {
 			try {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to go all-in."));
 			}
 		}
 			break;
@@ -102,7 +110,19 @@ public class MessageReceivingHandlers {
 						.build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to sit."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
+			}
+		}
+			break;
+		case SIT_IN: {
+			try {
+				boolean posting = payload.get("enabled").getAsBoolean();
+				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).withEnabled(posting).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -111,7 +131,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to stand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -120,7 +141,17 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to stand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
+			}
+		}
+			break;
+		case CANCEL_BUY_IN: {
+			try {
+				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
+			} catch (Exception e) {
+				e.printStackTrace();
+				session.sendMessage(new TextMessage("Error attempting to cancel buy in."));
 			}
 		}
 			break;
@@ -129,7 +160,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to stand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -138,7 +170,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to stand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -148,7 +181,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).withValue(amount).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to stand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -158,7 +192,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).withSlot(slot).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to stand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -167,7 +202,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to muck hand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -176,7 +212,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to show hand."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -185,7 +222,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to set automatic call preference."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -194,7 +232,8 @@ public class MessageReceivingHandlers {
 				game.performAction(new Action.ActionBuilder(type).withPlayerId(playerId).build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to set automatic check/fold preference."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
@@ -207,12 +246,14 @@ public class MessageReceivingHandlers {
 						.build());
 			} catch (Exception e) {
 				e.printStackTrace();
-				session.sendMessage(new TextMessage("Error attempting to set automatic check/fold preference."));
+				error.addProperty("error", e.getMessage());
+				session.sendMessage(new TextMessage(error.toString()));
 			}
 		}
 			break;
 		default:
-			session.sendMessage(new TextMessage("Unsupported action type"));
+			error.addProperty("error", "Unsupported action type.");
+			session.sendMessage(new TextMessage(error.toString()));
 			break;
 		}
 	}

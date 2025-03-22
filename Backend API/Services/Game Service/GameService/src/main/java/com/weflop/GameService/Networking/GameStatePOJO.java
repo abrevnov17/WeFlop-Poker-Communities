@@ -16,6 +16,7 @@ public class GameStatePOJO {
 	private String gameId;
 
 	private List<CardPOJO> centerCards;
+
 	private float pot;
 
 	private List<LimitedPlayerPOJO> otherPlayers;
@@ -25,8 +26,17 @@ public class GameStatePOJO {
 
 	private int epoch;
 
+	private float totalRoundBet;
+	private String dealer;
+
+	private boolean started;
+
+	private String smallBlind;
+	private String bigBlind;
+	private String tableState;
 	public GameStatePOJO(String gameId, List<CardPOJO> centerCards, float pot, List<LimitedPlayerPOJO> otherPlayers,
-			PlayerPOJO player, String idOfTurn, int epoch) {
+			PlayerPOJO player, String idOfTurn, int epoch, float totalRoundBet, boolean started, String dealer,
+						 String smallBlind, String bigBlind,String tableState) {
 		this.gameId = gameId;
 		this.centerCards = centerCards;
 		this.pot = pot;
@@ -34,6 +44,12 @@ public class GameStatePOJO {
 		this.player = player;
 		this.idOfTurn = idOfTurn;
 		this.epoch = epoch;
+		this.totalRoundBet = totalRoundBet;
+		this.dealer = dealer;
+		this.started = started;
+		this.smallBlind = smallBlind;
+		this.bigBlind = bigBlind;
+		this.tableState = tableState;
 	}
 
 	/* Getters and Setters */
@@ -92,4 +108,52 @@ public class GameStatePOJO {
 	public void setEpoch(int epoch) {
 		this.epoch = epoch;
 	}
+
+	public float getTotalRoundBet() {
+		return totalRoundBet;
+	}
+
+	public void setTotalRoundBet(float totalRoundBet) {
+		this.totalRoundBet = totalRoundBet;
+	}
+
+	public String getDealer() {
+		return dealer;
+	}
+
+	public void setDealer(String dealer) {
+		this.dealer = dealer;
+	}
+
+	public boolean isStarted() {
+		return started;
+	}
+
+	public void setStarted(boolean started) {
+		this.started = started;
+	}
+
+	public String getSmallBlind() {
+		return smallBlind;
+	}
+
+	public void setSmallBlind(String smallBlind) {
+		this.smallBlind = smallBlind;
+	}
+
+	public String getBigBlind() {
+		return bigBlind;
+	}
+
+	public void setBigBlind(String bigBlind) {
+		this.bigBlind = bigBlind;
+	}
+	public String getTableState() {
+		return tableState;
+	}
+
+	public void setTableState(String tableState) {
+		this.tableState = tableState;
+	}
+	
 }

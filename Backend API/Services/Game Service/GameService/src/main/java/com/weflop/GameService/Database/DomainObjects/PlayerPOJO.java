@@ -1,5 +1,7 @@
 package com.weflop.GameService.Database.DomainObjects;
 
+import com.weflop.GameService.Game.PlayerSettings;
+
 import java.util.List;
 
 /**
@@ -30,8 +32,10 @@ public class PlayerPOJO {
 
 	private int slot;
 
+	private PlayerSettings settings;
+
 	public PlayerPOJO(String id, float balance, float handBalance, float handBet, float roundBet, List<CardPOJO> cards, 
-			String state, String nextHandState, String prevState, int slot) {
+			String state, String nextHandState, String prevState, int slot, PlayerSettings settings) {
 		this.id = id;
 		this.balance = balance;
 		this.handBalance = handBalance;
@@ -42,6 +46,7 @@ public class PlayerPOJO {
 		this.nextHandState = nextHandState;
 		this.slot = slot;
 		this.prevState = prevState;
+		this.settings = settings;
 	}
 
 	public String getId() {
@@ -122,5 +127,13 @@ public class PlayerPOJO {
 
 	public void setHandBalance(float handBalance) {
 		this.handBalance = handBalance;
+	}
+
+	public PlayerSettings getSettings() {
+		return settings;
+	}
+
+	public void setSettings(PlayerSettings settings) {
+		this.settings = settings;
 	}
 }
